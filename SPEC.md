@@ -258,7 +258,7 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 
 | Milestone | Status | Date | Notes |
 |---|---|---|---|
-| M0 Project setup | ⬜ Not started | | |
+| M0 Project setup | ✅ Done | 2026-10-20 | Flutter 3.47.7 workspace (app/server/shared), placeholder screen, CI green. |
 | M1 Core app | ⬜ | | |
 | M2 Build pipeline | ⬜ | | |
 | M3 Week view + recurrence | ⬜ | | |
@@ -269,10 +269,19 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 | M8 Polish | ⬜ | | |
 
 ### How to test the latest milestone
-_(Claude Code fills this in.)_
+**M0** (on the Fedora laptop; first-time setup is in `docs/dev-setup-fedora.md`):
+1. `cd ~/Documents/projects/taskwise`
+2. `flutter pub get`, then `flutter analyze`. This should print "No issues found!".
+3. `cd app && flutter test`. This should print "All tests passed!".
+4. `flutter run -d linux` (from inside `app/`). A "Taskwise" window opens showing a check icon and "Coming soon: your tasks." Press `q` in the terminal to quit.
+5. CI: https://github.com/Krkr8/taskwise/actions should show a green check for the latest commit.
 
 ### Known issues
-_(Claude Code fills this in.)_
+- The Linux window title bar says "taskwise" in lowercase (the Flutter default). Fix planned for M1.
+- `flutter pub get` reports "7 packages have newer versions incompatible with dependency constraints". This is expected and comes from the version pins below.
 
 ### Notes for later
-_(Claude Code fills this in.)_
+- **`test` is pinned to 1.31.1** because Flutter 3.47.7's `flutter_test` pins `test_api` 0.7.12, and a pub workspace resolves to one version. Whenever Flutter is upgraded, bump `test` (in shared and server) to the release that uses the new `test_api`. The same constraint caps `analyzer` below 14, which keeps `build_runner` at 2.15.x.
+- Flutter's version is pinned in two places: `.github/workflows/ci.yml` and `docs/dev-setup-fedora.md`. Keep them in sync.
+- GitHub notice (2026-10-20): the `ubuntu-latest` runner label is moving to Ubuntu 26 (from 2026-10-19). Consider pinning an explicit runner image in M2.
+- Flutter commands must run from `app/` (the Flutter project), not the repo root. `flutter pub get` and `flutter analyze` work from the root.
