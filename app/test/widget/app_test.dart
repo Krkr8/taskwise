@@ -203,6 +203,21 @@ void main() {
     expect(label, isNot(contains('٢٥')));
   }, settings: const AppSettings(language: AppLanguage.ar));
 
+  appTest('Arabic priority labels in the side panel stay on one line', (
+    tester,
+    repo,
+  ) async {
+    await repo.createTask(title: 'مهمة');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('مهمة'));
+    await tester.pumpAndSettle();
+
+    final oneLine = tester.getSize(find.text('بلا')).height;
+    for (final label in ['منخفضة', 'متوسطة', 'عالية']) {
+      expect(tester.getSize(find.text(label)).height, oneLine, reason: label);
+    }
+  }, settings: const AppSettings(language: AppLanguage.ar));
+
   appTest('switching to dark theme in Settings applies immediately', (
     tester,
     repo,

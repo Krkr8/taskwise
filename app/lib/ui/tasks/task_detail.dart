@@ -269,24 +269,27 @@ class _TaskEditorState extends ConsumerState<_TaskEditor> {
                 ),
               const SizedBox(height: Spacing.md),
               _Label(l10n.priority),
-              SegmentedButton<Priority>(
-                showSelectedIcon: false,
-                segments: [
+              // Chips size to their labels and wrap as whole chips, so longer
+              // Arabic words never break across lines in the narrow panel.
+              Wrap(
+                spacing: Spacing.sm,
+                runSpacing: Spacing.sm,
+                children: [
                   for (final p in Priority.values)
-                    ButtonSegment(
-                      value: p,
-                      label: Text(l10n.priorityName(p)),
-                      icon: p == Priority.none
+                    ChoiceChip(
+                      showCheckmark: false,
+                      avatar: p == Priority.none
                           ? null
                           : Icon(
                               Icons.flag,
                               color: priorityColor(p, theme.colorScheme),
                             ),
+                      label: Text(l10n.priorityName(p)),
+                      selected: task.priority == p,
+                      onSelected: (_) =>
+                          _update((t) => t.copyWith(priority: p)),
                     ),
                 ],
-                selected: {task.priority},
-                onSelectionChanged: (s) =>
-                    _update((t) => t.copyWith(priority: s.single)),
               ),
               const SizedBox(height: Spacing.lg),
               _Label(l10n.category),

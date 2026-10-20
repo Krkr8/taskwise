@@ -22,3 +22,6 @@ coverage/
 
 # Screenshots shared with Claude Code (local only)
 tempscreenshot/
+
+# Personal Claude Code settings (not shared)
+.claude/settings.local.json

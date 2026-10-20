@@ -259,7 +259,7 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 | Milestone | Status | Date | Notes |
 |---|---|---|---|
 | M0 Project setup | ✅ Done | 2026-10-20 | Flutter 3.47.7 workspace (app/server/shared), placeholder screen, CI green. |
-| M1 Core app | 🟨 Ready for owner testing | 2026-10-20 | Local-only task manager: drift DB, list/quick add/details, subtasks, categories, tags, search/filter/sort, EN/AR with RTL, light/dark. 66 automated tests. |
+| M1 Core app | ✅ Done | 2026-10-20 | Local-only task manager: drift DB, list/quick add/details, subtasks, categories, tags, search/filter/sort, EN/AR with RTL, light/dark. 67 automated tests. Owner-tested on Fedora. |
 | M2 Build pipeline | ⬜ | | |
 | M3 Week view + recurrence | ⬜ | | |
 | M4 Time reminders | ⬜ | | |
