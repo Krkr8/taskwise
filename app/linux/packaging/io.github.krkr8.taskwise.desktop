@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Name=Taskwise
+GenericName=To-do list
+GenericName[ar]=قائمة المهام
+Comment=Tasks and reminders
+Comment[ar]=المهام والتذكيرات
+# install.sh replaces @EXEC@ with the installed binary's absolute path.
+Exec=@EXEC@
+Icon=io.github.krkr8.taskwise
+Terminal=false
+Categories=Office;ProjectManagement;
+Keywords=todo;task;reminder;
+# Matches the GTK application id / program name set by the runner.
+StartupWMClass=io.github.krkr8.taskwise

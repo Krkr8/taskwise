@@ -14,8 +14,13 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>ar</string>
+	</array>
 	<key>CFBundleName</key>
-	<string>taskwise</string>
+	<string>Taskwise</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -26,6 +31,17 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<!-- Location reminders (M7). Arabic versions go in ar.lproj/InfoPlist.strings with the permission flow. -->
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Taskwise uses your location in the background to remind you about tasks when you arrive at or leave a place, even when the app is closed. Your location never leaves your phone.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Taskwise uses your location to remind you about tasks when you arrive at or leave a place. Your location never leaves your phone.</string>
+	<!-- Info.plist-only background modes: they need no entitlement, so they work with a free Apple ID. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>location</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
