@@ -259,7 +259,7 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 | Milestone | Status | Date | Notes |
 |---|---|---|---|
 | M0 Project setup | ✅ Done | 2026-10-20 | Flutter 3.47.7 workspace (app/server/shared), placeholder screen, CI green. |
-| M1 Core app | ⬜ | | |
+| M1 Core app | 🟨 Ready for owner testing | 2026-10-20 | Local-only task manager: drift DB, list/quick add/details, subtasks, categories, tags, search/filter/sort, EN/AR with RTL, light/dark. 66 automated tests. |
 | M2 Build pipeline | ⬜ | | |
 | M3 Week view + recurrence | ⬜ | | |
 | M4 Time reminders | ⬜ | | |
@@ -269,19 +269,47 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 | M8 Polish | ⬜ | | |
 
 ### How to test the latest milestone
-**M0** (on the Fedora laptop; first-time setup is in `docs/dev-setup-fedora.md`):
-1. `cd ~/Documents/projects/taskwise`
-2. `flutter pub get`, then `flutter analyze`. This should print "No issues found!".
-3. `cd app && flutter test`. This should print "All tests passed!".
-4. `flutter run -d linux` (from inside `app/`). A "Taskwise" window opens showing a check icon and "Coming soon: your tasks." Press `q` in the terminal to quit.
-5. CI: https://github.com/Krkr8/taskwise/actions should show a green check for the latest commit.
+**M1** (on the Fedora laptop). Update and start the app:
+```bash
+cd ~/Documents/projects/taskwise
+git pull
+flutter pub get
+cd app
+flutter run -d linux
+```
+Then work through this checklist:
+1. **Quick add:** type "Buy milk" in "Add a task and press Enter" and press Enter. It appears under **No date**, and the field stays ready for the next task.
+2. **Details:** click the task. With a wide window, a panel opens on the right. Change the title, set a due date (today, then tomorrow) and a time, set priority **High**, and add notes. The row updates and moves between **Today** and **Tomorrow**.
+3. **Subtasks:** add three subtasks, tick one (the row shows "1/3"), drag one to a new position with the ⋮⋮ handle, click one to rename it, and delete one with ✕.
+4. **Categories:** go to Settings → Categories and add "Work" (pick a colour), then set it on a task. Delete the category: the task stays, without a category.
+5. **Tags:** in the task panel, click "Add tag" and type "errand". Add the same tag to a second task by tapping its chip in the dialog.
+6. **Search, filter and sort:** type in the search box. Use the filter button (priority, category or tag; the badge shows how many filters are active) and the sort button.
+7. **Complete:** click the circle next to a task. It animates, then moves to **Completed** (collapsed; click the header to expand). Click the circle again to undo.
+8. **Delete and undo:** open a task, click the bin icon, then click **Undo** in the message at the bottom. The task comes back.
+9. **Language:** Settings → Language → العربية. The whole layout mirrors to right-to-left and dates use 0-9 digits. Switch back to English.
+10. **Theme:** Settings → Theme → Dark, Light, System.
+11. **Week start / time format:** set the week to start on Monday and check that the "This week" group changes. Switch to 24-hour and check that times update.
+12. **Narrow layout:** make the window narrow (under ~600 px). Navigation moves to a bottom bar, and tasks open full-screen.
+13. **Persistence:** quit (press `q` in the terminal, or close the window) and run `flutter run -d linux` again. Everything is still there.
+
+Automated checks (optional): from the repo root, run `flutter analyze`, then `cd app && flutter test`, `cd ../shared && dart test` and `cd ../server && dart test`.
 
 ### Known issues
-- The Linux window title bar says "taskwise" in lowercase (the Flutter default). Fix planned for M1.
-- `flutter pub get` reports "7 packages have newer versions incompatible with dependency constraints". This is expected and comes from the version pins below.
+- **Please review the Arabic text** (`app/lib/l10n/app_ar.arb`). Claude Code wrote the translations, and a native speaker should check them.
+- `flutter pub get` reports "11 packages have newer versions incompatible with dependency constraints". This is expected and comes from the version pins below.
+- Grouping is by date only: a task due at 9:00 today stays in **Today** after 9:00 rather than moving to Overdue. Its due label shows the time.
+- The sort choice and collapsed groups reset when the app restarts (kept in memory only).
+- Running `flutter run`/`build` from the repo root fails with `Target file "lib/main.dart" not found`. Run them from `app/`.
+- GTK prints harmless `Atk-CRITICAL` / cursor-theme warnings to the terminal on GNOME.
 
 ### Notes for later
 - **`test` is pinned to 1.31.1** because Flutter 3.47.7's `flutter_test` pins `test_api` 0.7.12, and a pub workspace resolves to one version. Whenever Flutter is upgraded, bump `test` (in shared and server) to the release that uses the new `test_api`. The same constraint caps `analyzer` below 14, which keeps `build_runner` at 2.15.x.
 - Flutter's version is pinned in two places: `.github/workflows/ci.yml` and `docs/dev-setup-fedora.md`. Keep them in sync.
 - GitHub notice (2026-10-20): the `ubuntu-latest` runner label is moving to Ubuntu 26 (from 2026-10-19). Consider pinning an explicit runner image in M2.
-- Flutter commands must run from `app/` (the Flutter project), not the repo root. `flutter pub get` and `flutter analyze` work from the root.
+- **M2:** the iOS display name/bundle ID config is still the Flutter default. The Windows window title was changed to "Taskwise" in M1 but not tested on Windows yet.
+- **M3:** add the Week destination to `AdaptiveShell`. Recurrence goes in `Task.recurrenceRule` (column already exists).
+- **M4:** the `reminders` table and the shared `Reminder` model already exist (time: `absoluteAt` / `minutesBeforeDue`).
+- **M6:** every table has `id` (UUID v7), `updatedAt` (UTC ms), `deleted`, `updatedByDevice`. `settings.synced` marks shared keys (only `week_start` so far). `task_target_devices` exists for "Notify on devices". Tombstoned tasks keep their subtasks and tag links (needed for undo), and the server's 90-day purge should remove the children too. The device name is pre-filled ("Fedora Laptop") and becomes editable in M6.
+- **M7:** the `places` table and `Place` model exist (default radius 30 m).
+- **M8:** JSON export/import can reuse the shared models' `toJson`/`fromJson`. An accent colour picker can hook into `AppTheme.seed`.
+- **Testing tip:** in widget tests, drift query streams wait on the fake test clock. Read the database with plain queries inside `tester.runAsync`, and unmount the app at the end of each test (see `appTest` in `app/test/widget/app_test.dart`).

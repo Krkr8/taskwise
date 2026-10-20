@@ -22,6 +22,16 @@ jobs:
       - name: Check formatting
         run: dart format --output=none --set-exit-if-changed .
 
+      # Generated code (drift, localizations) is committed; make sure it's
+      # up to date with its sources.
+      - name: Check generated code is up to date
+        working-directory: app
+        run: |
+          dart run build_runner build --delete-conflicting-outputs
+          flutter gen-l10n
+          git diff --exit-code
+          test -z "$(git status --porcelain)"
+
       - name: Analyze
         run: flutter analyze
 

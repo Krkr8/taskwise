@@ -1,53 +1,67 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
 
-void main() {
-  runApp(const TaskwiseApp());
+import 'app.dart';
+import 'data/db/app_database.dart';
+import 'data/repositories/settings_repository.dart';
+import 'state/providers.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  configureIntl();
+
+  final db = AppDatabase();
+  final type = _detectDeviceType();
+  final deviceId = await ensureThisDevice(
+    db,
+    type: type,
+    name: _defaultDeviceName(type),
+  );
+  final settings = await SettingsRepository(
+    db,
+    deviceId: deviceId,
+  ).loadSettings();
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        databaseProvider.overrideWithValue(db),
+        deviceIdProvider.overrideWithValue(deviceId),
+        initialSettingsProvider.overrideWithValue(settings),
+      ],
+      child: const TaskwiseApp(),
+    ),
+  );
 }
 
-/// Root widget. Real theming, localization and navigation arrive in M1.
-class TaskwiseApp extends StatelessWidget {
-  const TaskwiseApp({super.key});
-
-  static const Color _seed = Colors.teal;
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: AppInfo.name,
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(colorSchemeSeed: _seed, brightness: Brightness.light),
-      darkTheme: ThemeData(colorSchemeSeed: _seed, brightness: Brightness.dark),
-      home: const PlaceholderHomePage(),
-    );
-  }
+/// Global intl setup. Arabic uses Western digits (0-9), per the owner.
+void configureIntl() {
+  DateFormat.useNativeDigitsByDefaultFor('ar', false);
 }
 
-/// Temporary home screen shown until the task list lands in M1.
-class PlaceholderHomePage extends StatelessWidget {
-  const PlaceholderHomePage({super.key});
+DeviceType _detectDeviceType() {
+  if (Platform.isWindows) return DeviceType.windows;
+  if (Platform.isLinux) return DeviceType.linux;
+  if (Platform.isIOS) return DeviceType.ios;
+  return DeviceType.other;
+}
 
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Scaffold(
-      appBar: AppBar(title: const Text(AppInfo.name)),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.task_alt,
-              size: 64,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            const SizedBox(height: 16),
-            Text(AppInfo.name, style: textTheme.headlineMedium),
-            const SizedBox(height: 8),
-            Text('Coming soon: your tasks.', style: textTheme.bodyLarge),
-          ],
-        ),
-      ),
-    );
+/// Pre-filled device name (SPEC.md section 3.4); editable from M6.
+String _defaultDeviceName(DeviceType type) => switch (type) {
+  DeviceType.windows => 'Windows PC',
+  DeviceType.ios => 'iPhone',
+  DeviceType.linux => _isFedora() ? 'Fedora Laptop' : 'Linux PC',
+  DeviceType.other => 'Device',
+};
+
+bool _isFedora() {
+  try {
+    return File('/etc/os-release').readAsStringSync().contains('ID=fedora');
+  } on FileSystemException {
+    return false;
   }
 }

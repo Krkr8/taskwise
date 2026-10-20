@@ -5,17 +5,44 @@ version: 0.1.0+1
 resolution: workspace
 
 environment:
-  sdk: ^3.11.0
+  sdk: ^3.13.0
 
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  drift: 2.35.2
+  drift_flutter: 0.3.1
+  flutter_riverpod: 3.4.3
+  intl: 0.20.3
+  path_provider: 2.1.6
   taskwise_shared: any
+  uuid: 4.6.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  build_runner: 2.15.3
+  drift_dev: 2.35.1
   flutter_lints: 6.0.0
 
 flutter:
   uses-material-design: true
+  generate: true
+  fonts:
+    # Noto Sans + Noto Sans Arabic, SIL Open Font License (assets/fonts/OFL.txt).
+    - family: NotoSans
+      fonts:
+        - asset: assets/fonts/NotoSans-Regular.ttf
+        - asset: assets/fonts/NotoSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/NotoSans-Bold.ttf
+          weight: 700
+    - family: NotoSansArabic
+      fonts:
+        - asset: assets/fonts/NotoSansArabic-Regular.ttf
+        - asset: assets/fonts/NotoSansArabic-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/NotoSansArabic-Bold.ttf
+          weight: 700

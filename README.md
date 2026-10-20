@@ -2,7 +2,7 @@
 
 A personal, self-hosted to-do and reminders app for Windows, Linux and iOS, with a small sync server you run yourself.
 
-> Status: early development (milestone M0, project setup). See [SPEC.md](SPEC.md) for the full specification and progress log.
+> Status: early development. Milestone M1 (core app, local only) is done. See [SPEC.md](SPEC.md) for the full specification and progress log.
 
 ## Repository layout
 
@@ -28,6 +28,20 @@ flutter analyze                                # static analysis (all packages)
 (cd shared && dart test) && (cd server && dart test)
 (cd app && flutter run -d linux)               # run the app
 ```
+
+### Generated code
+
+Generated files are committed, so a fresh clone runs without extra steps. After changing their sources, regenerate from `app/` (CI fails if they're out of date):
+
+| You changed | Run |
+|---|---|
+| Database tables (`app/lib/data/db/`) | `dart run build_runner build --delete-conflicting-outputs` |
+| UI text (`app/lib/l10n/*.arb`) | `flutter gen-l10n` |
+| Database schema version | `dart run drift_dev make-migrations` (see the comment in `app_database.dart`) |
+
+### Data location
+
+The app keeps its SQLite database in the per-user app-support folder, e.g. `~/.local/share/io.github.krkr8.taskwise/taskwise.sqlite` on Linux. Delete that folder to start fresh.
 
 ## License
 

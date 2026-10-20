@@ -1,0 +1,8 @@
+targets:
+  $default:
+    builders:
+      drift_dev:
+        options:
+          # Used by `dart run drift_dev make-migrations`.
+          databases:
+            taskwise: lib/data/db/app_database.dart
