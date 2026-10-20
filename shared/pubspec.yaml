@@ -1,0 +1,12 @@
+name: taskwise_shared
+description: Models, sync protocol and recurrence logic shared by the Taskwise app and server.
+version: 0.1.0
+publish_to: none
+resolution: workspace
+
+environment:
+  sdk: ^3.11.0
+
+dev_dependencies:
+  lints: 6.1.0
+  test: 1.31.1
