@@ -12,7 +12,7 @@ Builds for each platform are attached to [GitHub Releases](https://github.com/Kr
 - [Windows 11](docs/install-windows.md)
 - [iPhone with SideStore](docs/install-ios-sidestore.md) (no Mac needed; see also [what works with a free Apple ID](docs/ios-free-apple-id.md))
 
-Maintainers make a release by bumping `version:` in `app/pubspec.yaml`, then pushing a matching tag (e.g. `git tag v0.1.0 && git push origin v0.1.0`). The **Release builds** workflow builds all three platforms and publishes the release. It can also be run by hand from the Actions tab to get build artifacts without a release.
+Maintainers make a release by bumping `version:` in `app/pubspec.yaml`, then pushing a matching tag (e.g. `git tag v0.1.0 && git push origin v0.1.0`). The **Release builds** workflow builds all three platforms and attaches them to a **draft** release, which stays private until it is published by hand. It can also be run by hand from the Actions tab to get build artifacts without a release.
 
 ## Repository layout
 

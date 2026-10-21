@@ -132,11 +132,13 @@ jobs:
         with:
           path: dist
           merge-multiple: true
-      - name: Publish GitHub Release
+      # Draft only: drafts stay private until the owner publishes them by hand.
+      - name: Create draft GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           ls -la dist
           gh release create "$GITHUB_REF_NAME" dist/* \
             --title "Taskwise $GITHUB_REF_NAME" \
-            --generate-notes
+            --generate-notes \
+            --draft
