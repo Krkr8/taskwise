@@ -4,6 +4,16 @@ A personal, self-hosted to-do and reminders app for Windows, Linux and iOS, with
 
 > Status: early development. Milestone M1 (core app, local only) is done. See [SPEC.md](SPEC.md) for the full specification and progress log.
 
+## Install
+
+Builds for each platform are attached to [GitHub Releases](https://github.com/Krkr8/taskwise/releases):
+
+- [Linux (Fedora)](docs/install-linux.md)
+- [Windows 11](docs/install-windows.md)
+- [iPhone with SideStore](docs/install-ios-sidestore.md) (no Mac needed; see also [what works with a free Apple ID](docs/ios-free-apple-id.md))
+
+Maintainers make a release by bumping `version:` in `app/pubspec.yaml`, then pushing a matching tag (e.g. `git tag v0.1.0 && git push origin v0.1.0`). The **Release builds** workflow builds all three platforms and publishes the release. It can also be run by hand from the Actions tab to get build artifacts without a release.
+
 ## Repository layout
 
 | Path | What it is |
