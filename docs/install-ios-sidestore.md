@@ -60,9 +60,9 @@ If iloader doesn't see the phone, unplug and replug it. Still nothing? In one te
 13. On the laptop, download the iPhone build (it's `taskwise-<version>-ios-unsigned.ipa` on the release). If the release is still a **Draft**, it's only visible while you're signed in to GitHub as the repository owner. With the GitHub CLI:
     ```bash
     mkdir -p ~/Downloads/taskwise-ios && cd ~/Downloads/taskwise-ios
-    gh release download v0.1.0 --repo Krkr8/taskwise --pattern '*ios-unsigned.ipa' --clobber
+    gh release download v0.1.1 --repo Krkr8/taskwise --pattern '*ios-unsigned.ipa' --clobber
     ```
-    (Replace `v0.1.0` with the newest version.)
+    (Replace `v0.1.1` with the newest version.)
 14. Connect the iPhone by USB and unlock it. Open **iloader** (signed in with your Apple ID), select the phone, choose **Import IPA**, and pick the downloaded `.ipa`. Wait until it finishes.
 15. Open **Taskwise** from the home screen.
 
