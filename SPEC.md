@@ -264,7 +264,7 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 |---|---|---|---|
 | M0 Project setup | ✅ Done | 2026-10-20 | Flutter 3.47.7 workspace (app/server/shared), placeholder screen, CI green. |
 | M1 Core app | ✅ Done | 2026-10-20 | Local-only task manager: drift DB, list/quick add/details, subtasks, categories, tags, search/filter/sort, EN/AR with RTL, light/dark. 67 automated tests. Owner-tested on Fedora. |
-| M2 Build pipeline | ⬜ | | |
+| M2 Build pipeline | 🟡 In progress | 2026-10-30 | Release workflow builds Linux, Windows and unsigned iOS into a draft v0.1.0 release. Installed and owner-tested on Fedora and Windows. **Remaining: install on the iPhone with SideStore** (`docs/install-ios-sidestore.md`), then mark M2 done. |
 | M3 Week view + recurrence | ⬜ | | |
 | M4 Time reminders | ⬜ | | |
 | M5 Sync server | ⬜ | | |
@@ -310,7 +310,7 @@ Automated checks (optional): from the repo root, run `flutter analyze`, then `cd
 - **`test` is pinned to 1.31.1** because Flutter 3.47.7's `flutter_test` pins `test_api` 0.7.12, and a pub workspace resolves to one version. Whenever Flutter is upgraded, bump `test` (in shared and server) to the release that uses the new `test_api`. The same constraint caps `analyzer` below 14, which keeps `build_runner` at 2.15.x.
 - Flutter's version is pinned in two places: `.github/workflows/ci.yml` and `docs/dev-setup-fedora.md`. Keep them in sync.
 - GitHub notice (2026-10-20): the `ubuntu-latest` runner label is moving to Ubuntu 26 (from 2026-10-19). Consider pinning an explicit runner image in M2.
-- **M2:** the iOS display name/bundle ID config is still the Flutter default. The Windows window title was changed to "Taskwise" in M1 but not tested on Windows yet.
+- **M2:** the Windows SmartScreen step in `docs/install-windows.md` is untested (the zip was unblocked first). macOS runners can be unavailable for a while ("job was not acquired"); just re-run the release workflow later.
 - **M3:** add the Week destination to `AdaptiveShell`. Recurrence goes in `Task.recurrenceRule` (column already exists).
 - **M4:** the `reminders` table and the shared `Reminder` model already exist (time: `absoluteAt` / `minutesBeforeDue`).
 - **M5:** the sync server moved from the Windows PC (Dart, Tailscale) to Vercel (TypeScript, public HTTPS) on 2026-10-30, at the owner's request. Delete the Dart `server/` placeholder package, remove it from the root `pubspec.yaml` workspace and the CI "Test server" step, and drop `server` from the `test` pin note above. Update the M1 test instructions that run `dart test` in `server/`.
