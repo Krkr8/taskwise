@@ -1,6 +1,6 @@
 # Taskwise
 
-A personal, self-hosted to-do and reminders app for Windows, Linux and iOS, with a small sync server you run yourself.
+A personal, self-hosted to-do and reminders app for Windows, Linux and iOS, with a small sync server you host free on Vercel.
 
 > Status: early development. Milestone M1 (core app, local only) is done. See [SPEC.md](SPEC.md) for the full specification and progress log.
 
@@ -19,8 +19,8 @@ Maintainers make a release by bumping `version:` in `app/pubspec.yaml`, then pus
 | Path | What it is |
 |---|---|
 | `app/` | Flutter app (Linux, Windows, iOS) |
-| `server/` | Dart sync server (placeholder until M5) |
-| `shared/` | Models, sync protocol and recurrence logic shared by app and server |
+| `server/` | Sync server: TypeScript on Vercel from M5 (currently a Dart placeholder) |
+| `shared/` | Dart models and logic used by the app, plus sync API fixtures (from M5) |
 | `docs/` | Setup guides |
 | `.github/` | CI workflows |
 

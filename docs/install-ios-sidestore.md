@@ -72,7 +72,7 @@ Download the newer `.ipa` (step 13) and install it the same way (step 14). It re
 
 ## Only one VPN at a time
 
-iOS runs **one VPN at a time**. Right now that's LocalDevVPN. From M5/M6, the phone also uses **Tailscale** to reach your sync server. When you refresh or install apps, switch LocalDevVPN on (which turns Tailscale off), then switch Tailscale back on afterwards.
+iOS runs **one VPN at a time**, and SideStore needs LocalDevVPN to install and refresh apps. If you use another VPN, switch LocalDevVPN on while you refresh or install (which turns the other VPN off), then switch the other VPN back on afterwards. Taskwise doesn't need a VPN: its sync server is reached over normal HTTPS.
 
 ## Troubleshooting (from SideStore's docs)
 

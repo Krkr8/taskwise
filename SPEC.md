@@ -30,9 +30,10 @@ A personal, self-hosted **to-do + reminders app** that runs on:
 
 | Device | OS | Role |
 |---|---|---|
-| Desktop PC | Windows 11 | App **and** sync server (the hub). Always on, internet 24/7. |
+| Desktop PC | Windows 11 | App. |
 | Laptop | Fedora 44, GNOME (Wayland) | App. Development machine. |
 | Phone | iOS 27 (iPhone) | App. **Only device that does location reminders.** |
+| Cloud | Vercel (free Hobby plan) + hosted database | Sync server. Public HTTPS, reachable from anywhere. Nothing for the owner to maintain. |
 
 Single user (the owner). One device used at a time, so conflicts are rare. Designed so it could later be published as an open-source self-hosted app (multiple users not required now, but don't make it impossible).
 
@@ -53,21 +54,22 @@ Single user (the owner). One device used at a time, so conflicts are rare. Desig
   - Notifications: `flutter_local_notifications` (supports Windows, Linux, iOS) — verify.
   - Maps / location picker: `flutter_map` + OpenStreetMap tiles (no API key, open-source friendly). Address search via Nominatim (respect its usage policy: user-agent, rate limit) — make the geocoding provider swappable.
   - Geofencing on iOS: a small native Swift plugin using Core Location region monitoring (or a well-maintained Flutter plugin if one fits — evaluate in M7).
-- **Server (sync hub):** Dart (`shelf`) compiled to a native executable, SQLite storage.
-  - Shares model code with the app via a `shared` Dart package.
-  - Runs on Windows as a background service / auto-start task. Also provide a Dockerfile (for future open-source users on Linux).
-- **Networking between devices:** **Tailscale** (free private network). The server listens only on the Tailscale interface/LAN by default. No port forwarding.
-  - Note for docs: iOS allows one VPN at a time. Tailscale must be on for the phone to sync; SideStore's refresh may briefly need its own VPN. Document this.
-  - Optional alternative (document only, not default): Cloudflare Tunnel with HTTPS.
-- **CI/CD:** GitHub Actions: tests, Linux build, Windows build, unsigned iOS .ipa, server binaries. Artifacts attached to GitHub Releases.
+- **Server (sync server):** TypeScript with **Hono**, deployed as **Vercel Functions** on the free Hobby plan. The owner can't maintain or secure a Linux server, so the server must be fully managed.
+  - Storage: a hosted database, because Vercel has no persistent disk. Prefer **Turso** (SQLite-compatible), with **Neon** (Postgres) as the alternative. Avoid Supabase's free tier (it pauses inactive projects).
+  - Public **HTTPS** on the free `*.vercel.app` address (custom domain optional). No VPN app needed on any device.
+  - Scheduled jobs (tombstone purge, daily backup export) run as a **Vercel Cron** job, because serverless functions have no background process.
+  - Hono is portable: the same code must also run as a plain Node server with a Dockerfile, for future open-source self-hosters.
+  - The server does not reuse the Dart `shared` package. It only stores and serves records; recurrence and reminder logic stay in the app. To keep the Dart app and the TypeScript server in agreement, the sync API is defined once in `docs/sync-api.md`, with JSON fixture files in `shared/test/fixtures/` that both the Dart and the TypeScript tests load.
+  - At the start of M5, verify the current free limits of Vercel Hobby (function invocations, cron frequency) and the chosen database.
+- **CI/CD:** GitHub Actions: tests (Dart and TypeScript), Linux build, Windows build, unsigned iOS .ipa. Artifacts attached to GitHub Releases. Vercel deploys the server.
   - Note: macOS runners consume more minutes on private repos; public repos are free. Check current GitHub pricing and tell the owner.
 
 ### Repo layout
 ```
 /app        Flutter app (windows, linux, ios)
-/server     Dart sync server
-/shared     Shared models, sync protocol, recurrence logic
-/docs       Setup guides (install, Tailscale, SideStore, server service)
+/server     TypeScript sync server (Vercel)
+/shared     Dart models and logic for the app (recurrence, grouping) + sync API fixtures
+/docs       Setup guides (install, SideStore, server on Vercel, sync API)
 /.github    CI workflows
 SPEC.md     This file
 ```
@@ -125,12 +127,12 @@ Two types, a task can mix both:
 - Don't fire the same reminder repeatedly: debounce (e.g., don't re-fire "arrive" for the same reminder within X minutes; configurable; one-shot vs every time option).
 
 ### 3.4 Account & devices
-- One account (username + password) on the server. Set up on first server start (setup page in the app or CLI command).
+- One account (username + password) on the server, created once with `POST /auth/setup` (setup page in the app). The server is public, so setup requires a long random **setup secret** set as a Vercel environment variable; without it, anyone could claim the account first. Setup is refused once an account exists.
 - Each app install = a **device**. On first launch: enter server address, log in, give the device a name (pre-filled: "Windows PC", "Fedora Laptop", "iPhone"), device type is detected.
 - Server issues a per-device token (revocable). Store tokens securely (Windows Credential Manager / libsecret / iOS Keychain via `flutter_secure_storage`).
 - **Settings → Devices:** list devices (name, type, last seen), rename, remove/revoke.
 - New devices are added to "Notify on devices" for tasks that use the default "All devices" (store "all" as a flag, not as a list, so new devices are included automatically).
-- Passwords hashed with a strong algorithm (argon2 or bcrypt). Rate-limit login.
+- Passwords hashed with a strong algorithm (argon2id or bcrypt). Rate-limit login, with the counters stored in the database (serverless functions keep no memory between requests).
 
 ### 3.5 Settings
 - Theme: System / Light / Dark
@@ -164,13 +166,13 @@ Two types, a task can mix both:
   - **Push:** send all local changes since last successful push.
   - **Pull:** `GET /sync?since=<seq>` returns all changes after that sequence.
 - Conflict rule: **last write wins per record** (good enough: single user, one device at a time). Keep it simple, but structure code so field-level merge could be added later.
-- Tombstones: deleted records sync as `deleted=true`; server purges tombstones older than 90 days.
+- Tombstones: deleted records sync as `deleted=true`; a daily cron job purges tombstones older than 90 days.
 - Sync triggers: app start/resume, after any local change (debounced ~2 s), every 1–2 min while app open, iOS background refresh, iOS geofence wake (if quick), manual "Sync now".
 - After each pull, each device **rebuilds its scheduled local notifications** for tasks targeted at that device (cancel stale ones, schedule new ones; iOS has a 64 pending-notification limit — schedule the soonest 64 and refresh on sync/app open).
 - Device-only settings (theme, language, etc.) can be local; shared data (categories, places, week start) syncs. Decide per setting and document it.
-- API: JSON over HTTP, versioned (`/api/v1/...`), token auth in header. Endpoints at minimum: `POST /auth/login`, `POST /auth/setup`, `GET/POST /sync`, `GET/PATCH/DELETE /devices`, `GET /health`.
-- Server listens on Tailscale/LAN; document how to find the PC's Tailscale address (MagicDNS name like `my-pc`). Plain HTTP over Tailscale is acceptable (Tailscale encrypts); support HTTPS if a cert is configured.
-- Server backups: daily SQLite backup copy, keep last N.
+- API: JSON over HTTPS, versioned (`/api/v1/...`), token auth in header. Endpoints at minimum: `POST /auth/login`, `POST /auth/setup`, `GET/POST /sync`, `GET/PATCH/DELETE /devices`, `GET /health`. Documented in `docs/sync-api.md`, with JSON fixtures in `shared/test/fixtures/` tested on both sides.
+- The server is public on the internet (Vercel always serves HTTPS). Every endpoint except `/health`, `/auth/login` and `/auth/setup` requires a valid device token.
+- Server backups: the database provider's own backups, plus a daily cron export of all records, keeping the last N. Each device also holds a full copy of the data (local-first), and JSON export is available.
 
 ---
 
@@ -211,12 +213,14 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 - **Done when:** reminders fire reliably on all three devices (owner tests with a list you provide).
 
 ### M5 — Sync server
-- Dart `shelf` server per section 4: setup, login, devices, sync endpoints, SQLite, logging, daily backup, config file (port, bind address, data dir).
-- Run as a Windows background service / Task Scheduler auto-start (choose the simplest reliable method and script it), plus Dockerfile and Linux systemd example.
-- CI builds server executables (Windows + Linux).
-- `docs/server-setup-windows.md` and `docs/tailscale.md` (install Tailscale on all devices, find the PC's address).
-- Integration tests for the sync protocol.
-- **Done when:** server runs on the Windows PC and survives reboot; `GET /health` reachable from the laptop and iPhone over Tailscale.
+- First, verify the current free limits of Vercel Hobby and the database (Turso preferred, Neon as fallback), and tell the owner.
+- Replace the Dart placeholder in `server/` with a TypeScript + Hono server per sections 2 and 4: setup (with setup secret), login with rate limiting, devices, sync endpoints, hosted database with migrations, logging, Vercel Cron job (tombstone purge, daily backup export). Configuration only through environment variables (database URL and token, setup secret); never commit secrets.
+- Write `docs/sync-api.md` and the shared JSON fixtures in `shared/test/fixtures/`; contract tests on both sides (Dart and TypeScript) load the same fixtures.
+- Integration tests for the sync protocol against a local SQLite/libSQL database.
+- The same server code also runs as a plain Node server with a Dockerfile (for self-hosters).
+- CI: add a Node job that type-checks and tests the server.
+- `docs/server-setup-vercel.md`: beginner steps from Fedora (create Vercel and database accounts, install the `vercel` CLI, set environment variables, deploy, find the server address).
+- **Done when:** the server is deployed on Vercel and `GET /api/v1/health` works over HTTPS from the laptop and from the iPhone on mobile data.
 
 ### M6 — Client sync + accounts + device targeting
 - First-launch flow: server address → login → name device. Secure token storage.
@@ -244,7 +248,7 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 
 ## 6. Owner's preferences (summary)
 - Single user now; maybe public open-source self-hosted later.
-- Windows PC is the always-on sync hub; internet 24/7 on PC and phone.
+- Sync server hosted free on Vercel, reachable from anywhere over HTTPS; the owner doesn't maintain or secure servers. No server on the Windows PC.
 - Location reminders only on iPhone; default radius 30 m; arrive/leave selectable.
 - Week starts Sunday by default, changeable in settings.
 - English + Arabic, switchable in settings.
@@ -309,6 +313,7 @@ Automated checks (optional): from the repo root, run `flutter analyze`, then `cd
 - **M2:** the iOS display name/bundle ID config is still the Flutter default. The Windows window title was changed to "Taskwise" in M1 but not tested on Windows yet.
 - **M3:** add the Week destination to `AdaptiveShell`. Recurrence goes in `Task.recurrenceRule` (column already exists).
 - **M4:** the `reminders` table and the shared `Reminder` model already exist (time: `absoluteAt` / `minutesBeforeDue`).
+- **M5:** the sync server moved from the Windows PC (Dart, Tailscale) to Vercel (TypeScript, public HTTPS) on 2026-10-30, at the owner's request. Delete the Dart `server/` placeholder package, remove it from the root `pubspec.yaml` workspace and the CI "Test server" step, and drop `server` from the `test` pin note above. Update the M1 test instructions that run `dart test` in `server/`.
 - **M6:** every table has `id` (UUID v7), `updatedAt` (UTC ms), `deleted`, `updatedByDevice`. `settings.synced` marks shared keys (only `week_start` so far). `task_target_devices` exists for "Notify on devices". Tombstoned tasks keep their subtasks and tag links (needed for undo), and the server's 90-day purge should remove the children too. The device name is pre-filled ("Fedora Laptop") and becomes editable in M6.
 - **M7:** the `places` table and `Place` model exist (default radius 30 m).
 - **M8:** JSON export/import can reuse the shared models' `toJson`/`fromJson`. An accent colour picker can hook into `AppTheme.seed`.
