@@ -5,7 +5,7 @@ GenericName=To-do list
 GenericName[ar]=قائمة المهام
 Comment=Tasks and reminders
 Comment[ar]=المهام والتذكيرات
-# install.sh replaces @EXEC@ with the installed binary's absolute path.
+# install.sh fills in Exec= with the installed binary's absolute path.
 Exec=@EXEC@
 Icon=io.github.krkr8.taskwise
 Terminal=false

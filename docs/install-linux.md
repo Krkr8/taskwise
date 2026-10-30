@@ -9,6 +9,7 @@ Taskwise installs for your user only. You don't need `sudo`.
    cd ~/Downloads
    gh release download --repo Krkr8/taskwise --pattern '*linux-x64.tar.gz'
    ```
+   If the release is still a **draft** (not published yet), add its version, because the command above only finds published releases: `gh release download v0.1.0 --repo Krkr8/taskwise --pattern '*linux-x64.tar.gz'`.
    On the website, open **Releases** and download `taskwise-<version>-linux-x64.tar.gz`.
 2. Extract it and run the installer:
    ```bash

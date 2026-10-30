@@ -42,7 +42,7 @@ cp -r "$HERE/bundle/." "$DEST/"
 
 install -Dm644 "$HERE/$APP_ID.png" "$ICON_FILE"
 mkdir -p "$(dirname "$DESKTOP_FILE")"
-sed "s|@EXEC@|$DEST/taskwise|" "$HERE/$APP_ID.desktop" > "$DESKTOP_FILE"
+sed "s|^Exec=@EXEC@$|Exec=$DEST/taskwise|" "$HERE/$APP_ID.desktop" > "$DESKTOP_FILE"
 refresh_caches
 
 echo "Taskwise is installed in $DEST"
