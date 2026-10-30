@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
 
+import '../../data/app_settings.dart';
 import '../../state/providers.dart';
 import '../common/dialogs.dart';
 import '../tasks/labels.dart';
@@ -27,11 +28,16 @@ class CalendarChip extends ConsumerWidget {
     required this.onTap,
     this.showTime = false,
     this.dense = false,
+    this.stacked = false,
   });
 
   final CalendarItem item;
   final VoidCallback onTap;
   final bool showTime;
+
+  /// Time (and repeat icon) on a small first line, then the title on up to
+  /// three lines. Used in the week view's narrow columns.
+  final bool stacked;
 
   /// Smaller text, for month cells and narrow week columns.
   final bool dense;
@@ -82,32 +88,89 @@ class CalendarChip extends ConsumerWidget {
                 top: 1,
                 bottom: 1,
               ),
+              child: stacked
+                  ? _stackedContent(context, l10n.clockTime, timeFormat, style)
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (item.projected || task.recurrenceRule != null)
+                          Padding(
+                            padding: const EdgeInsetsDirectional.only(end: 2),
+                            child: Icon(
+                              Icons.repeat,
+                              size: dense ? 10 : 12,
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                        Expanded(
+                          child: Text(
+                            label,
+                            style: style,
+                            maxLines: dense ? 1 : 2,
+                            overflow: TextOverflow.ellipsis,
+                            softWrap: !dense,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _stackedContent(
+    BuildContext context,
+    String Function(int, TimeFormat) clockTime,
+    TimeFormat timeFormat,
+    TextStyle? style,
+  ) {
+    final theme = Theme.of(context);
+    final repeats = item.projected || item.task.recurrenceRule != null;
+    final metaStyle = theme.textTheme.labelSmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+      height: 1.2,
+    );
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (item.timeMinutes != null || repeats)
+            // Shrinks to fit narrow phone columns instead of cutting off.
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (item.projected || task.recurrenceRule != null)
+                  if (repeats)
                     Padding(
                       padding: const EdgeInsetsDirectional.only(end: 2),
                       child: Icon(
                         Icons.repeat,
-                        size: dense ? 10 : 12,
-                        color: scheme.onSurfaceVariant,
+                        size: 10,
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: style,
-                      maxLines: dense ? 1 : 2,
-                      overflow: TextOverflow.ellipsis,
-                      softWrap: !dense,
+                  if (item.timeMinutes != null)
+                    Text(
+                      clockTime(item.timeMinutes!, timeFormat),
+                      style: metaStyle,
+                      maxLines: 1,
                     ),
-                  ),
                 ],
               ),
             ),
+          Text(
+            item.task.title,
+            style: style,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
           ),
-        ),
+        ],
       ),
     );
   }

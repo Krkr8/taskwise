@@ -194,7 +194,7 @@ class _CalendarPageState extends ConsumerState<CalendarPage> {
             key: ValueKey(week.first),
             days: week,
             onOpenItem: (item) => openTask(item.task.id),
-            onAdd: add,
+            onAdd: (date) => add(date, null),
           ),
           CalendarMode.month => MonthView(
             key: ValueKey((_focus.year, _focus.month)),

@@ -97,7 +97,7 @@ Each task has:
 ### 3.2 Views
 - **List view:** groups: Overdue, Today, Tomorrow, This week, Later, No date, Completed (collapsible). Filter by category, priority, tag; search by text; sort options.
 - **Weekly calendar view:** 7 columns, week starts on the day chosen in settings (**default Sunday**). Timed tasks placed at their time, all-day tasks in a top row. Swipe/arrow to previous/next week, "Today" button. Tap a day to add a task on that day. Drag a task to another day/time (desktop) — nice to have.
-  - Same layout on every platform, phone included (owner's choice, 2026-10-30): header "Month Year · This week", today's column outlined in the accent colour, a current-time line with its time in the hour gutter. Tap an empty slot to add a task at that hour, or a day header for an all-day task. Upcoming repeats show faded.
+  - Same layout on every platform, phone included (owner's choice, 2026-10-30): header "Month Year · This week" and today's column outlined in the accent colour. **No hour timeline** (changed at the owner's request, 2026-10-30): each day column is a list of its tasks, all-day tasks first, then timed ones in time order, each chip showing its time above the title. Tap a day header or the empty part of a column to add a task that day. Upcoming repeats show faded.
 - **Monthly calendar view** (added in M3 at the owner's request, all platforms): 6-week grid from the week-start day; task chips per day (coloured dots on narrow screens) with "+N"; tapping a day opens its agenda (side panel on wide screens, bottom sheet on phones). The Calendar tab switches between week and month.
 - Quick add: a single input field on all views (title + Enter); details editable after.
 - Task detail / edit screen or side panel (side panel on wide screens, full screen on phone).
@@ -271,7 +271,7 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 | M0 Project setup | ✅ Done | 2026-10-20 | Flutter 3.47.7 workspace (app/server/shared), placeholder screen, CI green. |
 | M1 Core app | ✅ Done | 2026-10-20 | Local-only task manager: drift DB, list/quick add/details, subtasks, categories, tags, search/filter/sort, EN/AR with RTL, light/dark. 67 automated tests. Owner-tested on Fedora. |
 | M2 Build pipeline | ✅ Done | 2026-10-30 | Release workflow builds Linux, Windows and unsigned iOS into a draft v0.1.0 release. Owner-tested on Fedora, Windows and iPhone. The iPhone app is installed with iloader from the laptop, because Apple blocks SideStore's own sign-in (-80045) since 2026-10-12. Also fixed from iPhone testing: tapping outside a text field (or scrolling) closes the keyboard, and selected Settings options use the accent colour. 69 automated tests. |
-| M3 Calendar + recurrence | ✅ Done | 2026-10-30 | Calendar tab with week (hour timeline, all-day row, now line) and month views on all platforms; repeating tasks (RRULE subset in `shared`, editor with presets and Custom, done copy + next occurrence with Undo); upcoming repeats shown faded in the calendar. Selected chips now clearly highlighted. 115 automated tests (shared tests run in 3 timezones in CI). |
+| M3 Calendar + recurrence | ✅ Done | 2026-10-30 | Calendar tab with week (7 day columns listing tasks, all-day first then by time) and month views on all platforms; repeating tasks (RRULE subset in `shared`, editor with presets and Custom, done copy + next occurrence with Undo); upcoming repeats shown faded in the calendar. Selected chips now clearly highlighted. 115 automated tests (shared tests run in 3 timezones in CI). |
 | M4 Time reminders | ⬜ | | |
 | M5 Sync server | ⬜ | | |
 | M6 Client sync + devices | ⬜ | | |
@@ -290,8 +290,8 @@ flutter run -d linux
 1. **Repeat a task:** add "Gym", open it, set a due date of today and a time. Tap **Does not repeat** and choose **Weekly on <today>**. The row now says "Every week on …", and the list shows a 🔁 icon.
 2. **Custom repeat:** tap the repeat row → **Custom…**: every **2 weeks** on Mon and Wed, ends **after 5 times**. The summary at the bottom updates as you change things.
 3. **Complete it:** tick "Gym" in the list. A message says "Done. Next: …", the ticked one moves to **Completed**, and a fresh "Gym" appears on the next date with its subtasks unticked. Tick another repeating task and press **Undo**: the new copy disappears and the original is back.
-4. **Week view:** open **Calendar**. Today's column is outlined and a line shows the current time. Timed tasks sit at their hour, all-day ones in the top row, and upcoming repeats are faded. Use the arrows (or swipe) to change week; **Today** brings you back.
-5. **Add from the calendar:** tap an empty slot (adds a task at that hour), tap a day's header (adds an all-day task), or press **+**.
+4. **Week view:** open **Calendar**. Today's column is outlined. Each day lists its tasks: all-day ones first, then timed ones in time order with the time above the title; upcoming repeats are faded. Use the arrows (or swipe) to change week; **Today** brings you back.
+5. **Add from the calendar:** tap a day's header or the empty part of its column (adds a task that day), or press **+**. Set a time in the task details and it moves into time order.
 6. **Month view:** tap the grid icon at the top left. Each day shows its tasks (dots on a narrow window); tap a day to see its list, tick tasks off there, or add one.
 7. **Settings follow:** change **Week starts on** to Monday: both views start on Monday. Switch to **العربية**: the week runs right to left.
 8. **Narrow window:** make the window narrow. The calendar keeps 7 columns; tasks open full-screen and a day's list opens from the bottom.
@@ -315,7 +315,7 @@ Automated checks (optional): from the repo root, run `flutter analyze`, then `cd
 - GitHub notice (2026-10-20): the `ubuntu-latest` runner label is moving to Ubuntu 26 (from 2026-10-19). Consider pinning an explicit runner image in M2.
 - **M2:** the Windows SmartScreen step in `docs/install-windows.md` is untested (the zip was unblocked first). macOS runners can be unavailable for a while ("job was not acquired"); just re-run the release workflow later.
 - **iOS signing:** Apple broke free sideloader sign-in in October 2026 (SideStore -80045/-80046, workaround in `docs/install-ios-sidestore.md`). If free sign-in keeps breaking, consider the paid Developer Program + TestFlight (signing and upload in the release workflow, App Store Connect API key as GitHub secrets).
-- **Calendar (later):** drag a task to another day/time (desktop) is still a "nice to have". Timed tasks have no duration, so the week view draws them as 30-minute blocks.
+- **Calendar (later):** drag a task to another day (desktop) is still a "nice to have".
 - **Repeats:** un-ticking an old done copy from Completed makes it a normal one-off task (its rule moved to the next copy). Rules are an RRULE *subset*; anything else from a future import should be validated with `RecurrenceRule.tryParse`.
 - **M4:** reminders must follow each occurrence: when `setDone` spawns the next copy (`TaskRepository._spawnNext`), copy the task's reminders too (relative ones keep their offset).
 - **Local test runner:** `flutter test` sometimes fails to start one test file with "Unable to connect to flutter_tester process" on the Fedora laptop. It's the runner, not the code; re-run, or use `flutter test --concurrency=1`.

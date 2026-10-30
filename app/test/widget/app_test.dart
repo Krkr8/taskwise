@@ -312,25 +312,28 @@ void main() {
     );
   }, settings: const AppSettings(language: AppLanguage.ar));
 
-  appTest('a timed task lands in its day column at its hour', (
+  appTest('a day column lists all-day tasks first, then by time', (
     tester,
     repo,
   ) async {
-    // _now is Tuesday 2026-10-20, 09:00.
-    await repo.createTask(
-      title: 'Standup',
-      dueDate: LocalDate(2026, 10, 20),
-      dueTimeMinutes: 10 * 60,
-    );
+    // _now is Tuesday 2026-10-20.
+    final tue = LocalDate(2026, 10, 20);
+    await repo.createTask(title: 'Late', dueDate: tue, dueTimeMinutes: 18 * 60);
+    await repo.createTask(title: 'Early', dueDate: tue, dueTimeMinutes: 8 * 60);
+    await repo.createTask(title: 'Whole day', dueDate: tue);
     await openCalendar(tester);
 
-    final chip = tester.getCenter(find.text('Standup'));
-    final tue = tester.getRect(
+    final column = tester.getRect(
       find.ancestor(of: find.text('Tue'), matching: find.byType(InkWell)),
     );
-    expect(chip.dx, inInclusiveRange(tue.left, tue.right));
-    // 10 AM is below the 9 AM label (shown as "9:00 AM", the time line).
-    expect(chip.dy, greaterThan(tester.getCenter(find.text('9:00 AM')).dy));
+    double y(String title) => tester.getCenter(find.text(title)).dy;
+    for (final title in ['Late', 'Early', 'Whole day']) {
+      final x = tester.getCenter(find.text(title)).dx;
+      expect(x, inInclusiveRange(column.left, column.right), reason: title);
+    }
+    expect(y('Whole day'), lessThan(y('Early')));
+    expect(y('Early'), lessThan(y('Late')));
+    expect(find.text('8:00 AM'), findsOneWidget);
   });
 
   appTest('repeats show in the week and month views', (tester, repo) async {
@@ -367,15 +370,13 @@ void main() {
     expect(find.textContaining('This week'), findsOneWidget);
   });
 
-  appTest('tapping an empty slot adds a task at that hour', (
+  appTest('tapping the empty part of a day adds a task on that day', (
     tester,
     repo,
   ) async {
     await openCalendar(tester);
-    // An empty spot in Wednesday's column, an hour below the 9 AM line.
     final wed = tester.getCenter(find.text('Wed'));
-    final nine = tester.getCenter(find.text('9:00 AM'));
-    await tester.tapAt(Offset(wed.dx, nine.dy + 80));
+    await tester.tapAt(Offset(wed.dx, wed.dy + 300));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).last, 'Dentist');
     await tester.tap(find.text('Add'));
@@ -385,7 +386,7 @@ void main() {
     final task = tasks!.single.task;
     expect(task.title, 'Dentist');
     expect(task.dueDate, LocalDate(2026, 10, 21));
-    expect(task.dueTimeMinutes, 10 * 60);
+    expect(task.dueTimeMinutes, isNull);
   });
 
   appTest('the repeat editor sets a rule', (tester, repo) async {
