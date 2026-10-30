@@ -6,6 +6,7 @@ import '../../state/providers.dart';
 import '../common/hover_surface.dart';
 import '../theme/tokens.dart';
 import 'labels.dart';
+import 'task_actions.dart';
 
 /// One task row in the list.
 class TaskTile extends ConsumerWidget {
@@ -45,6 +46,11 @@ class TaskTile extends ConsumerWidget {
           icon: Icons.event_outlined,
           label: due,
           style: overdue ? metaStyle?.copyWith(color: scheme.error) : metaStyle,
+        ),
+      if (task.recurrenceRule != null)
+        Tooltip(
+          message: l10n.repeatingTask,
+          child: Icon(Icons.repeat, size: 16, color: scheme.onSurfaceVariant),
         ),
       if (category != null)
         _Meta(
@@ -148,13 +154,12 @@ class _CompleteButtonState extends ConsumerState<CompleteButton> {
   }
 
   Future<void> _toggle() async {
-    final id = widget.task.id;
     final done = !(_pending ?? widget.task.done);
     setState(() => _pending = done);
     final delay = Motion.of(context, Motion.medium);
-    final repo = ref.read(taskRepositoryProvider);
     if (delay > Duration.zero) await Future<void>.delayed(delay);
-    await repo.setDone(id, done: done);
+    if (!mounted) return;
+    await setTaskDone(context, ref, widget.task, done: done);
   }
 
   @override

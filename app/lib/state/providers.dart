@@ -194,3 +194,27 @@ class SelectedTaskNotifier extends Notifier<String?> {
 final selectedTaskIdProvider = NotifierProvider<SelectedTaskNotifier, String?>(
   SelectedTaskNotifier.new,
 );
+
+// ----------------------------------------------------------------- calendar
+
+/// An inclusive date range, used as a calendar query key.
+typedef DateRange = ({LocalDate from, LocalDate to});
+
+/// Calendar items (real tasks plus projected repeats) for a date range.
+final calendarItemsProvider =
+    Provider.family<AsyncValue<Map<LocalDate, List<CalendarItem>>>, DateRange>(
+      (ref, range) => ref
+          .watch(taskEntriesProvider)
+          .whenData(
+            (entries) => calendarItems(
+              entries.map((e) => e.task),
+              from: range.from,
+              to: range.to,
+            ),
+          ),
+    );
+
+/// The task open in the calendar's side panel (wide layouts). Separate from
+/// [selectedTaskIdProvider] so the two tabs don't move each other.
+final calendarSelectedTaskIdProvider =
+    NotifierProvider<SelectedTaskNotifier, String?>(SelectedTaskNotifier.new);

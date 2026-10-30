@@ -123,6 +123,88 @@ void main() {
     });
   });
 
+  group('repeating tasks', () {
+    // The fake clock's "today" is Tuesday 2026-10-20.
+    Future<Task> repeating(String rule, {LocalDate? due}) async {
+      final task = await repo.createTask(
+        title: 'Gym',
+        dueDate: due ?? LocalDate(2026, 10, 20),
+        dueTimeMinutes: 18 * 60,
+        priority: Priority.high,
+      );
+      return (await repo.saveTask(task.copyWith(recurrenceRule: () => rule)))!;
+    }
+
+    test(
+      'completing creates the next occurrence and keeps a done copy',
+      () async {
+        final task = await repeating(
+          'DTSTART=20261019;FREQ=WEEKLY;BYDAY=MO,WE',
+        );
+        final step = await repo.addSubtask(task.id, 'Stretch');
+        await repo.setSubtaskDone(step.id, done: true);
+        final tag = await repo.findOrCreateTag('health');
+        await repo.setTaskTags(task.id, {tag.id});
+
+        final completion = await repo.setDone(task.id, done: true);
+
+        final done = (await repo.getTask(task.id))!;
+        expect(done.done, isTrue);
+        expect(done.recurrenceRule, isNull);
+        expect(completion.rule, task.recurrenceRule);
+
+        final next = (await repo.getTask(completion.nextTaskId!))!;
+        expect(next.done, isFalse);
+        expect(next.dueDate, LocalDate(2026, 10, 21));
+        expect(next.dueTimeMinutes, 18 * 60);
+        expect(next.priority, Priority.high);
+        expect(next.recurrenceRule, task.recurrenceRule);
+        final nextSubtasks = await repo.watchSubtasks(next.id).first;
+        expect(nextSubtasks.single.title, 'Stretch');
+        expect(nextSubtasks.single.done, isFalse);
+        expect(await repo.watchTaskTagIds(next.id).first, {tag.id});
+      },
+    );
+
+    test('an overdue task skips to today or later', () async {
+      final task = await repeating(
+        'DTSTART=20261010;FREQ=DAILY',
+        due: LocalDate(2026, 10, 10),
+      );
+      final completion = await repo.setDone(task.id, done: true);
+      final next = (await repo.getTask(completion.nextTaskId!))!;
+      expect(next.dueDate, LocalDate(2026, 10, 20));
+    });
+
+    test('a finished series makes no copy', () async {
+      final task = await repeating(
+        'DTSTART=20261019;FREQ=DAILY;UNTIL=20261020',
+      );
+      final completion = await repo.setDone(task.id, done: true);
+      expect(completion.nextTaskId, isNull);
+      expect((await entries()).length, 1);
+    });
+
+    test('undo removes the copy and restores the rule', () async {
+      final task = await repeating('DTSTART=20261020;FREQ=DAILY');
+      final completion = await repo.setDone(task.id, done: true);
+      await repo.undoCompletion(task.id, completion);
+
+      final restored = (await repo.getTask(task.id))!;
+      expect(restored.done, isFalse);
+      expect(restored.recurrenceRule, task.recurrenceRule);
+      expect((await repo.getTask(completion.nextTaskId!))!.deleted, isTrue);
+      expect((await entries()).single.task.id, task.id);
+    });
+
+    test('an invalid rule completes like a normal task', () async {
+      final task = await repeating('nonsense');
+      final completion = await repo.setDone(task.id, done: true);
+      expect(completion.nextTaskId, isNull);
+      expect((await repo.getTask(task.id))!.recurrenceRule, 'nonsense');
+    });
+  });
+
   group('subtasks', () {
     test('append in order, count done, reorder and delete', () async {
       final task = await repo.createTask(title: 'x');

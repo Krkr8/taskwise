@@ -87,6 +87,9 @@ Each task has:
 - Subtasks: checklist items with their own done state, reorderable
 - Done / not done; completed date
 - **Repeat** (recurrence): none, daily, weekly (choose weekdays), monthly (day of month or "2nd Tuesday"), yearly, every N days/weeks/months, end: never / on date / after N times. Completing a repeating task creates/advances the next occurrence. Store as RRULE-style rule in `shared`.
+  - Implemented in M3 (`shared/lib/src/logic/recurrence.dart`), stored in `Task.recurrenceRule` as e.g. `DTSTART=20261020;FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,WE;COUNT=10`. `DTSTART` anchors the series (intervals and COUNT count from it); dates are floating `LocalDate`s, so DST never moves them.
+  - A day that doesn't exist falls back to the month's last day: "monthly on the 31st" gives Feb 28/29, and a Feb 29 yearly task gives Feb 28 in non-leap years.
+  - Completing a repeating task (owner's choice, 2026-10-30): the ticked task stays in Completed as history (without the rule), and a new copy appears on the next occurrence that is today or later, with the same content, tags and rule, and its subtasks unticked. Undo removes the copy. Changing the due date re-anchors the rule.
 - **Reminders** (0 or more per task, see 3.3)
 - **Notify on devices:** a set of registered devices. **Default = all devices.**
 - Created/updated timestamps, soft-delete (tombstone) for sync
@@ -94,6 +97,8 @@ Each task has:
 ### 3.2 Views
 - **List view:** groups: Overdue, Today, Tomorrow, This week, Later, No date, Completed (collapsible). Filter by category, priority, tag; search by text; sort options.
 - **Weekly calendar view:** 7 columns, week starts on the day chosen in settings (**default Sunday**). Timed tasks placed at their time, all-day tasks in a top row. Swipe/arrow to previous/next week, "Today" button. Tap a day to add a task on that day. Drag a task to another day/time (desktop) — nice to have.
+  - Same layout on every platform, phone included (owner's choice, 2026-10-30): header "Month Year · This week", today's column outlined in the accent colour, a current-time line with its time in the hour gutter. Tap an empty slot to add a task at that hour, or a day header for an all-day task. Upcoming repeats show faded.
+- **Monthly calendar view** (added in M3 at the owner's request, all platforms): 6-week grid from the week-start day; task chips per day (coloured dots on narrow screens) with "+N"; tapping a day opens its agenda (side panel on wide screens, bottom sheet on phones). The Calendar tab switches between week and month.
 - Quick add: a single input field on all views (title + Enter); details editable after.
 - Task detail / edit screen or side panel (side panel on wide screens, full screen on phone).
 
@@ -153,7 +158,7 @@ Two types, a task can mix both:
 - Simple and clean. Light and dark mode with a single accent color (user can pick from ~6 accents — nice to have).
 - Material 3 base, rounded corners, generous spacing, good typography. Use a font that supports Arabic well (e.g., Noto Sans + Noto Sans Arabic, or IBM Plex Sans Arabic).
 - **Simple hover animations** on desktop: subtle background/elevation change on task rows and buttons (~150 ms), smooth check animation when completing a task, gentle slide/fade for panels. Respect "reduce motion" settings.
-- Responsive: phone layout (bottom nav: List / Week / Settings), desktop layout (side nav + optional detail panel).
+- Responsive: phone layout (bottom nav: Tasks / Calendar / Settings), desktop layout (side nav + optional detail panel).
 - Accessible: proper contrast in both themes, readable sizes, screen-reader labels.
 
 ---
@@ -202,6 +207,7 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 
 ### M3 — Weekly calendar view + recurrence
 - Weekly view per 3.2 (respects week-start setting and RTL).
+- Monthly view per 3.2 (added 2026-10-30 at the owner's request).
 - Recurrence rules per 3.1, with editor UI and solid tests (DST, month ends, leap years, "2nd Tuesday", timezone Asia/Baghdad and others).
 - **Done when:** repeating tasks show correctly in list and week view on all devices.
 
@@ -265,7 +271,7 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 | M0 Project setup | ✅ Done | 2026-10-20 | Flutter 3.47.7 workspace (app/server/shared), placeholder screen, CI green. |
 | M1 Core app | ✅ Done | 2026-10-20 | Local-only task manager: drift DB, list/quick add/details, subtasks, categories, tags, search/filter/sort, EN/AR with RTL, light/dark. 67 automated tests. Owner-tested on Fedora. |
 | M2 Build pipeline | ✅ Done | 2026-10-30 | Release workflow builds Linux, Windows and unsigned iOS into a draft v0.1.0 release. Owner-tested on Fedora, Windows and iPhone. The iPhone app is installed with iloader from the laptop, because Apple blocks SideStore's own sign-in (-80045) since 2026-10-12. Also fixed from iPhone testing: tapping outside a text field (or scrolling) closes the keyboard, and selected Settings options use the accent colour. 69 automated tests. |
-| M3 Week view + recurrence | ⬜ | | |
+| M3 Calendar + recurrence | ✅ Done | 2026-10-30 | Calendar tab with week (hour timeline, all-day row, now line) and month views on all platforms; repeating tasks (RRULE subset in `shared`, editor with presets and Custom, done copy + next occurrence with Undo); upcoming repeats shown faded in the calendar. Selected chips now clearly highlighted. 115 automated tests (shared tests run in 3 timezones in CI). |
 | M4 Time reminders | ⬜ | | |
 | M5 Sync server | ⬜ | | |
 | M6 Client sync + devices | ⬜ | | |
@@ -273,20 +279,30 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 | M8 Polish | ⬜ | | |
 
 ### How to test the latest milestone
-**M2** (installed builds on each device; full guides in `docs/`).
-- **Fedora:** `docs/install-linux.md`. **Windows:** `docs/install-windows.md`.
-- **iPhone:** `docs/install-ios-sidestore.md`. For now, install and refresh it with **iloader** from the laptop (Part 5), and repeat the install every 7 days.
-- After the fixes in this milestone, rebuild the release (or wait for the next one) and check on the iPhone:
-  1. Tap "Add a task and press Enter". The keyboard opens. Tap anywhere outside the field (a task, an empty area, the bottom bar), and the keyboard closes. Scrolling the task list also closes it.
-  2. Settings: the selected Theme, Language, Week start and Time format option is filled with the teal accent colour, with white text.
+**M3** on the Fedora laptop (then on Windows and the iPhone once the v0.2.0 build is out):
+```bash
+cd ~/Documents/projects/taskwise
+git pull
+flutter pub get
+cd app
+flutter run -d linux
+```
+1. **Repeat a task:** add "Gym", open it, set a due date of today and a time. Tap **Does not repeat** and choose **Weekly on <today>**. The row now says "Every week on …", and the list shows a 🔁 icon.
+2. **Custom repeat:** tap the repeat row → **Custom…**: every **2 weeks** on Mon and Wed, ends **after 5 times**. The summary at the bottom updates as you change things.
+3. **Complete it:** tick "Gym" in the list. A message says "Done. Next: …", the ticked one moves to **Completed**, and a fresh "Gym" appears on the next date with its subtasks unticked. Tick another repeating task and press **Undo**: the new copy disappears and the original is back.
+4. **Week view:** open **Calendar**. Today's column is outlined and a line shows the current time. Timed tasks sit at their hour, all-day ones in the top row, and upcoming repeats are faded. Use the arrows (or swipe) to change week; **Today** brings you back.
+5. **Add from the calendar:** tap an empty slot (adds a task at that hour), tap a day's header (adds an all-day task), or press **+**.
+6. **Month view:** tap the grid icon at the top left. Each day shows its tasks (dots on a narrow window); tap a day to see its list, tick tasks off there, or add one.
+7. **Settings follow:** change **Week starts on** to Monday: both views start on Monday. Switch to **العربية**: the week runs right to left.
+8. **Narrow window:** make the window narrow. The calendar keeps 7 columns; tasks open full-screen and a day's list opens from the bottom.
 
-The **M1** feature checklist (quick add, details, subtasks, categories, tags, search, language, theme, persistence) still applies on every device.
+The M2 iPhone/iloader steps still apply (`docs/install-ios-sidestore.md`).
 
 Automated checks (optional): from the repo root, run `flutter analyze`, then `cd app && flutter test`, `cd ../shared && dart test` and `cd ../server && dart test`.
 
 ### Known issues
 - **iPhone:** SideStore can't sign in to Apple right now (-80045/-80046, Apple-side change from 2026-10-12). Taskwise is installed and refreshed weekly with iloader over USB instead. See Troubleshooting in `docs/install-ios-sidestore.md`.
-- **Please review the Arabic text** (`app/lib/l10n/app_ar.arb`). Claude Code wrote the translations, and a native speaker should check them.
+- **Please review the Arabic text** (`app/lib/l10n/app_ar.arb`). Claude Code wrote the translations, and a native speaker should check them (M3 added the repeat and calendar texts, including Arabic plural forms).
 - `flutter pub get` reports "11 packages have newer versions incompatible with dependency constraints". This is expected and comes from the version pins below.
 - Grouping is by date only: a task due at 9:00 today stays in **Today** after 9:00 rather than moving to Overdue. Its due label shows the time.
 - The sort choice and collapsed groups reset when the app restarts (kept in memory only).
@@ -299,7 +315,10 @@ Automated checks (optional): from the repo root, run `flutter analyze`, then `cd
 - GitHub notice (2026-10-20): the `ubuntu-latest` runner label is moving to Ubuntu 26 (from 2026-10-19). Consider pinning an explicit runner image in M2.
 - **M2:** the Windows SmartScreen step in `docs/install-windows.md` is untested (the zip was unblocked first). macOS runners can be unavailable for a while ("job was not acquired"); just re-run the release workflow later.
 - **iOS signing:** Apple broke free sideloader sign-in in October 2026 (SideStore -80045/-80046, workaround in `docs/install-ios-sidestore.md`). If free sign-in keeps breaking, consider the paid Developer Program + TestFlight (signing and upload in the release workflow, App Store Connect API key as GitHub secrets).
-- **M3:** add the Week destination to `AdaptiveShell`. Recurrence goes in `Task.recurrenceRule` (column already exists).
+- **Calendar (later):** drag a task to another day/time (desktop) is still a "nice to have". Timed tasks have no duration, so the week view draws them as 30-minute blocks.
+- **Repeats:** un-ticking an old done copy from Completed makes it a normal one-off task (its rule moved to the next copy). Rules are an RRULE *subset*; anything else from a future import should be validated with `RecurrenceRule.tryParse`.
+- **M4:** reminders must follow each occurrence: when `setDone` spawns the next copy (`TaskRepository._spawnNext`), copy the task's reminders too (relative ones keep their offset).
+- **Local test runner:** `flutter test` sometimes fails to start one test file with "Unable to connect to flutter_tester process" on the Fedora laptop. It's the runner, not the code; re-run, or use `flutter test --concurrency=1`.
 - **M4:** the `reminders` table and the shared `Reminder` model already exist (time: `absoluteAt` / `minutesBeforeDue`).
 - **M5:** the sync server moved from the Windows PC (Dart, Tailscale) to Vercel (TypeScript, public HTTPS) on 2026-10-30, at the owner's request. Delete the Dart `server/` placeholder package, remove it from the root `pubspec.yaml` workspace and the CI "Test server" step, and drop `server` from the `test` pin note above. Update the M1 test instructions that run `dart test` in `server/`.
 - **M6:** every table has `id` (UUID v7), `updatedAt` (UTC ms), `deleted`, `updatedByDevice`. `settings.synced` marks shared keys (only `week_start` so far). `task_target_devices` exists for "Notify on devices". Tombstoned tasks keep their subtasks and tag links (needed for undo), and the server's 90-day purge should remove the children too. The device name is pre-filled ("Fedora Laptop") and becomes editable in M6.

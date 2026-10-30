@@ -1,3 +1,4 @@
+import 'package:taskwise_shared/taskwise_shared.dart';
 import 'package:uuid/uuid.dart';
 
 import '../db/app_database.dart';
@@ -19,6 +20,9 @@ abstract class RepositoryBase {
 
   /// Current time in UTC.
   DateTime now() => _clock().toUtc();
+
+  /// Today's date on this device.
+  LocalDate today() => LocalDate.fromDateTime(_clock());
 
   /// A new time-ordered UUID (v7).
   String newId() => _uuid.v7();

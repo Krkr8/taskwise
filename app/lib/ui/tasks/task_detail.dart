@@ -8,6 +8,7 @@ import '../../data/repositories/task_repository.dart';
 import '../../state/providers.dart';
 import '../theme/tokens.dart';
 import 'labels.dart';
+import 'repeat_editor.dart';
 import 'subtask_list.dart';
 import 'task_actions.dart';
 
@@ -138,8 +139,36 @@ class _TaskEditorState extends ConsumerState<_TaskEditor> {
       lastDate: DateTime(2100),
     );
     if (picked == null) return;
+    final date = LocalDate.fromDateTime(picked);
+    // A repeat follows the new date: "yearly" and "every 2 weeks" count
+    // from it.
     await _update(
-      (t) => t.copyWith(dueDate: () => LocalDate.fromDateTime(picked)),
+      (t) => t.copyWith(
+        dueDate: () => date,
+        recurrenceRule: () =>
+            RecurrenceRule.tryParse(t.recurrenceRule)
+                ?.withStart(date)
+                .toString() ??
+            t.recurrenceRule,
+      ),
+    );
+  }
+
+  Future<void> _pickRepeat() async {
+    final LocalDate anchor = widget.task.dueDate ?? ref.read(todayProvider);
+    final choice = await showRepeatPicker(
+      context,
+      anchor: anchor,
+      current: widget.task.recurrenceRule,
+      weekStart: ref.read(appSettingsProvider).weekStart,
+    );
+    if (choice == null) return;
+    // A repeating task needs a date to repeat from.
+    await _update(
+      (t) => t.copyWith(
+        recurrenceRule: () => choice.rule,
+        dueDate: () => t.dueDate ?? anchor,
+      ),
     );
   }
 
@@ -163,6 +192,7 @@ class _TaskEditorState extends ConsumerState<_TaskEditor> {
     final today = ref.watch(todayProvider);
     final timeFormat = ref.watch(appSettingsProvider).timeFormat;
     final categories = ref.watch(categoriesProvider).value ?? const [];
+    final rule = RecurrenceRule.tryParse(task.recurrenceRule);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -179,7 +209,8 @@ class _TaskEditorState extends ConsumerState<_TaskEditor> {
               const Spacer(),
               IconButton(
                 tooltip: task.done ? l10n.markTaskNotDone : l10n.markTaskDone,
-                onPressed: () => _repo.setDone(task.id, done: !task.done),
+                onPressed: () =>
+                    setTaskDone(context, ref, task, done: !task.done),
                 icon: Icon(
                   task.done ? Icons.check_circle : Icons.check_circle_outline,
                   color: task.done ? theme.colorScheme.primary : null,
@@ -241,6 +272,7 @@ class _TaskEditorState extends ConsumerState<_TaskEditor> {
                           (t) => t.copyWith(
                             dueDate: () => null,
                             dueTimeMinutes: () => null,
+                            recurrenceRule: () => null,
                           ),
                         ),
                       ),
@@ -268,6 +300,24 @@ class _TaskEditorState extends ConsumerState<_TaskEditor> {
                           ),
                         ),
                 ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.repeat),
+                title: Text(
+                  rule == null ? l10n.repeatNone : l10n.repeatSummary(rule),
+                ),
+                subtitle: Text(l10n.repeat),
+                onTap: _pickRepeat,
+                trailing: task.recurrenceRule == null
+                    ? null
+                    : IconButton(
+                        tooltip: l10n.repeatNone,
+                        icon: const Icon(Icons.close),
+                        onPressed: () => _update(
+                          (t) => t.copyWith(recurrenceRule: () => null),
+                        ),
+                      ),
+              ),
               const SizedBox(height: Spacing.md),
               _Label(l10n.priority),
               // Chips size to their labels and wrap as whole chips, so longer

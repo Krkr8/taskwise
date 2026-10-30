@@ -62,9 +62,21 @@ abstract final class AppTheme {
           ),
         ),
       ),
+      // Selected chips (priority, weekdays) get a stronger fill and an
+      // accent outline, for the same reason as the segmented buttons.
       chipTheme: ChipThemeData(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(Radii.sm),
+        ),
+        color: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? scheme.primaryContainer
+              : null,
+        ),
+        side: WidgetStateBorderSide.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? BorderSide(color: scheme.primary, width: 1.5)
+              : BorderSide(color: scheme.outlineVariant),
         ),
       ),
     );

@@ -319,4 +319,301 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get edit => 'تعديل';
+
+  @override
+  String get repeat => 'التكرار';
+
+  @override
+  String get repeatNone => 'بدون تكرار';
+
+  @override
+  String get repeatDaily => 'يوميًا';
+
+  @override
+  String get repeatWeekdays => 'كل أيام العمل';
+
+  @override
+  String repeatWeeklyOn(String day) {
+    return 'أسبوعيًا يوم $day';
+  }
+
+  @override
+  String repeatMonthlyOnDay(int day) {
+    return 'شهريًا في اليوم $day';
+  }
+
+  @override
+  String repeatMonthlyOnNth(String nth, String weekday) {
+    return 'شهريًا في $weekday $nth';
+  }
+
+  @override
+  String repeatYearlyOn(String date) {
+    return 'سنويًا في $date';
+  }
+
+  @override
+  String get repeatCustom => 'مخصص…';
+
+  @override
+  String get repeatCustomTitle => 'تكرار مخصص';
+
+  @override
+  String everyNDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'كل $count يومًا',
+      few: 'كل $count أيام',
+      two: 'كل يومين',
+      one: 'كل يوم',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String everyNWeeks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'كل $count أسبوعًا',
+      few: 'كل $count أسابيع',
+      two: 'كل أسبوعين',
+      one: 'كل أسبوع',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String everyNMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'كل $count شهرًا',
+      few: 'كل $count أشهر',
+      two: 'كل شهرين',
+      one: 'كل شهر',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String everyNYears(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'كل $count سنة',
+      few: 'كل $count سنوات',
+      two: 'كل سنتين',
+      one: 'كل سنة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String repeatOnDays(String base, String days) {
+    return '$base أيام $days';
+  }
+
+  @override
+  String repeatOnMonthDay(String base, int day) {
+    return '$base في اليوم $day';
+  }
+
+  @override
+  String repeatOnNth(String base, String nth, String weekday) {
+    return '$base في $weekday $nth';
+  }
+
+  @override
+  String repeatOnDate(String base, String date) {
+    return '$base في $date';
+  }
+
+  @override
+  String repeatUntil(String summary, String date) {
+    return '$summary، حتى $date';
+  }
+
+  @override
+  String repeatTimes(String summary, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$summary، $count مرة',
+      few: '$summary، $count مرات',
+      two: '$summary، مرتين',
+      one: '$summary، مرة واحدة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ordinal1 => 'الأول';
+
+  @override
+  String get ordinal2 => 'الثاني';
+
+  @override
+  String get ordinal3 => 'الثالث';
+
+  @override
+  String get ordinal4 => 'الرابع';
+
+  @override
+  String get ordinalLast => 'الأخير';
+
+  @override
+  String get repeatEvery => 'كل';
+
+  @override
+  String unitDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'يومًا',
+      few: 'أيام',
+      two: 'يومين',
+      one: 'يوم',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String unitWeeks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'أسبوعًا',
+      few: 'أسابيع',
+      two: 'أسبوعين',
+      one: 'أسبوع',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String unitMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'شهرًا',
+      few: 'أشهر',
+      two: 'شهرين',
+      one: 'شهر',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String unitYears(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'سنة',
+      few: 'سنوات',
+      two: 'سنتين',
+      one: 'سنة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get repeatOn => 'في';
+
+  @override
+  String monthlyByDay(int day) {
+    return 'في اليوم $day';
+  }
+
+  @override
+  String monthlyByNth(String nth, String weekday) {
+    return 'في $weekday $nth';
+  }
+
+  @override
+  String get repeatEnds => 'ينتهي';
+
+  @override
+  String get endsNever => 'أبدًا';
+
+  @override
+  String endsOnDate(String date) {
+    return 'في $date';
+  }
+
+  @override
+  String get endsAfter => 'بعد';
+
+  @override
+  String endsTimes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'مرة',
+      few: 'مرات',
+      two: 'مرتين',
+      one: 'مرة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get repeatingTask => 'مهمة متكررة';
+
+  @override
+  String doneNextOn(String date) {
+    return 'تمت. القادمة: $date';
+  }
+
+  @override
+  String get doneSeriesEnded => 'تمت. كانت هذه الأخيرة.';
+
+  @override
+  String get navCalendar => 'التقويم';
+
+  @override
+  String get calendarWeek => 'أسبوع';
+
+  @override
+  String get calendarMonth => 'شهر';
+
+  @override
+  String get calendarThisMonth => 'هذا الشهر';
+
+  @override
+  String get previousWeek => 'الأسبوع السابق';
+
+  @override
+  String get nextWeek => 'الأسبوع التالي';
+
+  @override
+  String get previousMonth => 'الشهر السابق';
+
+  @override
+  String get nextMonth => 'الشهر التالي';
+
+  @override
+  String get addTask => 'إضافة مهمة';
+
+  @override
+  String addTaskOn(String date) {
+    return 'إضافة مهمة في $date';
+  }
+
+  @override
+  String get newTaskHint => 'عنوان المهمة';
+
+  @override
+  String moreTasks(int count) {
+    return '+$count';
+  }
+
+  @override
+  String get noTasksThisDay => 'لا توجد مهام في هذا اليوم.';
+
+  @override
+  String upcomingOccurrence(String title) {
+    return 'تكرار قادم لـ \"$title\"';
+  }
 }

@@ -667,6 +667,336 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Edit'**
   String get edit;
+
+  /// No description provided for @repeat.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat'**
+  String get repeat;
+
+  /// No description provided for @repeatNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Does not repeat'**
+  String get repeatNone;
+
+  /// No description provided for @repeatDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get repeatDaily;
+
+  /// No description provided for @repeatWeekdays.
+  ///
+  /// In en, this message translates to:
+  /// **'Every weekday'**
+  String get repeatWeekdays;
+
+  /// No description provided for @repeatWeeklyOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly on {day}'**
+  String repeatWeeklyOn(String day);
+
+  /// No description provided for @repeatMonthlyOnDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly on day {day}'**
+  String repeatMonthlyOnDay(int day);
+
+  /// No description provided for @repeatMonthlyOnNth.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly on the {nth} {weekday}'**
+  String repeatMonthlyOnNth(String nth, String weekday);
+
+  /// No description provided for @repeatYearlyOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Yearly on {date}'**
+  String repeatYearlyOn(String date);
+
+  /// No description provided for @repeatCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom…'**
+  String get repeatCustom;
+
+  /// No description provided for @repeatCustomTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom repeat'**
+  String get repeatCustomTitle;
+
+  /// No description provided for @everyNDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Every day} other{Every {count} days}}'**
+  String everyNDays(int count);
+
+  /// No description provided for @everyNWeeks.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Every week} other{Every {count} weeks}}'**
+  String everyNWeeks(int count);
+
+  /// No description provided for @everyNMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Every month} other{Every {count} months}}'**
+  String everyNMonths(int count);
+
+  /// No description provided for @everyNYears.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Every year} other{Every {count} years}}'**
+  String everyNYears(int count);
+
+  /// No description provided for @repeatOnDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{base} on {days}'**
+  String repeatOnDays(String base, String days);
+
+  /// No description provided for @repeatOnMonthDay.
+  ///
+  /// In en, this message translates to:
+  /// **'{base} on day {day}'**
+  String repeatOnMonthDay(String base, int day);
+
+  /// No description provided for @repeatOnNth.
+  ///
+  /// In en, this message translates to:
+  /// **'{base} on the {nth} {weekday}'**
+  String repeatOnNth(String base, String nth, String weekday);
+
+  /// No description provided for @repeatOnDate.
+  ///
+  /// In en, this message translates to:
+  /// **'{base} on {date}'**
+  String repeatOnDate(String base, String date);
+
+  /// No description provided for @repeatUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'{summary}, until {date}'**
+  String repeatUntil(String summary, String date);
+
+  /// No description provided for @repeatTimes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{{summary}, once} other{{summary}, {count} times}}'**
+  String repeatTimes(String summary, int count);
+
+  /// No description provided for @ordinal1.
+  ///
+  /// In en, this message translates to:
+  /// **'first'**
+  String get ordinal1;
+
+  /// No description provided for @ordinal2.
+  ///
+  /// In en, this message translates to:
+  /// **'second'**
+  String get ordinal2;
+
+  /// No description provided for @ordinal3.
+  ///
+  /// In en, this message translates to:
+  /// **'third'**
+  String get ordinal3;
+
+  /// No description provided for @ordinal4.
+  ///
+  /// In en, this message translates to:
+  /// **'fourth'**
+  String get ordinal4;
+
+  /// No description provided for @ordinalLast.
+  ///
+  /// In en, this message translates to:
+  /// **'last'**
+  String get ordinalLast;
+
+  /// No description provided for @repeatEvery.
+  ///
+  /// In en, this message translates to:
+  /// **'Every'**
+  String get repeatEvery;
+
+  /// No description provided for @unitDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{day} other{days}}'**
+  String unitDays(int count);
+
+  /// No description provided for @unitWeeks.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{week} other{weeks}}'**
+  String unitWeeks(int count);
+
+  /// No description provided for @unitMonths.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{month} other{months}}'**
+  String unitMonths(int count);
+
+  /// No description provided for @unitYears.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{year} other{years}}'**
+  String unitYears(int count);
+
+  /// No description provided for @repeatOn.
+  ///
+  /// In en, this message translates to:
+  /// **'On'**
+  String get repeatOn;
+
+  /// No description provided for @monthlyByDay.
+  ///
+  /// In en, this message translates to:
+  /// **'On day {day}'**
+  String monthlyByDay(int day);
+
+  /// No description provided for @monthlyByNth.
+  ///
+  /// In en, this message translates to:
+  /// **'On the {nth} {weekday}'**
+  String monthlyByNth(String nth, String weekday);
+
+  /// No description provided for @repeatEnds.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends'**
+  String get repeatEnds;
+
+  /// No description provided for @endsNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get endsNever;
+
+  /// No description provided for @endsOnDate.
+  ///
+  /// In en, this message translates to:
+  /// **'On {date}'**
+  String endsOnDate(String date);
+
+  /// No description provided for @endsAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'After'**
+  String get endsAfter;
+
+  /// No description provided for @endsTimes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{time} other{times}}'**
+  String endsTimes(int count);
+
+  /// No description provided for @repeatingTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeating task'**
+  String get repeatingTask;
+
+  /// No description provided for @doneNextOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Done. Next: {date}'**
+  String doneNextOn(String date);
+
+  /// No description provided for @doneSeriesEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'Done. That was the last one.'**
+  String get doneSeriesEnded;
+
+  /// No description provided for @navCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Calendar'**
+  String get navCalendar;
+
+  /// No description provided for @calendarWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Week'**
+  String get calendarWeek;
+
+  /// No description provided for @calendarMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Month'**
+  String get calendarMonth;
+
+  /// No description provided for @calendarThisMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get calendarThisMonth;
+
+  /// No description provided for @previousWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous week'**
+  String get previousWeek;
+
+  /// No description provided for @nextWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Next week'**
+  String get nextWeek;
+
+  /// No description provided for @previousMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous month'**
+  String get previousMonth;
+
+  /// No description provided for @nextMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Next month'**
+  String get nextMonth;
+
+  /// No description provided for @addTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Add task'**
+  String get addTask;
+
+  /// No description provided for @addTaskOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a task on {date}'**
+  String addTaskOn(String date);
+
+  /// No description provided for @newTaskHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Task title'**
+  String get newTaskHint;
+
+  /// No description provided for @moreTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'+{count}'**
+  String moreTasks(int count);
+
+  /// No description provided for @noTasksThisDay.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks on this day.'**
+  String get noTasksThisDay;
+
+  /// No description provided for @upcomingOccurrence.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming repeat of \"{title}\"'**
+  String upcomingOccurrence(String title);
 }
 
 class _AppLocalizationsDelegate

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../calendar/calendar_page.dart';
 import '../settings/settings_page.dart';
 import '../tasks/labels.dart';
 import '../tasks/task_list_page.dart';
 import '../theme/tokens.dart';
 
 /// Top-level navigation: bottom bar on phones, side rail on wider screens.
-/// (The Week destination joins in M3.)
 class AdaptiveShell extends StatefulWidget {
   const AdaptiveShell({super.key});
 
@@ -17,7 +17,7 @@ class AdaptiveShell extends StatefulWidget {
 class _AdaptiveShellState extends State<AdaptiveShell> {
   int _index = 0;
 
-  static const _pages = [TaskListPage(), SettingsPage()];
+  static const _pages = [TaskListPage(), CalendarPage(), SettingsPage()];
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +26,7 @@ class _AdaptiveShellState extends State<AdaptiveShell> {
     final page = IndexedStack(index: _index, children: _pages);
     final destinations = [
       (Icons.check_circle_outline, Icons.check_circle, l10n.navTasks),
+      (Icons.calendar_month_outlined, Icons.calendar_month, l10n.navCalendar),
       (Icons.settings_outlined, Icons.settings, l10n.navSettings),
     ];
 

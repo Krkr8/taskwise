@@ -317,4 +317,281 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get edit => 'Edit';
+
+  @override
+  String get repeat => 'Repeat';
+
+  @override
+  String get repeatNone => 'Does not repeat';
+
+  @override
+  String get repeatDaily => 'Daily';
+
+  @override
+  String get repeatWeekdays => 'Every weekday';
+
+  @override
+  String repeatWeeklyOn(String day) {
+    return 'Weekly on $day';
+  }
+
+  @override
+  String repeatMonthlyOnDay(int day) {
+    return 'Monthly on day $day';
+  }
+
+  @override
+  String repeatMonthlyOnNth(String nth, String weekday) {
+    return 'Monthly on the $nth $weekday';
+  }
+
+  @override
+  String repeatYearlyOn(String date) {
+    return 'Yearly on $date';
+  }
+
+  @override
+  String get repeatCustom => 'Custom…';
+
+  @override
+  String get repeatCustomTitle => 'Custom repeat';
+
+  @override
+  String everyNDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Every $count days',
+      one: 'Every day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String everyNWeeks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Every $count weeks',
+      one: 'Every week',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String everyNMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Every $count months',
+      one: 'Every month',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String everyNYears(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Every $count years',
+      one: 'Every year',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String repeatOnDays(String base, String days) {
+    return '$base on $days';
+  }
+
+  @override
+  String repeatOnMonthDay(String base, int day) {
+    return '$base on day $day';
+  }
+
+  @override
+  String repeatOnNth(String base, String nth, String weekday) {
+    return '$base on the $nth $weekday';
+  }
+
+  @override
+  String repeatOnDate(String base, String date) {
+    return '$base on $date';
+  }
+
+  @override
+  String repeatUntil(String summary, String date) {
+    return '$summary, until $date';
+  }
+
+  @override
+  String repeatTimes(String summary, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$summary, $count times',
+      one: '$summary, once',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get ordinal1 => 'first';
+
+  @override
+  String get ordinal2 => 'second';
+
+  @override
+  String get ordinal3 => 'third';
+
+  @override
+  String get ordinal4 => 'fourth';
+
+  @override
+  String get ordinalLast => 'last';
+
+  @override
+  String get repeatEvery => 'Every';
+
+  @override
+  String unitDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'days',
+      one: 'day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String unitWeeks(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'weeks',
+      one: 'week',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String unitMonths(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'months',
+      one: 'month',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String unitYears(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'years',
+      one: 'year',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get repeatOn => 'On';
+
+  @override
+  String monthlyByDay(int day) {
+    return 'On day $day';
+  }
+
+  @override
+  String monthlyByNth(String nth, String weekday) {
+    return 'On the $nth $weekday';
+  }
+
+  @override
+  String get repeatEnds => 'Ends';
+
+  @override
+  String get endsNever => 'Never';
+
+  @override
+  String endsOnDate(String date) {
+    return 'On $date';
+  }
+
+  @override
+  String get endsAfter => 'After';
+
+  @override
+  String endsTimes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'times',
+      one: 'time',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get repeatingTask => 'Repeating task';
+
+  @override
+  String doneNextOn(String date) {
+    return 'Done. Next: $date';
+  }
+
+  @override
+  String get doneSeriesEnded => 'Done. That was the last one.';
+
+  @override
+  String get navCalendar => 'Calendar';
+
+  @override
+  String get calendarWeek => 'Week';
+
+  @override
+  String get calendarMonth => 'Month';
+
+  @override
+  String get calendarThisMonth => 'This month';
+
+  @override
+  String get previousWeek => 'Previous week';
+
+  @override
+  String get nextWeek => 'Next week';
+
+  @override
+  String get previousMonth => 'Previous month';
+
+  @override
+  String get nextMonth => 'Next month';
+
+  @override
+  String get addTask => 'Add task';
+
+  @override
+  String addTaskOn(String date) {
+    return 'Add a task on $date';
+  }
+
+  @override
+  String get newTaskHint => 'Task title';
+
+  @override
+  String moreTasks(int count) {
+    return '+$count';
+  }
+
+  @override
+  String get noTasksThisDay => 'No tasks on this day.';
+
+  @override
+  String upcomingOccurrence(String title) {
+    return 'Upcoming repeat of \"$title\"';
+  }
 }

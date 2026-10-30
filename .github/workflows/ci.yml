@@ -39,9 +39,14 @@ jobs:
         working-directory: app
         run: flutter test
 
-      - name: Test shared
+      # Dates and recurrence must not depend on the device timezone or DST.
+      - name: Test shared (several timezones)
         working-directory: shared
-        run: dart test
+        run: |
+          for tz in Asia/Baghdad America/New_York Europe/London; do
+            echo "TZ=$tz"
+            TZ=$tz dart test
+          done
 
       - name: Test server
         working-directory: server

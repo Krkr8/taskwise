@@ -4,6 +4,17 @@ import 'package:taskwise_shared/taskwise_shared.dart';
 import '../db/app_database.dart';
 import 'repository_base.dart';
 
+/// What [TaskRepository.setDone] changed, for [TaskRepository.undoCompletion].
+final class Completion {
+  const Completion({this.rule, this.nextTaskId});
+
+  /// The repeat rule the completed task had (it's moved to the next copy).
+  final String? rule;
+
+  /// The occurrence created for a repeating task, if any.
+  final String? nextTaskId;
+}
+
 /// Reads and writes tasks, their subtasks and their tags.
 class TaskRepository extends RepositoryBase {
   TaskRepository(super.db, {required super.deviceId, super.clock});
@@ -112,16 +123,103 @@ class TaskRepository extends RepositoryBase {
   }
 
   /// Marks a task done (recording when) or not done.
-  Future<void> setDone(String id, {required bool done}) async {
+  ///
+  /// Completing a repeating task keeps it as a done copy without the rule and
+  /// creates the next occurrence (see [_spawnNext]). The returned [Completion]
+  /// lets [undoCompletion] reverse exactly that.
+  Future<Completion> setDone(
+    String id, {
+    required bool done,
+  }) => db.transaction(() async {
     final at = now();
+    final task = await getTask(id);
+    final rule = done ? RecurrenceRule.tryParse(task?.recurrenceRule) : null;
     await (db.update(db.tasks)..where((t) => t.id.equals(id))).write(
       TasksCompanion(
         done: Value(done),
         completedAt: Value(done ? at : null),
+        recurrenceRule: rule == null ? const Value.absent() : const Value(null),
         updatedAt: Value(at),
         updatedByDevice: Value(deviceId),
       ),
     );
+    if (task == null || rule == null) return const Completion();
+    return Completion(
+      rule: task.recurrenceRule,
+      nextTaskId: await _spawnNext(task, rule),
+    );
+  });
+
+  /// Undoes [setDone] (`done: true`): the task is open again with its rule,
+  /// and the occurrence created for it is deleted.
+  Future<void> undoCompletion(String id, Completion completion) =>
+      db.transaction(() async {
+        await setDone(id, done: false);
+        if (completion.rule case final rule?) {
+          await (db.update(db.tasks)..where((t) => t.id.equals(id))).write(
+            TasksCompanion(recurrenceRule: Value(rule)),
+          );
+        }
+        if (completion.nextTaskId case final next?) await deleteTask(next);
+      });
+
+  /// Creates the occurrence after [task] and returns its id, or null when
+  /// the series has ended.
+  ///
+  /// The next date is the first occurrence after the due date that is today
+  /// or later, so completing an overdue daily task doesn't spawn a pile of
+  /// past ones. The copy keeps the content, rule and tags, and gets the
+  /// subtasks back unticked.
+  Future<String?> _spawnNext(Task task, RecurrenceRule rule) async {
+    final yesterday = today().addDays(-1);
+    final due = task.dueDate;
+    final after = due == null || due.isBefore(yesterday) ? yesterday : due;
+    final nextDate = rule.nextAfter(after);
+    if (nextDate == null) return null;
+
+    final at = now();
+    final next = Task(
+      id: newId(),
+      title: task.title,
+      notes: task.notes,
+      dueDate: nextDate,
+      dueTimeMinutes: task.dueTimeMinutes,
+      priority: task.priority,
+      categoryId: task.categoryId,
+      recurrenceRule: task.recurrenceRule,
+      notifyAllDevices: task.notifyAllDevices,
+      createdAt: at,
+      updatedAt: at,
+      updatedByDevice: deviceId,
+    );
+    await db.into(db.tasks).insert(_toCompanion(next));
+
+    final subtasks = await (db.select(
+      db.subtasks,
+    )..where((s) => s.taskId.equals(task.id) & s.deleted.not())).get();
+    for (final s in subtasks) {
+      await db
+          .into(db.subtasks)
+          .insert(
+            _toSubtaskCompanion(
+              Subtask(
+                id: newId(),
+                taskId: next.id,
+                title: s.title,
+                sortOrder: s.sortOrder,
+                updatedAt: at,
+                updatedByDevice: deviceId,
+              ),
+            ),
+          );
+    }
+    final tagIds =
+        await (db.select(db.taskTags)
+              ..where((l) => l.taskId.equals(task.id) & l.deleted.not()))
+            .map((l) => l.tagId)
+            .get();
+    await setTaskTags(next.id, tagIds.toSet());
+    return next.id;
   }
 
   /// Soft-deletes a task (tombstone). Its subtasks and tag links are left as

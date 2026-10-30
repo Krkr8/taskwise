@@ -287,4 +287,154 @@ void main() {
       expect(style.backgroundColor!.resolve({}), isNull);
     }
   });
+  // ------------------------------------------------------------- M3
+
+  Future<void> openCalendar(WidgetTester tester) async {
+    await tester.tap(find.byIcon(Icons.calendar_month_outlined));
+    await tester.pumpAndSettle();
+  }
+
+  appTest('week columns follow the week start and RTL', (tester, repo) async {
+    await openCalendar(tester);
+    // Sunday start by default, left to right.
+    expect(
+      tester.getCenter(find.text('Sun')).dx,
+      lessThan(tester.getCenter(find.text('Mon')).dx),
+    );
+    expect(find.textContaining('October 2026'), findsOneWidget);
+  });
+
+  appTest('in Arabic the week runs right to left', (tester, repo) async {
+    await openCalendar(tester);
+    expect(
+      tester.getCenter(find.text('الأحد')).dx,
+      greaterThan(tester.getCenter(find.text('الاثنين')).dx),
+    );
+  }, settings: const AppSettings(language: AppLanguage.ar));
+
+  appTest('a timed task lands in its day column at its hour', (
+    tester,
+    repo,
+  ) async {
+    // _now is Tuesday 2026-10-20, 09:00.
+    await repo.createTask(
+      title: 'Standup',
+      dueDate: LocalDate(2026, 10, 20),
+      dueTimeMinutes: 10 * 60,
+    );
+    await openCalendar(tester);
+
+    final chip = tester.getCenter(find.text('Standup'));
+    final tue = tester.getRect(
+      find.ancestor(of: find.text('Tue'), matching: find.byType(InkWell)),
+    );
+    expect(chip.dx, inInclusiveRange(tue.left, tue.right));
+    // 10 AM is below the 9 AM label (shown as "9:00 AM", the time line).
+    expect(chip.dy, greaterThan(tester.getCenter(find.text('9:00 AM')).dy));
+  });
+
+  appTest('repeats show in the week and month views', (tester, repo) async {
+    final task = await repo.createTask(
+      title: 'Water',
+      dueDate: LocalDate(2026, 10, 20),
+    );
+    await repo.saveTask(
+      task.copyWith(recurrenceRule: () => 'DTSTART=20261020;FREQ=DAILY'),
+    );
+    await openCalendar(tester);
+    // Week of Sun 18 - Sat 24: the real task on Tuesday plus 4 repeats.
+    expect(find.text('Water'), findsNWidgets(5));
+
+    await tester.tap(find.byTooltip('Month'));
+    await tester.pumpAndSettle();
+    // Oct 20 to the end of the 6-week grid (Nov 7).
+    expect(find.text('Water'), findsNWidgets(19));
+  });
+
+  appTest('arrows move by week and Today comes back', (tester, repo) async {
+    await openCalendar(tester);
+    expect(find.text('Today'), findsNothing);
+    expect(find.textContaining('This week'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Next week'));
+    await tester.pumpAndSettle();
+    expect(find.text('25'), findsOneWidget);
+    expect(find.textContaining('This week'), findsNothing);
+
+    await tester.tap(find.text('Today'));
+    await tester.pumpAndSettle();
+    expect(find.text('18'), findsOneWidget);
+    expect(find.textContaining('This week'), findsOneWidget);
+  });
+
+  appTest('tapping an empty slot adds a task at that hour', (
+    tester,
+    repo,
+  ) async {
+    await openCalendar(tester);
+    // An empty spot in Wednesday's column, an hour below the 9 AM line.
+    final wed = tester.getCenter(find.text('Wed'));
+    final nine = tester.getCenter(find.text('9:00 AM'));
+    await tester.tapAt(Offset(wed.dx, nine.dy + 80));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, 'Dentist');
+    await tester.tap(find.text('Add'));
+    await tester.pumpAndSettle();
+
+    final tasks = await tester.runAsync(() => repo.watchEntries().first);
+    final task = tasks!.single.task;
+    expect(task.title, 'Dentist');
+    expect(task.dueDate, LocalDate(2026, 10, 21));
+    expect(task.dueTimeMinutes, 10 * 60);
+  });
+
+  appTest('the repeat editor sets a rule', (tester, repo) async {
+    final task = await repo.createTask(
+      title: 'Stretch',
+      dueDate: LocalDate(2026, 10, 20),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Stretch'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Does not repeat'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Weekly on Tuesday'));
+    await tester.pumpAndSettle();
+
+    final saved = await tester.runAsync(() => repo.getTask(task.id));
+    expect(saved!.recurrenceRule, 'DTSTART=20261020;FREQ=WEEKLY;BYDAY=TU');
+    expect(find.text('Every week on Tue'), findsOneWidget);
+  });
+
+  appTest('completing a repeating task spawns the next one; Undo removes it', (
+    tester,
+    repo,
+  ) async {
+    final task = await repo.createTask(
+      title: 'Pills',
+      dueDate: LocalDate(2026, 10, 20),
+    );
+    await repo.saveTask(
+      task.copyWith(recurrenceRule: () => 'DTSTART=20261020;FREQ=DAILY'),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Mark "Pills" as done'));
+    await tester.pumpAndSettle();
+    expect(find.text('Done. Next: Tomorrow'), findsOneWidget);
+    var entries = await tester.runAsync(() => repo.watchEntries().first);
+    expect(entries!.length, 2);
+    expect(
+      entries.singleWhere((e) => !e.task.done).task.dueDate,
+      LocalDate(2026, 10, 21),
+    );
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+    entries = await tester.runAsync(() => repo.watchEntries().first);
+    expect(entries!.single.task.id, task.id);
+    expect(entries.single.task.done, isFalse);
+    expect(entries.single.task.recurrenceRule, isNotNull);
+  });
 }
