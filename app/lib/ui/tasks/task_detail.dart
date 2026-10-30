@@ -200,6 +200,7 @@ class _TaskEditorState extends ConsumerState<_TaskEditor> {
         ),
         Expanded(
           child: ListView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.fromLTRB(
               Spacing.lg,
               0,

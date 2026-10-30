@@ -41,7 +41,18 @@ class TaskwiseApp extends ConsumerWidget {
         data: MediaQuery.of(context).copyWith(
           alwaysUse24HourFormat: settings.timeFormat == TimeFormat.h24,
         ),
-        child: child!,
+        // Tapping outside a text field closes the keyboard. Flutter only does
+        // this for mouse clicks on iOS/Android, so the keyboard would
+        // otherwise cover the bottom bar until a field is submitted.
+        child: Actions(
+          actions: {
+            EditableTextTapOutsideIntent:
+                CallbackAction<EditableTextTapOutsideIntent>(
+                  onInvoke: (intent) => intent.focusNode.unfocus(),
+                ),
+          },
+          child: child!,
+        ),
       ),
       home: const AdaptiveShell(),
     );

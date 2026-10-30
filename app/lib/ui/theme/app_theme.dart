@@ -47,6 +47,21 @@ abstract final class AppTheme {
           borderRadius: BorderRadius.circular(Radii.lg),
         ),
       ),
+      // The default selected segment (secondaryContainer) is a pale tint that
+      // is hard to tell apart from unselected ones, so use the accent colour.
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith(
+            (states) =>
+                states.contains(WidgetState.selected) ? scheme.primary : null,
+          ),
+          foregroundColor: WidgetStateProperty.resolveWith(
+            (states) => states.contains(WidgetState.selected)
+                ? scheme.onPrimary
+                : scheme.onSurface,
+          ),
+        ),
+      ),
       chipTheme: ChipThemeData(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(Radii.sm),

@@ -216,6 +216,7 @@ class _Sections extends ConsumerWidget {
           }
         }
         return ListView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: const EdgeInsets.fromLTRB(
             Spacing.sm,
             0,

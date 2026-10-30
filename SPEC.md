@@ -264,7 +264,7 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 |---|---|---|---|
 | M0 Project setup | ✅ Done | 2026-10-20 | Flutter 3.47.7 workspace (app/server/shared), placeholder screen, CI green. |
 | M1 Core app | ✅ Done | 2026-10-20 | Local-only task manager: drift DB, list/quick add/details, subtasks, categories, tags, search/filter/sort, EN/AR with RTL, light/dark. 67 automated tests. Owner-tested on Fedora. |
-| M2 Build pipeline | 🟡 In progress | 2026-10-30 | Release workflow builds Linux, Windows and unsigned iOS into a draft v0.1.0 release. Installed and owner-tested on Fedora and Windows. **Remaining: install on the iPhone with SideStore** (`docs/install-ios-sidestore.md`), then mark M2 done. |
+| M2 Build pipeline | ✅ Done | 2026-10-30 | Release workflow builds Linux, Windows and unsigned iOS into a draft v0.1.0 release. Owner-tested on Fedora, Windows and iPhone. The iPhone app is installed with iloader from the laptop, because Apple blocks SideStore's own sign-in (-80045) since 2026-10-12. Also fixed from iPhone testing: tapping outside a text field (or scrolling) closes the keyboard, and selected Settings options use the accent colour. 69 automated tests. |
 | M3 Week view + recurrence | ⬜ | | |
 | M4 Time reminders | ⬜ | | |
 | M5 Sync server | ⬜ | | |
@@ -273,32 +273,19 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 | M8 Polish | ⬜ | | |
 
 ### How to test the latest milestone
-**M1** (on the Fedora laptop). Update and start the app:
-```bash
-cd ~/Documents/projects/taskwise
-git pull
-flutter pub get
-cd app
-flutter run -d linux
-```
-Then work through this checklist:
-1. **Quick add:** type "Buy milk" in "Add a task and press Enter" and press Enter. It appears under **No date**, and the field stays ready for the next task.
-2. **Details:** click the task. With a wide window, a panel opens on the right. Change the title, set a due date (today, then tomorrow) and a time, set priority **High**, and add notes. The row updates and moves between **Today** and **Tomorrow**.
-3. **Subtasks:** add three subtasks, tick one (the row shows "1/3"), drag one to a new position with the ⋮⋮ handle, click one to rename it, and delete one with ✕.
-4. **Categories:** go to Settings → Categories and add "Work" (pick a colour), then set it on a task. Delete the category: the task stays, without a category.
-5. **Tags:** in the task panel, click "Add tag" and type "errand". Add the same tag to a second task by tapping its chip in the dialog.
-6. **Search, filter and sort:** type in the search box. Use the filter button (priority, category or tag; the badge shows how many filters are active) and the sort button.
-7. **Complete:** click the circle next to a task. It animates, then moves to **Completed** (collapsed; click the header to expand). Click the circle again to undo.
-8. **Delete and undo:** open a task, click the bin icon, then click **Undo** in the message at the bottom. The task comes back.
-9. **Language:** Settings → Language → العربية. The whole layout mirrors to right-to-left and dates use 0-9 digits. Switch back to English.
-10. **Theme:** Settings → Theme → Dark, Light, System.
-11. **Week start / time format:** set the week to start on Monday and check that the "This week" group changes. Switch to 24-hour and check that times update.
-12. **Narrow layout:** make the window narrow (under ~600 px). Navigation moves to a bottom bar, and tasks open full-screen.
-13. **Persistence:** quit (press `q` in the terminal, or close the window) and run `flutter run -d linux` again. Everything is still there.
+**M2** (installed builds on each device; full guides in `docs/`).
+- **Fedora:** `docs/install-linux.md`. **Windows:** `docs/install-windows.md`.
+- **iPhone:** `docs/install-ios-sidestore.md`. For now, install and refresh it with **iloader** from the laptop (Part 5), and repeat the install every 7 days.
+- After the fixes in this milestone, rebuild the release (or wait for the next one) and check on the iPhone:
+  1. Tap "Add a task and press Enter". The keyboard opens. Tap anywhere outside the field (a task, an empty area, the bottom bar), and the keyboard closes. Scrolling the task list also closes it.
+  2. Settings: the selected Theme, Language, Week start and Time format option is filled with the teal accent colour, with white text.
+
+The **M1** feature checklist (quick add, details, subtasks, categories, tags, search, language, theme, persistence) still applies on every device.
 
 Automated checks (optional): from the repo root, run `flutter analyze`, then `cd app && flutter test`, `cd ../shared && dart test` and `cd ../server && dart test`.
 
 ### Known issues
+- **iPhone:** SideStore can't sign in to Apple right now (-80045/-80046, Apple-side change from 2026-10-12). Taskwise is installed and refreshed weekly with iloader over USB instead. See Troubleshooting in `docs/install-ios-sidestore.md`.
 - **Please review the Arabic text** (`app/lib/l10n/app_ar.arb`). Claude Code wrote the translations, and a native speaker should check them.
 - `flutter pub get` reports "11 packages have newer versions incompatible with dependency constraints". This is expected and comes from the version pins below.
 - Grouping is by date only: a task due at 9:00 today stays in **Today** after 9:00 rather than moving to Overdue. Its due label shows the time.
@@ -311,6 +298,7 @@ Automated checks (optional): from the repo root, run `flutter analyze`, then `cd
 - Flutter's version is pinned in two places: `.github/workflows/ci.yml` and `docs/dev-setup-fedora.md`. Keep them in sync.
 - GitHub notice (2026-10-20): the `ubuntu-latest` runner label is moving to Ubuntu 26 (from 2026-10-19). Consider pinning an explicit runner image in M2.
 - **M2:** the Windows SmartScreen step in `docs/install-windows.md` is untested (the zip was unblocked first). macOS runners can be unavailable for a while ("job was not acquired"); just re-run the release workflow later.
+- **iOS signing:** Apple broke free sideloader sign-in in October 2026 (SideStore -80045/-80046, workaround in `docs/install-ios-sidestore.md`). If free sign-in keeps breaking, consider the paid Developer Program + TestFlight (signing and upload in the release workflow, App Store Connect API key as GitHub secrets).
 - **M3:** add the Week destination to `AdaptiveShell`. Recurrence goes in `Task.recurrenceRule` (column already exists).
 - **M4:** the `reminders` table and the shared `Reminder` model already exist (time: `absoluteAt` / `minutesBeforeDue`).
 - **M5:** the sync server moved from the Windows PC (Dart, Tailscale) to Vercel (TypeScript, public HTTPS) on 2026-10-30, at the owner's request. Delete the Dart `server/` placeholder package, remove it from the root `pubspec.yaml` workspace and the CI "Test server" step, and drop `server` from the `test` pin note above. Update the M1 test instructions that run `dart test` in `server/`.

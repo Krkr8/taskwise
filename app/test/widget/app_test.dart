@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,6 +12,7 @@ import 'package:taskwise/data/repositories/task_repository.dart';
 import 'package:taskwise/main.dart' show configureIntl;
 import 'package:taskwise/state/providers.dart';
 import 'package:taskwise/ui/tasks/task_detail.dart';
+import 'package:taskwise/ui/theme/app_theme.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
 
 /// Tuesday 2026-10-20, 09:00 local.
@@ -247,4 +249,42 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(TaskDetailPage), findsNothing);
   }, size: _phone);
+  appTest(
+    'on iPhone, tapping outside the quick add field closes the keyboard',
+    (tester, repo) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      try {
+        final field = find.widgetWithText(
+          TextField,
+          'Add a task and press Enter',
+        );
+        await tester.tap(field);
+        await tester.pumpAndSettle();
+        expect(tester.testTextInput.isVisible, isTrue);
+
+        await tester.tap(find.text('No tasks yet. Add your first one above.'));
+        await tester.pumpAndSettle();
+        expect(tester.testTextInput.isVisible, isFalse);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    },
+    size: _phone,
+  );
+
+  test('selected settings segments use the accent colour', () {
+    for (final theme in [AppTheme.light(), AppTheme.dark()]) {
+      final style = theme.segmentedButtonTheme.style!;
+      final scheme = theme.colorScheme;
+      expect(
+        style.backgroundColor!.resolve({WidgetState.selected}),
+        scheme.primary,
+      );
+      expect(
+        style.foregroundColor!.resolve({WidgetState.selected}),
+        scheme.onPrimary,
+      );
+      expect(style.backgroundColor!.resolve({}), isNull);
+    }
+  });
 }

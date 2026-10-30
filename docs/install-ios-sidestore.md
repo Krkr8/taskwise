@@ -2,7 +2,7 @@
 
 You don't have a Mac and Taskwise isn't on the App Store, so it's **sideloaded**: GitHub builds an unsigned app file (`.ipa`), and **SideStore** on the phone signs it with your free Apple ID and installs it.
 
-You need the Fedora laptop **once**, for the initial setup over USB. After that everything happens on the phone.
+You need the Fedora laptop for the initial setup over USB. While SideStore's sign-in is broken (see Part 5), you also need it once a week to refresh the app.
 
 > Sources: [SideStore docs](https://docs.sidestore.io/docs/installation/prerequisites) and [iloader](https://iloader.app), checked 2026-10-20. If a screen looks different, those pages are the reference.
 
@@ -55,16 +55,24 @@ If iloader doesn't see the phone, unplug and replug it. Still nothing? In one te
 
 ## Part 5: Install Taskwise
 
-13. On the iPhone, open **Safari**, sign in to **github.com** (the repository is private), go to **Krkr8/taskwise → Releases**, and download `taskwise-<version>-ios-unsigned.ipa`. It's saved to **Files → Downloads**.
-14. Make sure **LocalDevVPN** is connected. In **SideStore → My Apps**, tap the **+** button (top left) and pick the `.ipa` from **Files → Downloads**. SideStore signs it with your Apple ID and installs it. ⚠️ *Not yet confirmed for Taskwise:* SideStore's docs say it re-signs apps but don't spell out this button or say that unsigned files are accepted. Please tell me what you see on this step. If it fails, use the fallback below.
+> **Status (2026-10-30):** Apple currently blocks sign-in inside SideStore (error -80045, see Troubleshooting), but iloader on the laptop still works. So for now Taskwise is installed **from the laptop with iloader** (this is how it was first installed and confirmed). SideStore stays on the phone, and can take over once its sign-in works again.
+
+13. On the laptop, download the iPhone build (it's `taskwise-<version>-ios-unsigned.ipa` on the release). If the release is still a **Draft**, it's only visible while you're signed in to GitHub as the repository owner. With the GitHub CLI:
+    ```bash
+    mkdir -p ~/Downloads/taskwise-ios && cd ~/Downloads/taskwise-ios
+    gh release download v0.1.0 --repo Krkr8/taskwise --pattern '*ios-unsigned.ipa' --clobber
+    ```
+    (Replace `v0.1.0` with the newest version.)
+14. Connect the iPhone by USB and unlock it. Open **iloader** (signed in with your Apple ID), select the phone, choose **Import IPA**, and pick the downloaded `.ipa`. Wait until it finishes.
 15. Open **Taskwise** from the home screen.
 
-**Fallback (install from the laptop instead):** connect the phone by USB, open iloader, and use its option to install an IPA file, choosing the downloaded `.ipa`. iloader states it can install any IPA. SideStore then shows and refreshes it like any other app.
+**Installing from SideStore instead (once its sign-in works):** download the `.ipa` in Safari on the phone (it goes to **Files → Downloads**), connect **LocalDevVPN**, then in **SideStore → My Apps** tap **+** and pick the file. *This path hasn't been tested with Taskwise yet.*
 
 ## Every week
 
-- Apps expire **7 days** after their last refresh. SideStore refreshes them in the background when it can. To do it yourself: connect **LocalDevVPN**, open **SideStore → My Apps**, and tap **Refresh All** (or the days counter next to an app).
-- If an app expired, it won't open. Refresh it, and your data stays.
+- Apps expire **7 days** after they were last signed (this is Apple's limit for free Apple IDs). An expired app won't open, but **your tasks are kept**.
+- **With iloader (current way):** connect the phone by USB and repeat step 14 with the same `.ipa`. It installs over the existing app.
+- **With SideStore (when its sign-in works):** SideStore refreshes apps in the background. To do it yourself, connect **LocalDevVPN**, open **SideStore → My Apps**, and tap **Refresh All**.
 
 ## Updating Taskwise
 
@@ -79,6 +87,15 @@ iOS runs **one VPN at a time**, and SideStore needs LocalDevVPN to install and r
 - **Connection errors in SideStore:** make sure LocalDevVPN and Wi-Fi are both connected, turn off DNS/ad blockers, then restart LocalDevVPN and SideStore.
 - **Errors after an iOS update or reset:** the pairing file can expire. Redo step 7 with iloader.
 - **Sign-in errors:** usually a temporary "Anisette" server outage. Wait, or pick another server under SideStore **Settings → Anisette URL**.
+- **Sign-in fails with -80045 or -80046:** since 2026-10-12, Apple's sign-in server rejects the device identity ("anisette") that free sideloaders send, and it has changed more than once since then. This community workaround ([SideStore issue #1688](https://github.com/SideStore/SideStore/issues/1688)) uses a server run by a SideStore developer:
+  0. If SideStore says a newer version exists, reinstall it with the latest iloader first (step 6).
+  1. SideStore **Settings → User Customizations** → turn **On-Device Anisette** off (allow the restart).
+  2. **Settings → Anisette servers** → pick **SideStore (New)**, then at the bottom turn **Enable auto rotation** off.
+  3. **User Customizations → Anisette client configuration** → **Remote server sync** → **Fetch** → **Save as overrides**.
+  4. **User Customizations → Reset adi.pb**.
+  5. Connect LocalDevVPN and sign in again (it's slow).
+
+  If it still fails, install the `.ipa` from the laptop with iloader (see the fallback in Part 5), and check the SideStore issue for newer fixes.
 - **iloader problems** are supported on the *idevice* Discord, not SideStore's.
 
 What a free Apple ID can and can't do is in [ios-free-apple-id.md](ios-free-apple-id.md).
