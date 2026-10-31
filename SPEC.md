@@ -273,12 +273,12 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 ## 7. Progress Log
 
 ### Where we left off (2026-10-31)
-- **Next: M5 (sync server on Vercel).** Start with plan mode, per section 0; first verify Vercel Hobby and Turso free limits and tell the owner.
+- **M5 is built and pushed; it's done once the owner deploys it.** Follow `docs/server-setup-vercel.md` (Turso database, Vercel project with Root Directory `server`, four environment variables), then check `GET /api/v1/health` from the laptop and from the iPhone on mobile data. The first real Vercel deploy is untested (see Notes for later). After that, M6.
 - **Latest release build is v0.1.1** (draft, M2 fixes only). M3 and M4 are on `main` but no release has been built from them. Tagging **v0.2.0** (after bumping `app/pubspec.yaml` to `0.2.0+3`) builds Windows + iPhone; ask the owner before tagging.
 - **Open checks from M4, for the v0.2.0 build:** the M4 test list below on Windows and the iPhone, and that the release workflow still builds Windows and iOS with `tray_manager` (it compiles `cnativeapi` native code; only Linux has been built so far).
 - **iPhone install:** with iloader from the laptop (SideStore sign-in is broken by Apple since 2026-10-12, error -80045). Refresh every 7 days with iloader → Import IPA. See `docs/install-ios-sidestore.md`.
 - **M8 starts by asking the owner for their design idea** (they asked for a design milestone; merged into M8).
-- Running app tests on the Fedora laptop: take ccache off `PATH` (see `docs/dev-setup-fedora.md`), and re-run if a file fails with "Unable to connect to flutter_tester process".
+- Running app tests on the Fedora laptop: take ccache off `PATH` (see `docs/dev-setup-fedora.md`), and re-run if a file fails with "Unable to connect to flutter_tester process" (or use `--concurrency=1`).
 
 | Milestone | Status | Date | Notes |
 |---|---|---|---|
@@ -287,12 +287,23 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 | M2 Build pipeline | ✅ Done | 2026-10-30 | Release workflow builds Linux, Windows and unsigned iOS into a draft v0.1.0 release. Owner-tested on Fedora, Windows and iPhone. The iPhone app is installed with iloader from the laptop, because Apple blocks SideStore's own sign-in (-80045) since 2026-10-12. Also fixed from iPhone testing: tapping outside a text field (or scrolling) closes the keyboard, and selected Settings options use the accent colour. 69 automated tests. |
 | M3 Calendar + recurrence | ✅ Done | 2026-10-30 | Calendar tab with week (7 day columns listing tasks, all-day first then by time) and month views on all platforms; repeating tasks (RRULE subset in `shared`, editor with presets and Custom, done copy + next occurrence with Undo); upcoming repeats shown faded in the calendar. Selected chips now clearly highlighted. 115 automated tests (shared tests run in 3 timezones in CI). |
 | M4 Time reminders | ✅ Done | 2026-10-31 | Time reminders (relative + absolute, several per task, follow repeats), scheduling engine in `shared`, notifications with Done/Snooze/open, iOS 64-limit scheduling, desktop tray + single instance + start on login, notification settings. A real reminder fired on Fedora (GNOME) with Done/Snooze buttons. Closed by the owner on 2026-10-31 before device tests: **Windows and iPhone are untested** (see Where we left off). 138 automated tests. |
-| M5 Sync server | ⬜ | | |
+| M5 Sync server | 🟡 Built, deploy pending | 2026-10-31 | TypeScript + Hono server in `server/` (Node 24): account setup with a setup secret, login (argon2id) with database-backed rate limiting, per-device tokens (SHA-256 stored, revocable), devices API, push/pull sync with last-write-wins and a change sequence, daily Vercel Cron (90-day tombstone purge with task children, 7 nightly backups in the database). Generic record store: the server doesn't interpret records. API in `docs/sync-api.md`; contract fixtures in `shared/test/fixtures/sync/` tested by both Dart and TypeScript. Runs on Vercel or Docker (built and run with Podman locally). Dart `server/` placeholder removed; CI has a Node job. Free limits checked 2026-10-31 (Vercel Hobby: 1 M invocations/month, cron daily; Turso Free: 5 GB, 500 M reads, 10 M writes). 228 automated tests (app 53, shared 106, server 69). **Remaining:** the owner deploys and checks health on the laptop and the iPhone. |
 | M6 Client sync + devices | ⬜ | | |
 | M7 Location reminders | ⬜ | | |
 | M8 Design + polish | ⬜ | | |
 
 ### How to test the latest milestone
+**M5 (sync server).** Follow `docs/server-setup-vercel.md` step by step. In short:
+1. `git pull`. Make the setup and cron secrets (step 1) and keep them in your password manager.
+2. Create the Turso database and copy its URL and token (step 2).
+3. Import the repo in Vercel with **Root Directory = `server`**, add the four environment variables, deploy, and set the function region near the database (step 3).
+4. From the laptop, run `curl https://<your-app>.vercel.app/api/v1/health`. It should print `{"status":"ok","apiVersion":1,…}`.
+5. On the iPhone, turn Wi-Fi off and open the same address in Safari. You should see the same text.
+6. Optional: create your account with the `curl` in step 5 of the guide. A second try should say "The account already exists".
+7. Tell Claude Code the result (and the error text or Vercel **Logs** if something fails).
+
+Local checks (optional): `cd server && npm ci && npm test`. To run the server on the laptop: `cp .env.example .env && npm run dev`, then `curl http://localhost:8787/api/v1/health`.
+
 **M4.** Fedora: `git pull`, then `cd app && flutter run -d linux`. Windows and iPhone: the next release build (v0.2.0).
 
 On every device:
@@ -314,19 +325,19 @@ Desktop (Windows and Fedora):
 iPhone only:
 11. Close Taskwise completely (swipe it away) with a reminder pending: it still fires.
 
-Automated checks (optional): from the repo root, run `flutter analyze`, then `cd app && flutter test`, `cd ../shared && dart test` and `cd ../server && dart test`. If `flutter test` fails with "Building native assets failed", see the ccache note in `docs/dev-setup-fedora.md`.
+Automated checks (optional): from the repo root, run `flutter analyze`, then `cd app && flutter test`, `cd ../shared && dart test` and `cd ../server && npm ci && npm test`. If `flutter test` fails with "Building native assets failed", see the ccache note in `docs/dev-setup-fedora.md`.
 
 ### Known issues
 - **iPhone:** SideStore can't sign in to Apple right now (-80045/-80046, Apple-side change from 2026-10-12). Taskwise is installed and refreshed weekly with iloader over USB instead. See Troubleshooting in `docs/install-ios-sidestore.md`.
 - **Please review the Arabic text** (`app/lib/l10n/app_ar.arb`). Claude Code wrote the translations, and a native speaker should check them (M3 added the repeat and calendar texts, including Arabic plural forms).
-- `flutter pub get` reports "11 packages have newer versions incompatible with dependency constraints". This is expected and comes from the version pins below.
+- `flutter pub get` reports that some packages "have newer versions incompatible with dependency constraints". This is expected and comes from the version pins below.
 - Grouping is by date only: a task due at 9:00 today stays in **Today** after 9:00 rather than moving to Overdue. Its due label shows the time.
 - The sort choice and collapsed groups reset when the app restarts (kept in memory only).
 - Running `flutter run`/`build` from the repo root fails with `Target file "lib/main.dart" not found`. Run them from `app/`.
 - GTK prints harmless `Atk-CRITICAL` / cursor-theme warnings to the terminal on GNOME.
 
 ### Notes for later
-- **`test` is pinned to 1.31.1** because Flutter 3.47.7's `flutter_test` pins `test_api` 0.7.12, and a pub workspace resolves to one version. Whenever Flutter is upgraded, bump `test` (in shared and server) to the release that uses the new `test_api`. The same constraint caps `analyzer` below 14, which keeps `build_runner` at 2.15.x.
+- **`test` is pinned to 1.31.1** because Flutter 3.47.7's `flutter_test` pins `test_api` 0.7.12, and a pub workspace resolves to one version. Whenever Flutter is upgraded, bump `test` (in shared) to the release that uses the new `test_api`. The same constraint caps `analyzer` below 14, which keeps `build_runner` at 2.15.x.
 - Flutter's version is pinned in two places: `.github/workflows/ci.yml` and `docs/dev-setup-fedora.md`. Keep them in sync.
 - GitHub notice (2026-10-20): the `ubuntu-latest` runner label is moving to Ubuntu 26 (from 2026-10-19). Consider pinning an explicit runner image in M2.
 - **M2:** the Windows SmartScreen step in `docs/install-windows.md` is untested (the zip was unblocked first). macOS runners can be unavailable for a while ("job was not acquired"); just re-run the release workflow later.
@@ -336,7 +347,10 @@ Automated checks (optional): from the repo root, run `flutter analyze`, then `cd
 - **Local test runner:** `flutter test` sometimes fails to start one test file with "Unable to connect to flutter_tester process" on the Fedora laptop. It's the runner, not the code; re-run, or use `flutter test --concurrency=1`.
 - **Reminders (later):** Done/Snooze on iOS open the app; handling them in the background needs a background isolate with its own database connection. iOS snooze buttons are registered at launch, so changed snooze options apply on iOS after restarting the app. Windows `cancel` of shown toasts needs MSIX packaging. The first iPhone/Windows builds with `tray_manager` (which builds `cnativeapi` native code, iOS included) are untested; check the v0.2.0 release run.
 - **M6:** after a sync pull, the reminder scheduler re-plans automatically (it watches the tasks and reminders streams). The default reminder setting is marked synced.
-- **M5:** the sync server moved from the Windows PC (Dart, Tailscale) to Vercel (TypeScript, public HTTPS) on 2026-10-30, at the owner's request. Delete the Dart `server/` placeholder package, remove it from the root `pubspec.yaml` workspace and the CI "Test server" step, and drop `server` from the `test` pin note above. Update the M1 test instructions that run `dart test` in `server/`.
+- **M5 server, untested on Vercel itself:** everything ran locally (vitest, `npm run dev`, the compiled `dist/`, and the Docker image under Podman), but not on Vercel yet. If the first deploy fails, check the build log for the `.js` import extensions (the code uses NodeNext ESM) and the native packages (`@node-rs/argon2`, `libsql`; both have linux-x64-gnu builds in the lockfile).
+- **M5 versions:** TypeScript is pinned to 6.0.3, because 7.0 (the new native compiler) was released on 2026-10-31 itself; move to 7.x once it has settled. `npm install` warns that esbuild's postinstall script (used only by the `tsx` dev runner) isn't approved; it works without it.
+- **M6 (sync client):** follow `docs/sync-api.md`. Push only settings with `synced = true`, as `setting` records `{id: key, value, updatedAt, deleted, updatedByDevice}`. Handle `410 resync_required` by pulling from 0 and dropping local synced records the server doesn't have. Push in batches of at most 500. Devices come from `GET /devices` (revoked = `deleted: true`), not from sync. Device ids are compared as strings to break `updatedAt` ties, so use the same id the device logged in with. The account setup page calls `POST /auth/setup` (needs the setup secret).
+- **Server (later):** backups are stored in the same Turso database; an off-site copy (e.g. a GitHub Actions job downloading one) could be added. On a self-hosted server without a proxy, `X-Forwarded-For` can be spoofed, so only the per-username login limit is reliable there.
 - **M6:** every table has `id` (UUID v7), `updatedAt` (UTC ms), `deleted`, `updatedByDevice`. `settings.synced` marks shared keys (only `week_start` so far). `task_target_devices` exists for "Notify on devices". Tombstoned tasks keep their subtasks and tag links (needed for undo), and the server's 90-day purge should remove the children too. The device name is pre-filled ("Fedora Laptop") and becomes editable in M6.
 - **M7:** the `places` table and `Place` model exist (default radius 30 m).
 - **M8:** JSON export/import can reuse the shared models' `toJson`/`fromJson`. An accent colour picker can hook into `AppTheme.seed`.

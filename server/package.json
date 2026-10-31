@@ -1,0 +1,30 @@
+{
+  "name": "taskwise-server",
+  "version": "0.1.0",
+  "description": "Taskwise sync server (Hono). Runs on Vercel or as a plain Node server.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "dev": "tsx watch --env-file-if-exists=.env src/node.ts",
+    "start": "node dist/node.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "2.1.5",
+    "@libsql/client": "0.18.0",
+    "@node-rs/argon2": "2.2.2",
+    "hono": "4.13.14"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "vitest": "5.0.5"
+  }
+}

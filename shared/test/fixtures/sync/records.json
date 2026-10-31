@@ -1,0 +1,96 @@
+{
+  "_comment": "Sample record of each synced type, exactly as the app's shared models write it (toJson). See docs/sync-api.md.",
+  "records": {
+    "task": {
+      "id": "0199a3c0-0000-7000-8000-000000000001",
+      "title": "Buy milk",
+      "notes": "Two bottles",
+      "dueDate": "2026-11-02",
+      "dueTimeMinutes": 570,
+      "priority": "high",
+      "categoryId": "0199a3c0-0000-7000-8000-000000000002",
+      "done": false,
+      "completedAt": null,
+      "recurrenceRule": "DTSTART=20261102;FREQ=WEEKLY;INTERVAL=1;BYDAY=MO",
+      "notifyAllDevices": true,
+      "createdAt": "2026-10-30T09:00:00.000Z",
+      "updatedAt": "2026-10-30T09:00:00.000Z",
+      "deleted": false,
+      "updatedByDevice": null
+    },
+    "subtask": {
+      "id": "0199a3c0-0000-7000-8000-000000000011",
+      "taskId": "0199a3c0-0000-7000-8000-000000000001",
+      "title": "Check the fridge",
+      "done": false,
+      "sortOrder": 0,
+      "updatedAt": "2026-10-30T09:00:00.000Z",
+      "deleted": false,
+      "updatedByDevice": null
+    },
+    "category": {
+      "id": "0199a3c0-0000-7000-8000-000000000002",
+      "name": "Home",
+      "colorValue": 4283215696,
+      "updatedAt": "2026-10-30T09:00:00.000Z",
+      "deleted": false,
+      "updatedByDevice": null
+    },
+    "tag": {
+      "id": "0199a3c0-0000-7000-8000-000000000003",
+      "name": "errands",
+      "updatedAt": "2026-10-30T09:00:00.000Z",
+      "deleted": false,
+      "updatedByDevice": null
+    },
+    "taskTag": {
+      "id": "0199a3c0-0000-7000-8000-000000000012",
+      "taskId": "0199a3c0-0000-7000-8000-000000000001",
+      "tagId": "0199a3c0-0000-7000-8000-000000000003",
+      "updatedAt": "2026-10-30T09:00:00.000Z",
+      "deleted": false,
+      "updatedByDevice": null
+    },
+    "reminder": {
+      "id": "0199a3c0-0000-7000-8000-000000000013",
+      "taskId": "0199a3c0-0000-7000-8000-000000000001",
+      "kind": "time",
+      "absoluteAt": null,
+      "minutesBeforeDue": 15,
+      "placeId": null,
+      "latitude": null,
+      "longitude": null,
+      "radiusMeters": null,
+      "trigger": null,
+      "updatedAt": "2026-10-30T09:00:00.000Z",
+      "deleted": false,
+      "updatedByDevice": null
+    },
+    "place": {
+      "id": "0199a3c0-0000-7000-8000-000000000004",
+      "name": "Home",
+      "latitude": 33.3152,
+      "longitude": 44.3661,
+      "address": "Baghdad",
+      "radiusMeters": 30,
+      "updatedAt": "2026-10-30T09:00:00.000Z",
+      "deleted": false,
+      "updatedByDevice": null
+    },
+    "setting": {
+      "id": "week_start",
+      "value": "sunday",
+      "updatedAt": "2026-10-30T09:00:00.000Z",
+      "deleted": false,
+      "updatedByDevice": null
+    },
+    "taskTargetDevice": {
+      "id": "0199a3c0-0000-7000-8000-000000000014",
+      "taskId": "0199a3c0-0000-7000-8000-000000000001",
+      "deviceId": "0199a3c0-0000-7000-8000-00000000d002",
+      "updatedAt": "2026-10-30T09:00:00.000Z",
+      "deleted": false,
+      "updatedByDevice": null
+    }
+  }
+}

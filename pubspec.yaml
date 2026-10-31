@@ -1,4 +1,4 @@
-# Dart pub workspace root: one lockfile for the app, server and shared packages.
+# Dart pub workspace root: one lockfile for the app and shared packages.
 name: taskwise_workspace
 publish_to: none
 
@@ -7,5 +7,4 @@ environment:
 
 workspace:
   - app
-  - server
   - shared

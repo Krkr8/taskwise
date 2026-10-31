@@ -1,0 +1,787 @@
+{
+  "_comment": "Sync API contract, replayed by server/test/contract.test.ts and checked by shared/test/sync_fixtures_test.dart. The server clock is fixed at 'now'. Placeholders: \"$setupSecret\" in a request is the server's setup secret; \"$token\" in a response is any token (saved under saveTokenAs); \"$string\" is any string; request.auth names a saved token.",
+  "now": "2026-10-31T12:00:00.000Z",
+  "steps": [
+    {
+      "name": "health",
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/health"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "status": "ok",
+          "apiVersion": 1,
+          "time": "2026-10-31T12:00:00.000Z"
+        }
+      }
+    },
+    {
+      "name": "setup with a wrong secret",
+      "request": {
+        "method": "POST",
+        "path": "/api/v1/auth/setup",
+        "body": {
+          "setupSecret": "wrong",
+          "username": "owner",
+          "password": "a long password"
+        }
+      },
+      "response": {
+        "status": 403,
+        "body": {
+          "error": {
+            "code": "forbidden",
+            "message": "$string"
+          }
+        }
+      }
+    },
+    {
+      "name": "setup",
+      "request": {
+        "method": "POST",
+        "path": "/api/v1/auth/setup",
+        "body": {
+          "setupSecret": "$setupSecret",
+          "username": "owner",
+          "password": "a long password"
+        }
+      },
+      "response": {
+        "status": 201,
+        "body": {
+          "username": "owner"
+        }
+      }
+    },
+    {
+      "name": "setup again",
+      "request": {
+        "method": "POST",
+        "path": "/api/v1/auth/setup",
+        "body": {
+          "setupSecret": "$setupSecret",
+          "username": "other",
+          "password": "another password"
+        }
+      },
+      "response": {
+        "status": 409,
+        "body": {
+          "error": {
+            "code": "conflict",
+            "message": "$string"
+          }
+        }
+      }
+    },
+    {
+      "name": "login with a wrong password",
+      "request": {
+        "method": "POST",
+        "path": "/api/v1/auth/login",
+        "body": {
+          "username": "owner",
+          "password": "wrong",
+          "device": {
+            "id": "0199a3c0-0000-7000-8000-00000000d001",
+            "name": "Fedora Laptop",
+            "type": "linux"
+          }
+        }
+      },
+      "response": {
+        "status": 401,
+        "body": {
+          "error": {
+            "code": "unauthorized",
+            "message": "$string"
+          }
+        }
+      }
+    },
+    {
+      "name": "login (laptop)",
+      "request": {
+        "method": "POST",
+        "path": "/api/v1/auth/login",
+        "body": {
+          "username": "owner",
+          "password": "a long password",
+          "device": {
+            "id": "0199a3c0-0000-7000-8000-00000000d001",
+            "name": "Fedora Laptop",
+            "type": "linux"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "token": "$token",
+          "device": {
+            "id": "0199a3c0-0000-7000-8000-00000000d001",
+            "name": "Fedora Laptop",
+            "type": "linux",
+            "lastSeenAt": "2026-10-31T12:00:00.000Z",
+            "updatedAt": "2026-10-31T12:00:00.000Z",
+            "deleted": false,
+            "updatedByDevice": null
+          }
+        }
+      },
+      "saveTokenAs": "laptop"
+    },
+    {
+      "name": "login (iPhone)",
+      "request": {
+        "method": "POST",
+        "path": "/api/v1/auth/login",
+        "body": {
+          "username": "owner",
+          "password": "a long password",
+          "device": {
+            "id": "0199a3c0-0000-7000-8000-00000000d002",
+            "name": "iPhone",
+            "type": "ios"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "token": "$token",
+          "device": {
+            "id": "0199a3c0-0000-7000-8000-00000000d002",
+            "name": "iPhone",
+            "type": "ios",
+            "lastSeenAt": "2026-10-31T12:00:00.000Z",
+            "updatedAt": "2026-10-31T12:00:00.000Z",
+            "deleted": false,
+            "updatedByDevice": null
+          }
+        }
+      },
+      "saveTokenAs": "iphone"
+    },
+    {
+      "name": "push one record of each type",
+      "request": {
+        "method": "POST",
+        "path": "/api/v1/sync",
+        "auth": "laptop",
+        "body": {
+          "changes": [
+            {
+              "type": "task",
+              "record": {
+                "id": "0199a3c0-0000-7000-8000-000000000001",
+                "title": "Buy milk",
+                "notes": "Two bottles",
+                "dueDate": "2026-11-02",
+                "dueTimeMinutes": 570,
+                "priority": "high",
+                "categoryId": "0199a3c0-0000-7000-8000-000000000002",
+                "done": false,
+                "completedAt": null,
+                "recurrenceRule": "DTSTART=20261102;FREQ=WEEKLY;INTERVAL=1;BYDAY=MO",
+                "notifyAllDevices": true,
+                "createdAt": "2026-10-30T09:00:00.000Z",
+                "updatedAt": "2026-10-30T09:00:00.000Z",
+                "deleted": false,
+                "updatedByDevice": null
+              }
+            },
+            {
+              "type": "subtask",
+              "record": {
+                "id": "0199a3c0-0000-7000-8000-000000000011",
+                "taskId": "0199a3c0-0000-7000-8000-000000000001",
+                "title": "Check the fridge",
+                "done": false,
+                "sortOrder": 0,
+                "updatedAt": "2026-10-30T09:00:00.000Z",
+                "deleted": false,
+                "updatedByDevice": null
+              }
+            },
+            {
+              "type": "category",
+              "record": {
+                "id": "0199a3c0-0000-7000-8000-000000000002",
+                "name": "Home",
+                "colorValue": 4283215696,
+                "updatedAt": "2026-10-30T09:00:00.000Z",
+                "deleted": false,
+                "updatedByDevice": null
+              }
+            },
+            {
+              "type": "tag",
+              "record": {
+                "id": "0199a3c0-0000-7000-8000-000000000003",
+                "name": "errands",
+                "updatedAt": "2026-10-30T09:00:00.000Z",
+                "deleted": false,
+                "updatedByDevice": null
+              }
+            },
+            {
+              "type": "taskTag",
+              "record": {
+                "id": "0199a3c0-0000-7000-8000-000000000012",
+                "taskId": "0199a3c0-0000-7000-8000-000000000001",
+                "tagId": "0199a3c0-0000-7000-8000-000000000003",
+                "updatedAt": "2026-10-30T09:00:00.000Z",
+                "deleted": false,
+                "updatedByDevice": null
+              }
+            },
+            {
+              "type": "reminder",
+              "record": {
+                "id": "0199a3c0-0000-7000-8000-000000000013",
+                "taskId": "0199a3c0-0000-7000-8000-000000000001",
+                "kind": "time",
+                "absoluteAt": null,
+                "minutesBeforeDue": 15,
+                "placeId": null,
+                "latitude": null,
+                "longitude": null,
+                "radiusMeters": null,
+                "trigger": null,
+                "updatedAt": "2026-10-30T09:00:00.000Z",
+                "deleted": false,
+                "updatedByDevice": null
+              }
+            },
+            {
+              "type": "place",
+              "record": {
+                "id": "0199a3c0-0000-7000-8000-000000000004",
+                "name": "Home",
+                "latitude": 33.3152,
+                "longitude": 44.3661,
+                "address": "Baghdad",
+                "radiusMeters": 30,
+                "updatedAt": "2026-10-30T09:00:00.000Z",
+                "deleted": false,
+                "updatedByDevice": null
+              }
+            },
+            {
+              "type": "setting",
+              "record": {
+                "id": "week_start",
+                "value": "sunday",
+                "updatedAt": "2026-10-30T09:00:00.000Z",
+                "deleted": false,
+                "updatedByDevice": null
+              }
+            },
+            {
+              "type": "taskTargetDevice",
+              "record": {
+                "id": "0199a3c0-0000-7000-8000-000000000014",
+                "taskId": "0199a3c0-0000-7000-8000-000000000001",
+                "deviceId": "0199a3c0-0000-7000-8000-00000000d002",
+                "updatedAt": "2026-10-30T09:00:00.000Z",
+                "deleted": false,
+                "updatedByDevice": null
+              }
+            }
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "results": [
+            {
+              "type": "task",
+              "id": "0199a3c0-0000-7000-8000-000000000001",
+              "status": "applied"
+            },
+            {
+              "type": "subtask",
+              "id": "0199a3c0-0000-7000-8000-000000000011",
+              "status": "applied"
+            },
+            {
+              "type": "category",
+              "id": "0199a3c0-0000-7000-8000-000000000002",
+              "status": "applied"
+            },
+            {
+              "type": "tag",
+              "id": "0199a3c0-0000-7000-8000-000000000003",
+              "status": "applied"
+            },
+            {
+              "type": "taskTag",
+              "id": "0199a3c0-0000-7000-8000-000000000012",
+              "status": "applied"
+            },
+            {
+              "type": "reminder",
+              "id": "0199a3c0-0000-7000-8000-000000000013",
+              "status": "applied"
+            },
+            {
+              "type": "place",
+              "id": "0199a3c0-0000-7000-8000-000000000004",
+              "status": "applied"
+            },
+            {
+              "type": "setting",
+              "id": "week_start",
+              "status": "applied"
+            },
+            {
+              "type": "taskTargetDevice",
+              "id": "0199a3c0-0000-7000-8000-000000000014",
+              "status": "applied"
+            }
+          ],
+          "seq": 9
+        }
+      }
+    },
+    {
+      "name": "pull, first page",
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/sync?since=0&limit=5",
+        "auth": "iphone"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "changes": [
+            {
+              "type": "task",
+              "seq": 1,
+              "record": {
+                "id": "0199a3c0-0000-7000-8000-000000000001",
+                "title": "Buy milk",
+                "notes": "Two bottles",
+                "dueDate": "2026-11-02",
+                "dueTimeMinutes": 570,
+                "priority": "high",
+                "categoryId": "0199a3c0-0000-7000-8000-000000000002",
+                "done": false,
+                "completedAt": null,
+                "recurrenceRule": "DTSTART=20261102;FREQ=WEEKLY;INTERVAL=1;BYDAY=MO",
+                "notifyAllDevices": true,
+                "createdAt": "2026-10-30T09:00:00.000Z",
+                "updatedAt": "2026-10-30T09:00:00.000Z",
+                "deleted": false,
+                "updatedByDevice": "0199a3c0-0000-7000-8000-00000000d001"
+              }
+            },
+            {
+              "type": "subtask",
+              "seq": 2,
+              "record": {
+                "id": "0199a3c0-0000-7000-8000-000000000011",
+                "taskId": "0199a3c0-0000-7000-8000-000000000001",
+                "title": "Check the fridge",
+                "done": false,
+                "sortOrder": 0,
+                "updatedAt": "2026-10-30T09:00:00.000Z",
+                "deleted": false,
+                "updatedByDevice": "0199a3c0-0000-7000-8000-00000000d001"
+              }
+            },
+            {
+              "type": "category",
+              "seq": 3,
+              "record": {
+                "id": "0199a3c0-0000-7000-8000-000000000002",
+                "name": "Home",
+                "colorValue": 4283215696,
+                "updatedAt": "2026-10-30T09:00:00.000Z",
+                "deleted": false,
+                "updatedByDevice": "0199a3c0-0000-7000-8000-00000000d001"
+              }
+            },
+            {
+              "type": "tag",
+              "seq": 4,
+              "record": {
+                "id": "0199a3c0-0000-7000-8000-000000000003",
+                "name": "errands",
+                "updatedAt": "2026-10-30T09:00:00.000Z",
+                "deleted": false,
+                "updatedByDevice": "0199a3c0-0000-7000-8000-00000000d001"
+              }
+            },
+            {
+              "type": "taskTag",
+              "seq": 5,
+              "record": {
+                "id": "0199a3c0-0000-7000-8000-000000000012",
+                "taskId": "0199a3c0-0000-7000-8000-000000000001",
+                "tagId": "0199a3c0-0000-7000-8000-000000000003",
+                "updatedAt": "2026-10-30T09:00:00.000Z",
+                "deleted": false,
+                "updatedByDevice": "0199a3c0-0000-7000-8000-00000000d001"
+              }
+            }
+          ],
+          "nextSince": 5,
+          "hasMore": true
+        }
+      }
+    },
+    {
+      "name": "pull, last page",
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/sync?since=5&limit=5",
+        "auth": "iphone"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "changes": [
+            {
+              "type": "reminder",
+              "seq": 6,
+              "record": {
+                "id": "0199a3c0-0000-7000-8000-000000000013",
+                "taskId": "0199a3c0-0000-7000-8000-000000000001",
+                "kind": "time",
+                "absoluteAt": null,
+                "minutesBeforeDue": 15,
+                "placeId": null,
+                "latitude": null,
+                "longitude": null,
+                "radiusMeters": null,
+                "trigger": null,
+                "updatedAt": "2026-10-30T09:00:00.000Z",
+                "deleted": false,
+                "updatedByDevice": "0199a3c0-0000-7000-8000-00000000d001"
+              }
+            },
+            {
+              "type": "place",
+              "seq": 7,
+              "record": {
+                "id": "0199a3c0-0000-7000-8000-000000000004",
+                "name": "Home",
+                "latitude": 33.3152,
+                "longitude": 44.3661,
+                "address": "Baghdad",
+                "radiusMeters": 30,
+                "updatedAt": "2026-10-30T09:00:00.000Z",
+                "deleted": false,
+                "updatedByDevice": "0199a3c0-0000-7000-8000-00000000d001"
+              }
+            },
+            {
+              "type": "setting",
+              "seq": 8,
+              "record": {
+                "id": "week_start",
+                "value": "sunday",
+                "updatedAt": "2026-10-30T09:00:00.000Z",
+                "deleted": false,
+                "updatedByDevice": "0199a3c0-0000-7000-8000-00000000d001"
+              }
+            },
+            {
+              "type": "taskTargetDevice",
+              "seq": 9,
+              "record": {
+                "id": "0199a3c0-0000-7000-8000-000000000014",
+                "taskId": "0199a3c0-0000-7000-8000-000000000001",
+                "deviceId": "0199a3c0-0000-7000-8000-00000000d002",
+                "updatedAt": "2026-10-30T09:00:00.000Z",
+                "deleted": false,
+                "updatedByDevice": "0199a3c0-0000-7000-8000-00000000d001"
+              }
+            }
+          ],
+          "nextSince": 9,
+          "hasMore": false
+        }
+      }
+    },
+    {
+      "name": "push: a newer edit wins, an older one is stale",
+      "request": {
+        "method": "POST",
+        "path": "/api/v1/sync",
+        "auth": "iphone",
+        "body": {
+          "changes": [
+            {
+              "type": "task",
+              "record": {
+                "id": "0199a3c0-0000-7000-8000-000000000001",
+                "title": "Buy oat milk",
+                "notes": "Two bottles",
+                "dueDate": "2026-11-02",
+                "dueTimeMinutes": 570,
+                "priority": "high",
+                "categoryId": "0199a3c0-0000-7000-8000-000000000002",
+                "done": false,
+                "completedAt": null,
+                "recurrenceRule": "DTSTART=20261102;FREQ=WEEKLY;INTERVAL=1;BYDAY=MO",
+                "notifyAllDevices": true,
+                "createdAt": "2026-10-30T09:00:00.000Z",
+                "updatedAt": "2026-10-31T08:00:00.000Z",
+                "deleted": false,
+                "updatedByDevice": null
+              }
+            },
+            {
+              "type": "category",
+              "record": {
+                "id": "0199a3c0-0000-7000-8000-000000000002",
+                "name": "House",
+                "colorValue": 4283215696,
+                "updatedAt": "2026-10-29T09:00:00.000Z",
+                "deleted": false,
+                "updatedByDevice": null
+              }
+            }
+          ]
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "results": [
+            {
+              "type": "task",
+              "id": "0199a3c0-0000-7000-8000-000000000001",
+              "status": "applied"
+            },
+            {
+              "type": "category",
+              "id": "0199a3c0-0000-7000-8000-000000000002",
+              "status": "stale"
+            }
+          ],
+          "seq": 11
+        }
+      }
+    },
+    {
+      "name": "pull the edit",
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/sync?since=9",
+        "auth": "laptop"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "changes": [
+            {
+              "type": "task",
+              "seq": 10,
+              "record": {
+                "id": "0199a3c0-0000-7000-8000-000000000001",
+                "title": "Buy oat milk",
+                "notes": "Two bottles",
+                "dueDate": "2026-11-02",
+                "dueTimeMinutes": 570,
+                "priority": "high",
+                "categoryId": "0199a3c0-0000-7000-8000-000000000002",
+                "done": false,
+                "completedAt": null,
+                "recurrenceRule": "DTSTART=20261102;FREQ=WEEKLY;INTERVAL=1;BYDAY=MO",
+                "notifyAllDevices": true,
+                "createdAt": "2026-10-30T09:00:00.000Z",
+                "updatedAt": "2026-10-31T08:00:00.000Z",
+                "deleted": false,
+                "updatedByDevice": "0199a3c0-0000-7000-8000-00000000d002"
+              }
+            }
+          ],
+          "nextSince": 10,
+          "hasMore": false
+        }
+      }
+    },
+    {
+      "name": "pull with nothing new",
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/sync?since=10",
+        "auth": "laptop"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "changes": [],
+          "nextSince": 10,
+          "hasMore": false
+        }
+      }
+    },
+    {
+      "name": "push an unknown type",
+      "request": {
+        "method": "POST",
+        "path": "/api/v1/sync",
+        "auth": "laptop",
+        "body": {
+          "changes": [
+            {
+              "type": "device",
+              "record": {
+                "id": "x",
+                "updatedAt": "2026-10-30T09:00:00.000Z",
+                "deleted": false
+              }
+            }
+          ]
+        }
+      },
+      "response": {
+        "status": 400,
+        "body": {
+          "error": {
+            "code": "bad_request",
+            "message": "$string"
+          }
+        }
+      }
+    },
+    {
+      "name": "push without a token",
+      "request": {
+        "method": "POST",
+        "path": "/api/v1/sync",
+        "body": {
+          "changes": []
+        }
+      },
+      "response": {
+        "status": 401,
+        "body": {
+          "error": {
+            "code": "unauthorized",
+            "message": "$string"
+          }
+        }
+      }
+    },
+    {
+      "name": "list devices",
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/devices",
+        "auth": "laptop"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "devices": [
+            {
+              "id": "0199a3c0-0000-7000-8000-00000000d001",
+              "name": "Fedora Laptop",
+              "type": "linux",
+              "lastSeenAt": "2026-10-31T12:00:00.000Z",
+              "updatedAt": "2026-10-31T12:00:00.000Z",
+              "deleted": false,
+              "updatedByDevice": null
+            },
+            {
+              "id": "0199a3c0-0000-7000-8000-00000000d002",
+              "name": "iPhone",
+              "type": "ios",
+              "lastSeenAt": "2026-10-31T12:00:00.000Z",
+              "updatedAt": "2026-10-31T12:00:00.000Z",
+              "deleted": false,
+              "updatedByDevice": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "rename a device",
+      "request": {
+        "method": "PATCH",
+        "path": "/api/v1/devices/0199a3c0-0000-7000-8000-00000000d002",
+        "auth": "laptop",
+        "body": {
+          "name": "My iPhone"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "id": "0199a3c0-0000-7000-8000-00000000d002",
+          "name": "My iPhone",
+          "type": "ios",
+          "lastSeenAt": "2026-10-31T12:00:00.000Z",
+          "updatedAt": "2026-10-31T12:00:00.000Z",
+          "deleted": false,
+          "updatedByDevice": null
+        }
+      }
+    },
+    {
+      "name": "revoke a device",
+      "request": {
+        "method": "DELETE",
+        "path": "/api/v1/devices/0199a3c0-0000-7000-8000-00000000d002",
+        "auth": "laptop"
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "id": "0199a3c0-0000-7000-8000-00000000d002",
+          "name": "My iPhone",
+          "type": "ios",
+          "lastSeenAt": "2026-10-31T12:00:00.000Z",
+          "updatedAt": "2026-10-31T12:00:00.000Z",
+          "deleted": true,
+          "updatedByDevice": null
+        }
+      }
+    },
+    {
+      "name": "a revoked device is refused",
+      "request": {
+        "method": "GET",
+        "path": "/api/v1/sync?since=0",
+        "auth": "iphone"
+      },
+      "response": {
+        "status": 401,
+        "body": {
+          "error": {
+            "code": "unauthorized",
+            "message": "$string"
+          }
+        }
+      }
+    },
+    {
+      "name": "unknown device",
+      "request": {
+        "method": "DELETE",
+        "path": "/api/v1/devices/nope",
+        "auth": "laptop"
+      },
+      "response": {
+        "status": 404,
+        "body": {
+          "error": {
+            "code": "not_found",
+            "message": "$string"
+          }
+        }
+      }
+    }
+  ]
+}

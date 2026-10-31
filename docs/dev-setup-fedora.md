@@ -1,6 +1,6 @@
 # Development setup on Fedora
 
-These steps set up a Fedora 44 (GNOME) machine to build and run the Taskwise Linux app. Windows and iOS builds run on GitHub Actions, so you don't need anything else locally.
+These steps set up a Fedora 44 (GNOME) machine to build and run the Taskwise Linux app, and to work on the sync server. Windows and iOS builds run on GitHub Actions, so you don't need anything else locally.
 
 ## 1. System packages
 
@@ -40,7 +40,23 @@ flutter doctor -v
 
 `flutter doctor` should show a green check for **Linux toolchain**. It may warn about Android Studio, Chrome or Xcode, and you can ignore those.
 
-## 3. Get the code and run it
+## 3. Node.js (for the sync server)
+
+The sync server in `server/` is TypeScript and needs **Node.js 24** (the version Vercel runs it on). Skip this if `node --version` already prints `v24.…`. Otherwise install the official build into your home folder:
+
+```bash
+cd /tmp
+curl -fsSLO https://nodejs.org/dist/latest-v24.x/SHASUMS256.txt
+FILE=$(grep -o 'node-v24[^ ]*-linux-x64.tar.xz' SHASUMS256.txt)
+curl -fsSLO "https://nodejs.org/dist/latest-v24.x/$FILE"
+sha256sum -c --ignore-missing SHASUMS256.txt
+mkdir -p ~/.local/node && tar -xf "$FILE" -C ~/.local/node --strip-components=1
+echo 'export PATH="$HOME/.local/node/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+node --version
+```
+
+## 4. Get the code and run it
 
 ```bash
 gh repo clone Krkr8/taskwise
@@ -49,6 +65,8 @@ flutter pub get
 cd app
 flutter run -d linux
 ```
+
+For the sync server, see "Running the server locally" in [server-setup-vercel.md](server-setup-vercel.md).
 
 ## Troubleshooting: `flutter test` fails with "Building native assets failed"
 

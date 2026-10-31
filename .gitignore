@@ -19,6 +19,7 @@ coverage/
 *.local.json
 .env
 .env.*
+!.env.example
 
 # Screenshots shared with Claude Code (local only)
 tempscreenshot/

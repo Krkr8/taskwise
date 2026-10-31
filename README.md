@@ -2,7 +2,7 @@
 
 A personal, self-hosted to-do and reminders app for Windows, Linux and iOS, with a small sync server you host free on Vercel.
 
-> Status: early development. Milestone M1 (core app, local only) is done. See [SPEC.md](SPEC.md) for the full specification and progress log.
+> Status: early development. The app works on its own on each device (milestones M1–M4), and the sync server is ready (M5); syncing in the app arrives in M6. See [SPEC.md](SPEC.md) for the full specification and progress log.
 
 ## Install
 
@@ -19,12 +19,12 @@ Maintainers make a release by bumping `version:` in `app/pubspec.yaml`, then pus
 | Path | What it is |
 |---|---|
 | `app/` | Flutter app (Linux, Windows, iOS) |
-| `server/` | Sync server: TypeScript on Vercel from M5 (currently a Dart placeholder) |
-| `shared/` | Dart models and logic used by the app, plus sync API fixtures (from M5) |
+| `server/` | Sync server: TypeScript ([Hono](https://hono.dev)) on Vercel, or Docker for self-hosting. See [docs/server-setup-vercel.md](docs/server-setup-vercel.md) and the [sync API](docs/sync-api.md) |
+| `shared/` | Dart models and logic used by the app, plus the sync API fixtures both sides test against |
 | `docs/` | Setup guides |
 | `.github/` | CI workflows |
 
-The three Dart packages form a [pub workspace](https://dart.dev/tools/pub/workspaces), so one `flutter pub get` at the repo root fetches everything.
+The two Dart packages (`app`, `shared`) form a [pub workspace](https://dart.dev/tools/pub/workspaces), so one `flutter pub get` at the repo root fetches them both. The server is a separate npm project.
 
 ## Development
 
@@ -35,7 +35,8 @@ flutter pub get                                # fetch dependencies for all pack
 dart format .                                  # format
 flutter analyze                                # static analysis (all packages)
 (cd app && flutter test)                       # app tests
-(cd shared && dart test) && (cd server && dart test)
+(cd shared && dart test)                       # shared tests
+(cd server && npm ci && npm test)              # server tests (Node.js 24)
 (cd app && flutter run -d linux)               # run the app
 ```
 
