@@ -272,13 +272,21 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 
 ## 7. Progress Log
 
+### Where we left off (2026-10-31)
+- **Next: M5 (sync server on Vercel).** Start with plan mode, per section 0; first verify Vercel Hobby and Turso free limits and tell the owner.
+- **Latest release build is v0.1.1** (draft, M2 fixes only). M3 and M4 are on `main` but no release has been built from them. Tagging **v0.2.0** (after bumping `app/pubspec.yaml` to `0.2.0+3`) builds Windows + iPhone; ask the owner before tagging.
+- **Open checks from M4, for the v0.2.0 build:** the M4 test list below on Windows and the iPhone, and that the release workflow still builds Windows and iOS with `tray_manager` (it compiles `cnativeapi` native code; only Linux has been built so far).
+- **iPhone install:** with iloader from the laptop (SideStore sign-in is broken by Apple since 2026-10-12, error -80045). Refresh every 7 days with iloader → Import IPA. See `docs/install-ios-sidestore.md`.
+- **M8 starts by asking the owner for their design idea** (they asked for a design milestone; merged into M8).
+- Running app tests on the Fedora laptop: take ccache off `PATH` (see `docs/dev-setup-fedora.md`), and re-run if a file fails with "Unable to connect to flutter_tester process".
+
 | Milestone | Status | Date | Notes |
 |---|---|---|---|
 | M0 Project setup | ✅ Done | 2026-10-20 | Flutter 3.47.7 workspace (app/server/shared), placeholder screen, CI green. |
 | M1 Core app | ✅ Done | 2026-10-20 | Local-only task manager: drift DB, list/quick add/details, subtasks, categories, tags, search/filter/sort, EN/AR with RTL, light/dark. 67 automated tests. Owner-tested on Fedora. |
 | M2 Build pipeline | ✅ Done | 2026-10-30 | Release workflow builds Linux, Windows and unsigned iOS into a draft v0.1.0 release. Owner-tested on Fedora, Windows and iPhone. The iPhone app is installed with iloader from the laptop, because Apple blocks SideStore's own sign-in (-80045) since 2026-10-12. Also fixed from iPhone testing: tapping outside a text field (or scrolling) closes the keyboard, and selected Settings options use the accent colour. 69 automated tests. |
 | M3 Calendar + recurrence | ✅ Done | 2026-10-30 | Calendar tab with week (7 day columns listing tasks, all-day first then by time) and month views on all platforms; repeating tasks (RRULE subset in `shared`, editor with presets and Custom, done copy + next occurrence with Undo); upcoming repeats shown faded in the calendar. Selected chips now clearly highlighted. 115 automated tests (shared tests run in 3 timezones in CI). |
-| M4 Time reminders | 🟡 Built, Fedora verified | 2026-10-31 | Time reminders (relative + absolute, several per task, follow repeats), scheduling engine in `shared`, notifications with Done/Snooze/open, iOS 64-limit scheduling, desktop tray + single instance + start on login, notification settings. A real reminder fired on Fedora (GNOME) with Done/Snooze buttons. **Remaining: test on Windows and the iPhone** with the next release build (list below). 138 automated tests. |
+| M4 Time reminders | ✅ Done | 2026-10-31 | Time reminders (relative + absolute, several per task, follow repeats), scheduling engine in `shared`, notifications with Done/Snooze/open, iOS 64-limit scheduling, desktop tray + single instance + start on login, notification settings. A real reminder fired on Fedora (GNOME) with Done/Snooze buttons. Closed by the owner on 2026-10-31 before device tests: **Windows and iPhone are untested** (see Where we left off). 138 automated tests. |
 | M5 Sync server | ⬜ | | |
 | M6 Client sync + devices | ⬜ | | |
 | M7 Location reminders | ⬜ | | |
