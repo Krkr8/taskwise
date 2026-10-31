@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'data/app_settings.dart';
+import 'desktop/desktop_shell.dart';
 import 'l10n/app_localizations.dart';
+import 'notifications/reminder_scheduler.dart';
 import 'state/providers.dart';
 import 'ui/shell/adaptive_shell.dart';
 import 'ui/theme/app_theme.dart';
@@ -14,6 +16,12 @@ class TaskwiseApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(appSettingsProvider);
+    // Starts the reminder scheduler (kept alive by this watch).
+    ref.watch(reminderSchedulerProvider);
+    ref.listen(
+      appSettingsProvider,
+      (_, next) => DesktopShell.instance?.apply(next),
+    );
     return MaterialApp(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,

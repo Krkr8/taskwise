@@ -8,6 +8,7 @@ import '../../data/repositories/task_repository.dart';
 import '../../state/providers.dart';
 import '../theme/tokens.dart';
 import 'labels.dart';
+import 'reminder_editor.dart';
 import 'repeat_editor.dart';
 import 'subtask_list.dart';
 import 'task_actions.dart';
@@ -179,9 +180,19 @@ class _TaskEditorState extends ConsumerState<_TaskEditor> {
       initialTime: TimeOfDay(hour: minutes ~/ 60, minute: minutes % 60),
     );
     if (picked == null) return;
+    final hadTime = widget.task.dueTimeMinutes != null;
     await _update(
       (t) => t.copyWith(dueTimeMinutes: () => picked.hour * 60 + picked.minute),
     );
+    // The first time a task gets a time, add the default reminder (if one
+    // is set and the task has no reminders yet).
+    final before = ref.read(appSettingsProvider).defaultReminder.minutesBefore;
+    final reminders = ref.read(reminderRepositoryProvider);
+    if (!hadTime &&
+        before != null &&
+        !await reminders.hasReminders(widget.task.id)) {
+      await reminders.addRelative(widget.task.id, before);
+    }
   }
 
   @override
@@ -319,6 +330,9 @@ class _TaskEditorState extends ConsumerState<_TaskEditor> {
                       ),
               ),
               const SizedBox(height: Spacing.md),
+              _Label(l10n.reminders),
+              ReminderEditor(task: task),
+              const SizedBox(height: Spacing.lg),
               _Label(l10n.priority),
               // Chips size to their labels and wrap as whole chips, so longer
               // Arabic words never break across lines in the narrow panel.

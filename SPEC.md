@@ -110,6 +110,11 @@ Two types, a task can mix both:
 - Repeating tasks: reminders follow each occurrence.
 - Fires as a system notification on each device in the task's "Notify on devices" set (each device schedules its own local notifications after sync).
 - Notification actions where the platform supports them: **Done**, **Snooze** (5 / 15 / 60 min, configurable).
+- How M4 implements it (2026-10-31):
+  - Plan computed by `planNotifications` in `shared` (14-day horizon; relative reminders in wall-clock time so DST doesn't move them; all-day tasks remind at a set time, default 09:00; repeats get reminders for each occurrence, including ones not created yet).
+  - **iPhone:** iOS schedules them (`zonedSchedule`), the soonest 64. Done/Snooze open the app to run (foreground actions; no background isolate). Permission is asked when the first reminder is added.
+  - **Windows / Linux:** the app shows them itself while running (Linux can't schedule; Windows can't cancel scheduled toasts without MSIX). Closing the window keeps it in the tray; one instance only; optional start on login (hidden). Reminders missed in the last 24 h show at startup.
+  - Done on a future (projected) repeat isn't offered; Done on the real occurrence completes it (and spawns the next copy, reminders included).
 
 **Location reminder (iPhone only)**
 - Pick a place on a map (search address or drop a pin) or choose a saved place ("Home", "Work"...). Saved places are managed in settings.
@@ -144,8 +149,8 @@ Two types, a task can mix both:
 - Language: English / Arabic (switches layout to RTL)
 - Week starts on: Sunday (default) / Saturday / Monday
 - Time format: 12h / 24h
-- Default reminder (e.g., none / at due time / 15 min before)
-- Default snooze durations
+- Default reminder (e.g., none / at due time / 15 min before) — M4: added when a task first gets a due time and has no reminders; synced.
+- Default snooze durations — M4: pick up to 3 of 5/10/15/30/60/120 min (default 5/15/60); device-only. Plus the all-day reminder time and, on desktop, keep running in background / start on login.
 - Default location radius (30 m)
 - Saved places
 - Categories (add, rename, color, delete)
@@ -243,7 +248,8 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 - Give the owner a real-world test plan (walk away from/to home, etc.) and a debug screen showing monitored regions and last events.
 - **Done when:** arrive and leave reminders fire on the iPhone at ~30 m, with the app closed.
 
-### M8 — Polish & open-source readiness
+### M8 — Design, polish & open-source readiness
+- **Start by asking the owner for their design idea** (they asked for a design milestone on 2026-10-30 and have an idea ready). Plan the redesign with them before anything else in this milestone.
 - Animation polish, empty states, onboarding hints, app icon, accent colors.
 - JSON export/import, error handling, logs viewer.
 - Performance check (1,000+ tasks).
@@ -272,33 +278,35 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 | M1 Core app | ✅ Done | 2026-10-20 | Local-only task manager: drift DB, list/quick add/details, subtasks, categories, tags, search/filter/sort, EN/AR with RTL, light/dark. 67 automated tests. Owner-tested on Fedora. |
 | M2 Build pipeline | ✅ Done | 2026-10-30 | Release workflow builds Linux, Windows and unsigned iOS into a draft v0.1.0 release. Owner-tested on Fedora, Windows and iPhone. The iPhone app is installed with iloader from the laptop, because Apple blocks SideStore's own sign-in (-80045) since 2026-10-12. Also fixed from iPhone testing: tapping outside a text field (or scrolling) closes the keyboard, and selected Settings options use the accent colour. 69 automated tests. |
 | M3 Calendar + recurrence | ✅ Done | 2026-10-30 | Calendar tab with week (7 day columns listing tasks, all-day first then by time) and month views on all platforms; repeating tasks (RRULE subset in `shared`, editor with presets and Custom, done copy + next occurrence with Undo); upcoming repeats shown faded in the calendar. Selected chips now clearly highlighted. 115 automated tests (shared tests run in 3 timezones in CI). |
-| M4 Time reminders | ⬜ | | |
+| M4 Time reminders | 🟡 Built, Fedora verified | 2026-10-31 | Time reminders (relative + absolute, several per task, follow repeats), scheduling engine in `shared`, notifications with Done/Snooze/open, iOS 64-limit scheduling, desktop tray + single instance + start on login, notification settings. A real reminder fired on Fedora (GNOME) with Done/Snooze buttons. **Remaining: test on Windows and the iPhone** with the next release build (list below). 138 automated tests. |
 | M5 Sync server | ⬜ | | |
 | M6 Client sync + devices | ⬜ | | |
 | M7 Location reminders | ⬜ | | |
-| M8 Polish | ⬜ | | |
+| M8 Design + polish | ⬜ | | |
 
 ### How to test the latest milestone
-**M3** on the Fedora laptop (then on Windows and the iPhone once the v0.2.0 build is out):
-```bash
-cd ~/Documents/projects/taskwise
-git pull
-flutter pub get
-cd app
-flutter run -d linux
-```
-1. **Repeat a task:** add "Gym", open it, set a due date of today and a time. Tap **Does not repeat** and choose **Weekly on <today>**. The row now says "Every week on …", and the list shows a 🔁 icon.
-2. **Custom repeat:** tap the repeat row → **Custom…**: every **2 weeks** on Mon and Wed, ends **after 5 times**. The summary at the bottom updates as you change things.
-3. **Complete it:** tick "Gym" in the list. A message says "Done. Next: …", the ticked one moves to **Completed**, and a fresh "Gym" appears on the next date with its subtasks unticked. Tick another repeating task and press **Undo**: the new copy disappears and the original is back.
-4. **Week view:** open **Calendar**. Today's column is outlined. Each day lists its tasks: all-day ones first, then timed ones in time order with the time above the title; upcoming repeats are faded. Use the arrows (or swipe) to change week; **Today** brings you back.
-5. **Add from the calendar:** tap a day's header or the empty part of its column (adds a task that day), or press **+**. Set a time in the task details and it moves into time order.
-6. **Month view:** tap the grid icon at the top left. Each day shows its tasks (dots on a narrow window); tap a day to see its list, tick tasks off there, or add one.
-7. **Settings follow:** change **Week starts on** to Monday: both views start on Monday. Switch to **العربية**: the week runs right to left.
-8. **Narrow window:** make the window narrow. The calendar keeps 7 columns; tasks open full-screen and a day's list opens from the bottom.
+**M4.** Fedora: `git pull`, then `cd app && flutter run -d linux`. Windows and iPhone: the next release build (v0.2.0).
 
-The M2 iPhone/iloader steps still apply (`docs/install-ios-sidestore.md`).
+On every device:
+1. Open a task, give it a due date and a time about 5 minutes from now. Under **Reminders**, tap **Add reminder → 5 minutes before** (and try **At due time** too). The row shows a 🔔.
+   - iPhone: allow notifications when asked.
+2. Wait. A notification "Task title / Due: Today, …" appears with **Done** and **Snooze** buttons.
+3. Press **Snooze 5 minutes**: it comes back 5 minutes later. Press **Done**: the task is ticked off.
+4. Tap a notification (not a button): Taskwise opens on that task.
+5. **Repeating task:** make a daily task with a reminder, tick it off. Tomorrow's copy has the same reminder.
+6. **Custom date & time…** in Add reminder: pick a time 2 minutes away; it fires.
+7. **Settings → Notifications:** set Default reminder to "15 min before", then give a new task a time: the reminder is added by itself. Change the snooze options and check the buttons change.
 
-Automated checks (optional): from the repo root, run `flutter analyze`, then `cd app && flutter test`, `cd ../shared && dart test` and `cd ../server && dart test`.
+Desktop (Windows and Fedora):
+8. Close the window with a reminder pending: it still fires (Taskwise stays in the tray). Open Taskwise again from the menu: the same window comes back.
+9. Tray menu → **Quit Taskwise**, set a reminder 1 minute ahead next time and start Taskwise after it was due: it shows as missed when the app starts.
+10. **Settings → Background → Start when I log in**, log out and in: Taskwise is running in the background.
+    - Fedora tray icon needs `sudo dnf install -y gnome-shell-extension-appindicator` (see `docs/install-linux.md`).
+
+iPhone only:
+11. Close Taskwise completely (swipe it away) with a reminder pending: it still fires.
+
+Automated checks (optional): from the repo root, run `flutter analyze`, then `cd app && flutter test`, `cd ../shared && dart test` and `cd ../server && dart test`. If `flutter test` fails with "Building native assets failed", see the ccache note in `docs/dev-setup-fedora.md`.
 
 ### Known issues
 - **iPhone:** SideStore can't sign in to Apple right now (-80045/-80046, Apple-side change from 2026-10-12). Taskwise is installed and refreshed weekly with iloader over USB instead. See Troubleshooting in `docs/install-ios-sidestore.md`.
@@ -317,9 +325,9 @@ Automated checks (optional): from the repo root, run `flutter analyze`, then `cd
 - **iOS signing:** Apple broke free sideloader sign-in in October 2026 (SideStore -80045/-80046, workaround in `docs/install-ios-sidestore.md`). If free sign-in keeps breaking, consider the paid Developer Program + TestFlight (signing and upload in the release workflow, App Store Connect API key as GitHub secrets).
 - **Calendar (later):** drag a task to another day (desktop) is still a "nice to have".
 - **Repeats:** un-ticking an old done copy from Completed makes it a normal one-off task (its rule moved to the next copy). Rules are an RRULE *subset*; anything else from a future import should be validated with `RecurrenceRule.tryParse`.
-- **M4:** reminders must follow each occurrence: when `setDone` spawns the next copy (`TaskRepository._spawnNext`), copy the task's reminders too (relative ones keep their offset).
 - **Local test runner:** `flutter test` sometimes fails to start one test file with "Unable to connect to flutter_tester process" on the Fedora laptop. It's the runner, not the code; re-run, or use `flutter test --concurrency=1`.
-- **M4:** the `reminders` table and the shared `Reminder` model already exist (time: `absoluteAt` / `minutesBeforeDue`).
+- **Reminders (later):** Done/Snooze on iOS open the app; handling them in the background needs a background isolate with its own database connection. iOS snooze buttons are registered at launch, so changed snooze options apply on iOS after restarting the app. Windows `cancel` of shown toasts needs MSIX packaging. The first iPhone/Windows builds with `tray_manager` (which builds `cnativeapi` native code, iOS included) are untested; check the v0.2.0 release run.
+- **M6:** after a sync pull, the reminder scheduler re-plans automatically (it watches the tasks and reminders streams). The default reminder setting is marked synced.
 - **M5:** the sync server moved from the Windows PC (Dart, Tailscale) to Vercel (TypeScript, public HTTPS) on 2026-10-30, at the owner's request. Delete the Dart `server/` placeholder package, remove it from the root `pubspec.yaml` workspace and the CI "Test server" step, and drop `server` from the `test` pin note above. Update the M1 test instructions that run `dart test` in `server/`.
 - **M6:** every table has `id` (UUID v7), `updatedAt` (UTC ms), `deleted`, `updatedByDevice`. `settings.synced` marks shared keys (only `week_start` so far). `task_target_devices` exists for "Notify on devices". Tombstoned tasks keep their subtasks and tag links (needed for undo), and the server's 90-day purge should remove the children too. The device name is pre-filled ("Fedora Laptop") and becomes editable in M6.
 - **M7:** the `places` table and `Place` model exist (default radius 30 m).

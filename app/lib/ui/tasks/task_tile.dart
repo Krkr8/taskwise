@@ -39,6 +39,9 @@ class TaskTile extends ConsumerWidget {
       color: scheme.onSurfaceVariant,
     );
     final flag = priorityColor(task.priority, scheme);
+    final hasReminders = ref
+        .watch(taskIdsWithRemindersProvider)
+        .contains(task.id);
 
     final meta = <Widget>[
       if (due != null)
@@ -46,6 +49,15 @@ class TaskTile extends ConsumerWidget {
           icon: Icons.event_outlined,
           label: due,
           style: overdue ? metaStyle?.copyWith(color: scheme.error) : metaStyle,
+        ),
+      if (hasReminders)
+        Tooltip(
+          message: l10n.hasReminders,
+          child: Icon(
+            Icons.notifications_outlined,
+            size: 16,
+            color: scheme.onSurfaceVariant,
+          ),
         ),
       if (task.recurrenceRule != null)
         Tooltip(

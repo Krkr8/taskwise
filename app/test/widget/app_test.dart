@@ -10,6 +10,8 @@ import 'package:taskwise/data/db/app_database.dart';
 import 'package:taskwise/data/repositories/settings_repository.dart';
 import 'package:taskwise/data/repositories/task_repository.dart';
 import 'package:taskwise/main.dart' show configureIntl;
+import 'package:taskwise/notifications/notifier.dart';
+import 'package:taskwise/notifications/reminder_scheduler.dart';
 import 'package:taskwise/state/providers.dart';
 import 'package:taskwise/ui/tasks/task_detail.dart';
 import 'package:taskwise/ui/theme/app_theme.dart';
@@ -31,6 +33,7 @@ void appTest(
   Future<void> Function(WidgetTester tester, TaskRepository repo) body, {
   Size size = _desktop,
   AppSettings settings = const AppSettings(language: AppLanguage.en),
+  ReminderNotifier? notifier,
 }) {
   testWidgets(description, (tester) async {
     configureIntl();
@@ -56,6 +59,8 @@ void appTest(
           clockProvider.overrideWithValue(() => _now),
           todayProvider.overrideWithValue(LocalDate.fromDateTime(_now)),
           initialSettingsProvider.overrideWithValue(settings),
+          if (notifier != null)
+            reminderNotifierProvider.overrideWithValue(notifier),
         ],
         child: const TaskwiseApp(),
       ),
@@ -167,10 +172,19 @@ void main() {
       'Plan Erbil trip',
     );
     await tester.tap(find.text('High'));
-    await tester.enterText(
-      find.widgetWithText(TextField, 'Add a subtask'),
-      'Book hotel',
+    // The subtask field is further down the panel.
+    final addSubtask = find.widgetWithText(TextField, 'Add a subtask');
+    await tester.scrollUntilVisible(
+      addSubtask,
+      200,
+      scrollable: find
+          .descendant(
+            of: find.byType(TaskDetailView),
+            matching: find.byType(Scrollable),
+          )
+          .first,
     );
+    await tester.enterText(addSubtask, 'Book hotel');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     // Let the typing debounce fire.
     await tester.pump(const Duration(seconds: 1));
@@ -438,4 +452,111 @@ void main() {
     expect(entries.single.task.done, isFalse);
     expect(entries.single.task.recurrenceRule, isNotNull);
   });
+  // ------------------------------------------------------------- M4
+
+  appTest('adding a reminder plans a notification', (tester, repo) async {
+    // _now is Tuesday 2026-10-20, 09:00.
+    await repo.createTask(
+      title: 'Call bank',
+      dueDate: LocalDate(2026, 10, 20),
+      dueTimeMinutes: 10 * 60,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Call bank'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Add reminder'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('15 minutes before'));
+    await tester.pumpAndSettle();
+    expect(find.text('15 minutes before'), findsOneWidget); // the chip
+    expect(find.byTooltip('Has reminders'), findsOneWidget); // the row
+
+    // Let the scheduler's debounce run.
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+    final plan = _notifier.lastPlan;
+    expect(plan.single.title, 'Call bank');
+    expect(plan.single.fireAt, DateTime(2026, 10, 20, 9, 45));
+  }, notifier: _notifier = NoopNotifier());
+
+  appTest('Done and Snooze from a notification', (tester, repo) async {
+    final task = await repo.createTask(
+      title: 'Pay bill',
+      dueDate: LocalDate(2026, 10, 20),
+    );
+    await tester.pumpAndSettle();
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(MaterialApp)),
+    );
+    final scheduler = container.read(reminderSchedulerProvider);
+
+    await tester.runAsync(
+      () => scheduler.handleAction(
+        SnoozeAction(task.id, LocalDate(2026, 10, 20), 15),
+      ),
+    );
+    final snoozes = await tester.runAsync(
+      () => container.read(settingsRepositoryProvider).getSnoozes(),
+    );
+    expect(
+      snoozes!.single.until.isAtSameMomentAs(
+        _now.add(const Duration(minutes: 15)),
+      ),
+      isTrue,
+    );
+
+    await tester.runAsync(
+      () =>
+          scheduler.handleAction(DoneAction(task.id, LocalDate(2026, 10, 20))),
+    );
+    final done = await tester.runAsync(() => repo.getTask(task.id));
+    expect(done!.done, isTrue);
+  });
+
+  appTest('tapping a notification opens the task', (tester, repo) async {
+    final task = await repo.createTask(title: 'Renew passport');
+    await tester.pumpAndSettle();
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(MaterialApp)),
+    );
+    await tester.tap(find.byIcon(Icons.calendar_month_outlined));
+    await tester.pumpAndSettle();
+
+    await container
+        .read(reminderSchedulerProvider)
+        .handleAction(OpenTaskAction(task.id, LocalDate(2026, 10, 20)));
+    await tester.pumpAndSettle();
+    expect(find.byType(TaskDetailView), findsOneWidget);
+    expect(find.widgetWithText(TextField, 'Renew passport'), findsOneWidget);
+  });
+
+  appTest('notification settings are saved', (tester, repo) async {
+    await tester.tap(find.text('Settings').first);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('15 min before'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('15 min before'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('10 min')); // ignored: 3 already picked
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('5 min')); // unpick
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('10 min'));
+    await tester.pumpAndSettle();
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(MaterialApp)),
+    );
+    final saved = await tester.runAsync(
+      () => container.read(settingsRepositoryProvider).loadSettings(),
+    );
+    expect(saved!.defaultReminder, DefaultReminder.min15);
+    expect(saved.snoozeMinutes, [10, 15, 60]);
+  });
 }
+
+NoopNotifier _notifier = NoopNotifier();

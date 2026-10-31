@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
@@ -8,7 +10,8 @@ import '../tasks/labels.dart';
 import '../theme/tokens.dart';
 import 'categories_page.dart';
 
-/// Settings destination (M1: appearance, date & time, categories).
+/// Settings destination: appearance, date & time, notifications,
+/// background (desktop) and categories.
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
 
@@ -17,6 +20,7 @@ class SettingsPage extends ConsumerWidget {
     final l10n = context.l10n;
     final settings = ref.watch(appSettingsProvider);
     final repo = ref.read(settingsRepositoryProvider);
+    final isDesktop = Platform.isLinux || Platform.isWindows;
     // The Settings tab shows the effective language even before one is saved.
     final language =
         settings.language ??
@@ -114,6 +118,105 @@ class SettingsPage extends ConsumerWidget {
                   onSelectionChanged: (s) => repo.setTimeFormat(s.single),
                 ),
               ),
+              _Section(l10n.settingsNotifications),
+              _Setting(
+                label: l10n.defaultReminder,
+                child: SegmentedButton<DefaultReminder>(
+                  showSelectedIcon: false,
+                  segments: [
+                    ButtonSegment(
+                      value: DefaultReminder.none,
+                      label: Text(l10n.defaultReminderNone),
+                    ),
+                    ButtonSegment(
+                      value: DefaultReminder.atDueTime,
+                      label: Text(l10n.defaultReminderAtDue),
+                    ),
+                    ButtonSegment(
+                      value: DefaultReminder.min15,
+                      label: Text(l10n.defaultReminderMin15),
+                    ),
+                  ],
+                  selected: {settings.defaultReminder},
+                  onSelectionChanged: (s) => repo.setDefaultReminder(s.single),
+                ),
+              ),
+              _Setting(
+                label: l10n.snoozeOptions,
+                child: Wrap(
+                  spacing: Spacing.sm,
+                  children: [
+                    for (final m in AppSettings.snoozeChoices)
+                      FilterChip(
+                        showCheckmark: false,
+                        label: Text(l10n.minutesShort(m)),
+                        selected: settings.snoozeMinutes.contains(m),
+                        // Keep 1 to 3 selected.
+                        onSelected: (on) {
+                          final current = settings.snoozeMinutes;
+                          if (on && current.length < 3) {
+                            repo.setSnoozeMinutes([...current, m]);
+                          } else if (!on && current.length > 1) {
+                            repo.setSnoozeMinutes([...current]..remove(m));
+                          }
+                        },
+                      ),
+                  ],
+                ),
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.schedule),
+                title: Text(l10n.allDayReminderTime),
+                trailing: Text(
+                  l10n.clockTime(
+                    settings.allDayReminderMinutes,
+                    settings.timeFormat,
+                  ),
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                onTap: () async {
+                  final minutes = settings.allDayReminderMinutes;
+                  final picked = await showTimePicker(
+                    context: context,
+                    initialTime: TimeOfDay(
+                      hour: minutes ~/ 60,
+                      minute: minutes % 60,
+                    ),
+                  );
+                  if (picked != null) {
+                    await repo.setAllDayReminderMinutes(
+                      picked.hour * 60 + picked.minute,
+                    );
+                  }
+                },
+              ),
+              if (isDesktop) ...[
+                _Section(l10n.settingsBackground),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l10n.keepRunning),
+                  subtitle: Text(l10n.keepRunningHint),
+                  value: settings.keepRunningInBackground,
+                  onChanged: repo.setKeepRunningInBackground,
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l10n.startOnLogin),
+                  value: settings.startOnLogin,
+                  onChanged: repo.setStartOnLogin,
+                ),
+                if (Platform.isLinux)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: Spacing.sm),
+                    child: Text(
+                      l10n.linuxTrayHint,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+              ],
               _Section(l10n.settingsOrganize),
               ListTile(
                 leading: const Icon(Icons.label_outline),

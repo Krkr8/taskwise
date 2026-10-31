@@ -6,6 +6,7 @@ import 'package:taskwise_shared/taskwise_shared.dart';
 import '../data/app_settings.dart';
 import '../data/db/app_database.dart';
 import '../data/repositories/category_repository.dart';
+import '../data/repositories/reminder_repository.dart';
 import '../data/repositories/repository_base.dart';
 import '../data/repositories/settings_repository.dart';
 import '../data/repositories/task_repository.dart';
@@ -40,6 +41,14 @@ final taskRepositoryProvider = Provider(
 
 final categoryRepositoryProvider = Provider(
   (ref) => CategoryRepository(
+    ref.watch(databaseProvider),
+    deviceId: ref.watch(deviceIdProvider),
+    clock: ref.watch(clockProvider),
+  ),
+);
+
+final reminderRepositoryProvider = Provider(
+  (ref) => ReminderRepository(
     ref.watch(databaseProvider),
     deviceId: ref.watch(deviceIdProvider),
     clock: ref.watch(clockProvider),
@@ -218,3 +227,58 @@ final calendarItemsProvider =
 /// [selectedTaskIdProvider] so the two tabs don't move each other.
 final calendarSelectedTaskIdProvider =
     NotifierProvider<SelectedTaskNotifier, String?>(SelectedTaskNotifier.new);
+
+// ---------------------------------------------------------------- reminders
+
+/// All live time reminders.
+final timeRemindersProvider = StreamProvider<List<Reminder>>(
+  (ref) => ref.watch(reminderRepositoryProvider).watchTimeReminders(),
+);
+
+/// A task's time reminders, in display order.
+final taskRemindersProvider = StreamProvider.family<List<Reminder>, String>(
+  (ref, taskId) => ref.watch(reminderRepositoryProvider).watchForTask(taskId),
+);
+
+/// Ids of tasks that have at least one time reminder (for the 🔔 marker).
+final taskIdsWithRemindersProvider = Provider<Set<String>>(
+  (ref) => {
+    for (final r
+        in ref.watch(timeRemindersProvider).value ?? const <Reminder>[])
+      r.taskId,
+  },
+);
+
+/// Active snoozes on this device.
+final snoozesProvider = StreamProvider<List<Snooze>>(
+  (ref) => ref.watch(settingsRepositoryProvider).watchSnoozes(),
+);
+
+/// A task the app was asked to open (from a notification). The shell shows
+/// it and clears the request.
+class OpenTaskRequestNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  void request(String taskId) => state = taskId;
+
+  void clear() => state = null;
+}
+
+final openTaskRequestProvider =
+    NotifierProvider<OpenTaskRequestNotifier, String?>(
+      OpenTaskRequestNotifier.new,
+    );
+
+/// False once the user has refused notifications (iOS); null = not asked.
+class NotificationPermissionNotifier extends Notifier<bool?> {
+  @override
+  bool? build() => null;
+
+  void set(bool granted) => state = granted;
+}
+
+final notificationPermissionProvider =
+    NotifierProvider<NotificationPermissionNotifier, bool?>(
+      NotificationPermissionNotifier.new,
+    );

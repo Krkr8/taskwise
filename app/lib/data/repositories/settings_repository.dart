@@ -12,6 +12,18 @@ abstract final class SettingKeys {
   static const language = 'language';
   static const timeFormat = 'time_format';
   static const weekStart = 'week_start';
+  static const defaultReminder = 'default_reminder';
+  static const snoozeMinutes = 'snooze_minutes';
+  static const allDayReminderMinutes = 'all_day_reminder_minutes';
+  static const keepRunningInBackground = 'keep_running_in_background';
+  static const startOnLogin = 'start_on_login';
+
+  /// Active snoozes (JSON list of [Snooze]); device-only.
+  static const snoozes = 'snoozes';
+
+  /// When this device last checked for due reminders (ISO UTC). Desktop
+  /// uses it to show reminders missed while the app wasn't running.
+  static const remindersCheckedAt = 'reminders_checked_at';
   static const thisDeviceId = 'this_device_id';
 }
 
@@ -35,6 +47,68 @@ class SettingsRepository extends RepositoryBase {
 
   Future<void> setWeekStart(WeekStart value) =>
       _put(SettingKeys.weekStart, value.name, synced: true);
+
+  Future<void> setDefaultReminder(DefaultReminder value) =>
+      _put(SettingKeys.defaultReminder, value.name, synced: true);
+
+  /// Stores 1 to 3 snooze lengths (sorted, duplicates dropped).
+  Future<void> setSnoozeMinutes(List<int> minutes) {
+    final values = (minutes.toSet().toList()..sort()).take(3).toList();
+    if (values.isEmpty) throw ArgumentError('At least one snooze length');
+    return _put(SettingKeys.snoozeMinutes, values.join(','), synced: false);
+  }
+
+  Future<void> setAllDayReminderMinutes(int minutes) => _put(
+    SettingKeys.allDayReminderMinutes,
+    '${minutes.clamp(0, 24 * 60 - 1)}',
+    synced: false,
+  );
+
+  Future<void> setKeepRunningInBackground(bool value) =>
+      _put(SettingKeys.keepRunningInBackground, '$value', synced: false);
+
+  Future<void> setStartOnLogin(bool value) =>
+      _put(SettingKeys.startOnLogin, '$value', synced: false);
+
+  // --------------------------------------------- reminder bookkeeping
+
+  /// Active snoozes on this device.
+  Stream<List<Snooze>> watchSnoozes() =>
+      (db.select(db.settings)..where((s) => s.id.equals(SettingKeys.snoozes)))
+          .watchSingleOrNull()
+          .map((row) => Snooze.decodeList(row?.value));
+
+  Future<List<Snooze>> getSnoozes() async => Snooze.decodeList(
+    (await (db.select(
+          db.settings,
+        )..where((s) => s.id.equals(SettingKeys.snoozes))).getSingleOrNull())
+        ?.value,
+  );
+
+  /// Adds a snooze, dropping ones that are already over.
+  Future<void> addSnooze(Snooze snooze) async {
+    final at = now();
+    final kept = [
+      for (final s in await getSnoozes())
+        if (s.until.isAfter(at)) s,
+      snooze,
+    ];
+    await _put(SettingKeys.snoozes, Snooze.encodeList(kept), synced: false);
+  }
+
+  Future<DateTime?> getRemindersCheckedAt() async {
+    final row =
+        await (db.select(db.settings)
+              ..where((s) => s.id.equals(SettingKeys.remindersCheckedAt)))
+            .getSingleOrNull();
+    return row == null ? null : DateTime.tryParse(row.value);
+  }
+
+  Future<void> setRemindersCheckedAt(DateTime at) => _put(
+    SettingKeys.remindersCheckedAt,
+    at.toUtc().toIso8601String(),
+    synced: false,
+  );
 
   SimpleSelectStatement<$SettingsTable, SettingRow> _liveRows() =>
       db.select(db.settings)..where((s) => s.deleted.not());
@@ -63,7 +137,26 @@ class SettingsRepository extends RepositoryBase {
           TimeFormat.values.asNameMap()[values[SettingKeys.timeFormat]] ??
           TimeFormat.h12,
       weekStart: WeekStart.fromName(values[SettingKeys.weekStart]),
+      defaultReminder:
+          DefaultReminder.values
+              .asNameMap()[values[SettingKeys.defaultReminder]] ??
+          DefaultReminder.none,
+      snoozeMinutes: _parseSnoozes(values[SettingKeys.snoozeMinutes]),
+      allDayReminderMinutes:
+          int.tryParse(values[SettingKeys.allDayReminderMinutes] ?? '') ??
+          9 * 60,
+      keepRunningInBackground:
+          values[SettingKeys.keepRunningInBackground] != 'false',
+      startOnLogin: values[SettingKeys.startOnLogin] == 'true',
     );
+  }
+
+  static List<int> _parseSnoozes(String? text) {
+    final values = [
+      for (final part in (text ?? '').split(','))
+        if (int.tryParse(part) case final m? when m > 0) m,
+    ];
+    return values.isEmpty ? AppSettings.defaultSnoozeMinutes : values;
   }
 }
 

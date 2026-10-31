@@ -8,11 +8,25 @@ import 'package:taskwise_shared/taskwise_shared.dart';
 import 'app.dart';
 import 'data/db/app_database.dart';
 import 'data/repositories/settings_repository.dart';
+import 'desktop/desktop_shell.dart';
+import 'notifications/desktop_notifier.dart';
+import 'notifications/ios_notifier.dart';
+import 'notifications/notifier.dart';
+import 'notifications/reminder_scheduler.dart';
 import 'state/providers.dart';
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   configureIntl();
+
+  final desktop = Platform.isWindows || Platform.isLinux;
+  if (desktop) {
+    // A second launch just shows the running Taskwise.
+    final shell = await DesktopShell.start(
+      hidden: args.contains(DesktopShell.hiddenArg),
+    );
+    if (shell == null) exit(0);
+  }
 
   final db = AppDatabase();
   final type = _detectDeviceType();
@@ -25,6 +39,13 @@ Future<void> main() async {
     db,
     deviceId: deviceId,
   ).loadSettings();
+  await DesktopShell.instance?.apply(settings);
+
+  final ReminderNotifier notifier = desktop
+      ? DesktopNotifier()
+      : Platform.isIOS
+      ? IosNotifier()
+      : NoopNotifier();
 
   runApp(
     ProviderScope(
@@ -32,6 +53,7 @@ Future<void> main() async {
         databaseProvider.overrideWithValue(db),
         deviceIdProvider.overrideWithValue(deviceId),
         initialSettingsProvider.overrideWithValue(settings),
+        reminderNotifierProvider.overrideWithValue(notifier),
       ],
       child: const TaskwiseApp(),
     ),

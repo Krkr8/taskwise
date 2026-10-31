@@ -594,4 +594,138 @@ class AppLocalizationsEn extends AppLocalizations {
   String upcomingOccurrence(String title) {
     return 'Upcoming repeat of \"$title\"';
   }
+
+  @override
+  String get reminders => 'Reminders';
+
+  @override
+  String get addReminder => 'Add reminder';
+
+  @override
+  String get reminderAtDueTime => 'At due time';
+
+  @override
+  String reminderBefore(String duration) {
+    return '$duration before';
+  }
+
+  @override
+  String durationMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count minutes',
+      one: '1 minute',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String durationHours(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hours',
+      one: '1 hour',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String durationDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reminderCustom => 'Custom date & time…';
+
+  @override
+  String get reminderNeedsDueDate =>
+      'Set a due date to add reminders before it.';
+
+  @override
+  String get removeReminder => 'Remove reminder';
+
+  @override
+  String get hasReminders => 'Has reminders';
+
+  @override
+  String get notificationsDenied =>
+      'Notifications are off for Taskwise. Turn them on in the iPhone\'s Settings to get reminders.';
+
+  @override
+  String get notifDone => 'Done';
+
+  @override
+  String notifSnooze(String duration) {
+    return 'Snooze $duration';
+  }
+
+  @override
+  String get notifOpen => 'Open';
+
+  @override
+  String notifDue(String when) {
+    return 'Due: $when';
+  }
+
+  @override
+  String notifSnoozed(String when) {
+    return 'Snoozed · Due: $when';
+  }
+
+  @override
+  String get settingsNotifications => 'Notifications';
+
+  @override
+  String get defaultReminder => 'Default reminder (when a task gets a time)';
+
+  @override
+  String get defaultReminderNone => 'None';
+
+  @override
+  String get defaultReminderAtDue => 'At due time';
+
+  @override
+  String get defaultReminderMin15 => '15 min before';
+
+  @override
+  String get snoozeOptions => 'Snooze options (up to 3)';
+
+  @override
+  String minutesShort(int count) {
+    return '$count min';
+  }
+
+  @override
+  String get allDayReminderTime => 'All-day tasks remind at';
+
+  @override
+  String get settingsBackground => 'Background';
+
+  @override
+  String get keepRunning => 'Keep running when the window is closed';
+
+  @override
+  String get keepRunningHint =>
+      'Reminders only appear while Taskwise is running. Closing the window keeps it in the tray.';
+
+  @override
+  String get startOnLogin => 'Start when I log in';
+
+  @override
+  String get linuxTrayHint =>
+      'On GNOME the tray icon needs the AppIndicator extension. Without it, open Taskwise from the app menu to bring the window back.';
+
+  @override
+  String get trayShow => 'Show Taskwise';
+
+  @override
+  String get trayQuit => 'Quit Taskwise';
 }

@@ -616,4 +616,144 @@ class AppLocalizationsAr extends AppLocalizations {
   String upcomingOccurrence(String title) {
     return 'تكرار قادم لـ \"$title\"';
   }
+
+  @override
+  String get reminders => 'التذكيرات';
+
+  @override
+  String get addReminder => 'إضافة تذكير';
+
+  @override
+  String get reminderAtDueTime => 'في موعد الاستحقاق';
+
+  @override
+  String reminderBefore(String duration) {
+    return 'قبل $duration';
+  }
+
+  @override
+  String durationMinutes(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count دقيقة',
+      few: '$count دقائق',
+      two: 'دقيقتين',
+      one: 'دقيقة واحدة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String durationHours(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ساعة',
+      few: '$count ساعات',
+      two: 'ساعتين',
+      one: 'ساعة واحدة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String durationDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count يومًا',
+      few: '$count أيام',
+      two: 'يومين',
+      one: 'يوم واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get reminderCustom => 'تاريخ ووقت مخصصان…';
+
+  @override
+  String get reminderNeedsDueDate =>
+      'حدّد تاريخ الاستحقاق لإضافة تذكيرات قبله.';
+
+  @override
+  String get removeReminder => 'إزالة التذكير';
+
+  @override
+  String get hasReminders => 'لها تذكيرات';
+
+  @override
+  String get notificationsDenied =>
+      'الإشعارات متوقفة لتطبيق Taskwise. فعّلها من إعدادات الآيفون لتصلك التذكيرات.';
+
+  @override
+  String get notifDone => 'تمت';
+
+  @override
+  String notifSnooze(String duration) {
+    return 'تأجيل $duration';
+  }
+
+  @override
+  String get notifOpen => 'فتح';
+
+  @override
+  String notifDue(String when) {
+    return 'الموعد: $when';
+  }
+
+  @override
+  String notifSnoozed(String when) {
+    return 'مؤجلة · الموعد: $when';
+  }
+
+  @override
+  String get settingsNotifications => 'الإشعارات';
+
+  @override
+  String get defaultReminder => 'التذكير الافتراضي (عند تحديد وقت للمهمة)';
+
+  @override
+  String get defaultReminderNone => 'بدون';
+
+  @override
+  String get defaultReminderAtDue => 'في الموعد';
+
+  @override
+  String get defaultReminderMin15 => 'قبل 15 دقيقة';
+
+  @override
+  String get snoozeOptions => 'مدد التأجيل (حتى 3)';
+
+  @override
+  String minutesShort(int count) {
+    return '$count د';
+  }
+
+  @override
+  String get allDayReminderTime => 'وقت تذكير المهام طوال اليوم';
+
+  @override
+  String get settingsBackground => 'التشغيل في الخلفية';
+
+  @override
+  String get keepRunning => 'الاستمرار في العمل عند إغلاق النافذة';
+
+  @override
+  String get keepRunningHint =>
+      'لا تظهر التذكيرات إلا أثناء تشغيل Taskwise. إغلاق النافذة يبقيه في شريط النظام.';
+
+  @override
+  String get startOnLogin => 'التشغيل عند تسجيل الدخول';
+
+  @override
+  String get linuxTrayHint =>
+      'في GNOME تحتاج أيقونة شريط النظام إلى إضافة AppIndicator. بدونها افتح Taskwise من قائمة التطبيقات لإظهار النافذة.';
+
+  @override
+  String get trayShow => 'إظهار Taskwise';
+
+  @override
+  String get trayQuit => 'إنهاء Taskwise';
 }

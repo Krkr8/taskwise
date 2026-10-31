@@ -997,6 +997,198 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Upcoming repeat of \"{title}\"'**
   String upcomingOccurrence(String title);
+
+  /// No description provided for @reminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get reminders;
+
+  /// No description provided for @addReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Add reminder'**
+  String get addReminder;
+
+  /// No description provided for @reminderAtDueTime.
+  ///
+  /// In en, this message translates to:
+  /// **'At due time'**
+  String get reminderAtDueTime;
+
+  /// No description provided for @reminderBefore.
+  ///
+  /// In en, this message translates to:
+  /// **'{duration} before'**
+  String reminderBefore(String duration);
+
+  /// No description provided for @durationMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 minute} other{{count} minutes}}'**
+  String durationMinutes(int count);
+
+  /// No description provided for @durationHours.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 hour} other{{count} hours}}'**
+  String durationHours(int count);
+
+  /// No description provided for @durationDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day} other{{count} days}}'**
+  String durationDays(int count);
+
+  /// No description provided for @reminderCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom date & time…'**
+  String get reminderCustom;
+
+  /// No description provided for @reminderNeedsDueDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a due date to add reminders before it.'**
+  String get reminderNeedsDueDate;
+
+  /// No description provided for @removeReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove reminder'**
+  String get removeReminder;
+
+  /// No description provided for @hasReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Has reminders'**
+  String get hasReminders;
+
+  /// No description provided for @notificationsDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are off for Taskwise. Turn them on in the iPhone\'s Settings to get reminders.'**
+  String get notificationsDenied;
+
+  /// No description provided for @notifDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get notifDone;
+
+  /// No description provided for @notifSnooze.
+  ///
+  /// In en, this message translates to:
+  /// **'Snooze {duration}'**
+  String notifSnooze(String duration);
+
+  /// No description provided for @notifOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get notifOpen;
+
+  /// No description provided for @notifDue.
+  ///
+  /// In en, this message translates to:
+  /// **'Due: {when}'**
+  String notifDue(String when);
+
+  /// No description provided for @notifSnoozed.
+  ///
+  /// In en, this message translates to:
+  /// **'Snoozed · Due: {when}'**
+  String notifSnoozed(String when);
+
+  /// No description provided for @settingsNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get settingsNotifications;
+
+  /// No description provided for @defaultReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Default reminder (when a task gets a time)'**
+  String get defaultReminder;
+
+  /// No description provided for @defaultReminderNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get defaultReminderNone;
+
+  /// No description provided for @defaultReminderAtDue.
+  ///
+  /// In en, this message translates to:
+  /// **'At due time'**
+  String get defaultReminderAtDue;
+
+  /// No description provided for @defaultReminderMin15.
+  ///
+  /// In en, this message translates to:
+  /// **'15 min before'**
+  String get defaultReminderMin15;
+
+  /// No description provided for @snoozeOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Snooze options (up to 3)'**
+  String get snoozeOptions;
+
+  /// No description provided for @minutesShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} min'**
+  String minutesShort(int count);
+
+  /// No description provided for @allDayReminderTime.
+  ///
+  /// In en, this message translates to:
+  /// **'All-day tasks remind at'**
+  String get allDayReminderTime;
+
+  /// No description provided for @settingsBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Background'**
+  String get settingsBackground;
+
+  /// No description provided for @keepRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep running when the window is closed'**
+  String get keepRunning;
+
+  /// No description provided for @keepRunningHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders only appear while Taskwise is running. Closing the window keeps it in the tray.'**
+  String get keepRunningHint;
+
+  /// No description provided for @startOnLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Start when I log in'**
+  String get startOnLogin;
+
+  /// No description provided for @linuxTrayHint.
+  ///
+  /// In en, this message translates to:
+  /// **'On GNOME the tray icon needs the AppIndicator extension. Without it, open Taskwise from the app menu to bring the window back.'**
+  String get linuxTrayHint;
+
+  /// No description provided for @trayShow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Taskwise'**
+  String get trayShow;
+
+  /// No description provided for @trayQuit.
+  ///
+  /// In en, this message translates to:
+  /// **'Quit Taskwise'**
+  String get trayQuit;
 }
 
 class _AppLocalizationsDelegate

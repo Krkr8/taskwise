@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
 
 import '../db/app_database.dart';
+import 'reminder_repository.dart';
 import 'repository_base.dart';
 
 /// What [TaskRepository.setDone] changed, for [TaskRepository.undoCompletion].
@@ -219,6 +220,38 @@ class TaskRepository extends RepositoryBase {
             .map((l) => l.tagId)
             .get();
     await setTaskTags(next.id, tagIds.toSet());
+
+    // Reminders follow the task: relative ones keep their offset, absolute
+    // ones move by as many days as the due date did.
+    final shift = due == null ? 0 : nextDate.differenceInDays(due);
+    final reminders = await (db.select(
+      db.reminders,
+    )..where((r) => r.taskId.equals(task.id) & r.deleted.not())).get();
+    for (final r in reminders) {
+      final absolute = r.absoluteAt;
+      await db
+          .into(db.reminders)
+          .insert(
+            ReminderRepository.toCompanion(
+              Reminder(
+                id: newId(),
+                taskId: next.id,
+                kind: r.kind,
+                absoluteAt: absolute == null
+                    ? null
+                    : _shiftDays(absolute, shift),
+                minutesBeforeDue: r.minutesBeforeDue,
+                placeId: r.placeId,
+                latitude: r.latitude,
+                longitude: r.longitude,
+                radiusMeters: r.radiusMeters,
+                trigger: r.trigger,
+                updatedAt: at,
+                updatedByDevice: deviceId,
+              ),
+            ),
+          );
+    }
     return next.id;
   }
 
@@ -393,6 +426,18 @@ class TaskRepository extends RepositoryBase {
               );
         }
       });
+
+  /// [utc] moved by [days] calendar days in local wall-clock time.
+  static DateTime _shiftDays(DateTime utc, int days) {
+    final local = utc.toLocal();
+    return DateTime(
+      local.year,
+      local.month,
+      local.day + days,
+      local.hour,
+      local.minute,
+    ).toUtc();
+  }
 
   // -------------------------------------------------------------- mapping
 

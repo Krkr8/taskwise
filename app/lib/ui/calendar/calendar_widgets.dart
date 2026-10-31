@@ -89,7 +89,15 @@ class CalendarChip extends ConsumerWidget {
                 bottom: 1,
               ),
               child: stacked
-                  ? _stackedContent(context, l10n.clockTime, timeFormat, style)
+                  ? _stackedContent(
+                      context,
+                      l10n.clockTime,
+                      timeFormat,
+                      style,
+                      hasReminders: ref
+                          .watch(taskIdsWithRemindersProvider)
+                          .contains(task.id),
+                    )
                   : Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -124,8 +132,9 @@ class CalendarChip extends ConsumerWidget {
     BuildContext context,
     String Function(int, TimeFormat) clockTime,
     TimeFormat timeFormat,
-    TextStyle? style,
-  ) {
+    TextStyle? style, {
+    required bool hasReminders,
+  }) {
     final theme = Theme.of(context);
     final repeats = item.projected || item.task.recurrenceRule != null;
     final metaStyle = theme.textTheme.labelSmall?.copyWith(
@@ -138,7 +147,7 @@ class CalendarChip extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (item.timeMinutes != null || repeats)
+          if (item.timeMinutes != null || repeats || hasReminders)
             // Shrinks to fit narrow phone columns instead of cutting off.
             FittedBox(
               fit: BoxFit.scaleDown,
@@ -146,6 +155,15 @@ class CalendarChip extends ConsumerWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (hasReminders)
+                    Padding(
+                      padding: const EdgeInsetsDirectional.only(end: 2),
+                      child: Icon(
+                        Icons.notifications_outlined,
+                        size: 10,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                   if (repeats)
                     Padding(
                       padding: const EdgeInsetsDirectional.only(end: 2),
