@@ -1,6 +1,6 @@
 import { createClient, type Client } from '@libsql/client';
 
-import { createApp } from '../src/app.js';
+import { createApp } from '../src/api.js';
 import { migrate } from '../src/db/migrations.js';
 
 export const setupSecret = 'test-setup-secret-0123456789';

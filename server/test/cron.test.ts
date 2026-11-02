@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createApp } from '../src/app.js';
+import { createApp } from '../src/api.js';
 import { tombstoneMaxAgeMs } from '../src/sync/purge.js';
 import { cronSecret, record, testApp } from './helpers.js';
 

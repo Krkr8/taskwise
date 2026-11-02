@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createApp } from '../src/app.js';
+import { createApp } from '../src/api.js';
 import { Database } from '../src/db/client.js';
 import { password, setupSecret, testApp } from './helpers.js';
 

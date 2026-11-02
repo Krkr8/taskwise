@@ -1,9 +1,10 @@
 /**
- * Vercel entry. Vercel detects a Hono app in src/index.ts and serves its
- * default export as a function. Configure it with the environment
+ * Vercel entry. Vercel serves the default export of the first Hono file it
+ * finds among app.ts, index.ts, server.ts, src/app.ts, src/index.ts... so
+ * don't add a file with one of those names before this one. Configure it with the environment
  * variables listed in .env.example.
  */
-import { createApp } from './app.js';
+import { createApp } from './api.js';
 import { configFromEnv } from './config.js';
 import { Database } from './db/client.js';
 

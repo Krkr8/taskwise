@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { maxBodyBytes } from '../src/app.js';
+import { maxBodyBytes } from '../src/api.js';
 import { record, testApp } from './helpers.js';
 
 async function ready() {
