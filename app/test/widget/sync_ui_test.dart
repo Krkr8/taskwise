@@ -167,10 +167,36 @@ void main() {
     expect(find.text('Synced just now'), findsOneWidget);
     expect(find.textContaining('Signed in as owner'), findsOneWidget);
 
+    server.devices['phone'] = {
+      'id': 'phone',
+      'name': 'iPhone',
+      'type': 'ios',
+      'lastSeenAt': '2026-11-02T08:00:00.000Z',
+      'updatedAt': '2026-11-02T08:00:00.000Z',
+      'deleted': false,
+      'updatedByDevice': null,
+    };
+    await tester.tap(find.text('Sync now'));
+    await _settle(tester);
     await tester.tap(find.text('Devices'));
     await _settle(tester);
     expect(find.text('Fedora Laptop'), findsOneWidget);
-    expect(find.text('This device'), findsOneWidget);
+    // The first device to sign in is the main one, so it manages the others.
+    expect(find.text('Main device · This device'), findsOneWidget);
+    expect(find.text('Make this the main device'), findsNothing);
+    await tester.tap(find.byType(PopupMenuButton<String>).last);
+    await _settle(tester);
+    expect(find.text('Remove'), findsOneWidget);
+    expect(find.text('Make main device'), findsOneWidget);
+
+    // Hand the role to the iPhone: this device can't remove it any more.
+    await tester.tap(find.text('Make main device'));
+    await _settle(tester);
+    await tester.tap(find.widgetWithText(FilledButton, 'Make main device'));
+    await _settle(tester);
+    expect(server.devices['phone']!['main'], isTrue);
+    expect(find.text('Make this the main device'), findsOneWidget);
+    expect(find.byType(PopupMenuButton<String>), findsOneWidget); // own row
   });
 
   syncUiTest('a task can be limited to some devices', (

@@ -11,6 +11,7 @@ final class Device implements SyncRecord {
     required this.updatedAt,
     this.deleted = false,
     this.updatedByDevice,
+    this.isMain = false,
   });
 
   factory Device.fromJson(Map<String, Object?> json) => Device(
@@ -21,6 +22,7 @@ final class Device implements SyncRecord {
     updatedAt: JsonFields.parseRequiredDateTime(json['updatedAt']),
     deleted: json['deleted'] as bool? ?? false,
     updatedByDevice: json['updatedByDevice'] as String?,
+    isMain: json['main'] as bool? ?? false,
   );
 
   @override
@@ -35,6 +37,9 @@ final class Device implements SyncRecord {
   @override
   final String? updatedByDevice;
 
+  /// The main device manages the account's devices (set by the server).
+  final bool isMain;
+
   Map<String, Object?> toJson() => {
     'id': id,
     'name': name,
@@ -43,6 +48,7 @@ final class Device implements SyncRecord {
     'updatedAt': JsonFields.dateTime(updatedAt),
     'deleted': deleted,
     'updatedByDevice': updatedByDevice,
+    'main': isMain,
   };
 
   @override
@@ -54,7 +60,8 @@ final class Device implements SyncRecord {
       other.lastSeenAt == lastSeenAt &&
       other.updatedAt == updatedAt &&
       other.deleted == deleted &&
-      other.updatedByDevice == updatedByDevice;
+      other.updatedByDevice == updatedByDevice &&
+      other.isMain == isMain;
 
   @override
   int get hashCode => Object.hash(
@@ -65,6 +72,7 @@ final class Device implements SyncRecord {
     updatedAt,
     deleted,
     updatedByDevice,
+    isMain,
   );
 
   @override

@@ -951,4 +951,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notNotifiedHere => 'Doesn\'t remind on this device';
+
+  @override
+  String get notifTestButton => 'Send a test notification';
+
+  @override
+  String get notifTestBody => 'Notifications work on this device.';
+
+  @override
+  String get notifTestDenied =>
+      'Notifications are turned off for Taskwise. Turn them on in the system settings.';
+
+  @override
+  String get notifTestSent =>
+      'Sent. If nothing appeared, check the system\'s notification settings (and Focus / Do Not Disturb).';
+
+  @override
+  String get reminderPassed => 'time passed';
+
+  @override
+  String get deviceMain => 'Main device';
+
+  @override
+  String get devicesMainHint =>
+      'The main device manages the others: only it can remove or rename them.';
+
+  @override
+  String get deviceMakeMain => 'Make main device';
+
+  @override
+  String deviceMakeMainConfirm(String name) {
+    return 'Make $name the main device? This device then can\'t remove or rename other devices any more.';
+  }
+
+  @override
+  String get deviceClaimMain => 'Make this the main device';
+
+  @override
+  String get deviceClaimMainHelp =>
+      'If the main device is lost, enter your account password to make this one the main device.';
+
+  @override
+  String get deviceWrongPassword => 'Wrong password.';
 }

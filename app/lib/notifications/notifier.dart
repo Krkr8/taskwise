@@ -159,6 +159,12 @@ abstract class ReminderNotifier {
   /// Asks the OS for permission (iOS). Returns false if denied.
   Future<bool> requestPermission() async => true;
 
+  /// Shows a notification right away, to check notifications work here.
+  Future<void> showTest({required String title, required String body}) async {}
+
+  /// Id of the test notification (outside the range plans use).
+  static const testId = 2147480000;
+
   void dispose() {}
 }
 

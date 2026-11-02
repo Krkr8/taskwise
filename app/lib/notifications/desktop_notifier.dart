@@ -80,6 +80,18 @@ class DesktopNotifier extends ReminderNotifier {
     );
   }
 
+  @override
+  Future<void> showTest({required String title, required String body}) =>
+      _plugin.show(
+        id: ReminderNotifier.testId,
+        title: title,
+        body: body,
+        notificationDetails: const NotificationDetails(
+          linux: LinuxNotificationDetails(),
+          windows: WindowsNotificationDetails(),
+        ),
+      );
+
   Future<void> _show(PlannedNotification p) {
     final payload = NotificationPayload.of(p).encode();
     final snoozes = _texts.snoozeMinutes;

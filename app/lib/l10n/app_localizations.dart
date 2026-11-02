@@ -1531,6 +1531,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Doesn\'t remind on this device'**
   String get notNotifiedHere;
+
+  /// No description provided for @notifTestButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a test notification'**
+  String get notifTestButton;
+
+  /// No description provided for @notifTestBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications work on this device.'**
+  String get notifTestBody;
+
+  /// No description provided for @notifTestDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are turned off for Taskwise. Turn them on in the system settings.'**
+  String get notifTestDenied;
+
+  /// No description provided for @notifTestSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent. If nothing appeared, check the system\'s notification settings (and Focus / Do Not Disturb).'**
+  String get notifTestSent;
+
+  /// No description provided for @reminderPassed.
+  ///
+  /// In en, this message translates to:
+  /// **'time passed'**
+  String get reminderPassed;
+
+  /// No description provided for @deviceMain.
+  ///
+  /// In en, this message translates to:
+  /// **'Main device'**
+  String get deviceMain;
+
+  /// No description provided for @devicesMainHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The main device manages the others: only it can remove or rename them.'**
+  String get devicesMainHint;
+
+  /// No description provided for @deviceMakeMain.
+  ///
+  /// In en, this message translates to:
+  /// **'Make main device'**
+  String get deviceMakeMain;
+
+  /// No description provided for @deviceMakeMainConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Make {name} the main device? This device then can\'t remove or rename other devices any more.'**
+  String deviceMakeMainConfirm(String name);
+
+  /// No description provided for @deviceClaimMain.
+  ///
+  /// In en, this message translates to:
+  /// **'Make this the main device'**
+  String get deviceClaimMain;
+
+  /// No description provided for @deviceClaimMainHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'If the main device is lost, enter your account password to make this one the main device.'**
+  String get deviceClaimMainHelp;
+
+  /// No description provided for @deviceWrongPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong password.'**
+  String get deviceWrongPassword;
 }
 
 class _AppLocalizationsDelegate

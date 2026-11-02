@@ -53,8 +53,13 @@ class FakeSyncServer {
       final token = 'tw_${_tokenCount++}';
       tokens.removeWhere((_, id) => id == device['id']);
       tokens[token] = device['id']! as String;
+      final hasMain = devices.values.any(
+        (d) => d['main'] == true && d['deleted'] != true,
+      );
+      final existing = devices[device['id']];
       devices[device['id']! as String] = {
         ...device,
+        'main': (existing?['main'] ?? false) == true || !hasMain,
         'lastSeenAt': '2026-11-02T10:00:00.000Z',
         'updatedAt': '2026-11-02T10:00:00.000Z',
         'deleted': false,
@@ -112,12 +117,35 @@ class FakeSyncServer {
       });
     }
     if (path == '/devices') return _json({'devices': devices.values.toList()});
+    final me = devices[deviceId]!;
+    if (path == '/devices/claim-main') {
+      if (body!['password'] != password) return _error(403, 'wrong_password');
+      for (final d in devices.values) {
+        d['main'] = false;
+      }
+      me['main'] = true;
+      return _json(me);
+    }
     if (path.startsWith('/devices/')) {
       final id = Uri.decodeComponent(path.substring('/devices/'.length));
       final device = devices[id];
       if (device == null) return _error(404, 'not_found');
-      if (request.method == 'PATCH') device['name'] = body!['name'];
-      if (request.method == 'DELETE') device['deleted'] = true;
+      final isMain = me['main'] == true;
+      if (id != deviceId && !isMain) return _error(403, 'forbidden');
+      if (request.method == 'PATCH') {
+        if (body!['name'] case final String name) device['name'] = name;
+        if (body['main'] == true) {
+          if (!isMain) return _error(403, 'forbidden');
+          for (final d in devices.values) {
+            d['main'] = false;
+          }
+          device['main'] = true;
+        }
+      }
+      if (request.method == 'DELETE') {
+        device['deleted'] = true;
+        device['main'] = false;
+      }
       return _json(device);
     }
     return _error(404, 'not_found');

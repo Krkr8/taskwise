@@ -984,4 +984,46 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get notNotifiedHere => 'لا تذكّر على هذا الجهاز';
+
+  @override
+  String get notifTestButton => 'إرسال إشعار تجريبي';
+
+  @override
+  String get notifTestBody => 'الإشعارات تعمل على هذا الجهاز.';
+
+  @override
+  String get notifTestDenied =>
+      'الإشعارات معطّلة لـ Taskwise. فعّلها من إعدادات النظام.';
+
+  @override
+  String get notifTestSent =>
+      'تم الإرسال. إن لم يظهر شيء، فتحقّق من إعدادات الإشعارات في النظام (ووضع التركيز / عدم الإزعاج).';
+
+  @override
+  String get reminderPassed => 'فات وقته';
+
+  @override
+  String get deviceMain => 'الجهاز الرئيسي';
+
+  @override
+  String get devicesMainHint =>
+      'الجهاز الرئيسي يدير بقية الأجهزة: هو وحده يستطيع إزالتها أو إعادة تسميتها.';
+
+  @override
+  String get deviceMakeMain => 'جعله الجهاز الرئيسي';
+
+  @override
+  String deviceMakeMainConfirm(String name) {
+    return 'جعل $name الجهاز الرئيسي؟ لن يستطيع هذا الجهاز بعدها إزالة الأجهزة الأخرى أو إعادة تسميتها.';
+  }
+
+  @override
+  String get deviceClaimMain => 'اجعل هذا الجهاز الرئيسي';
+
+  @override
+  String get deviceClaimMainHelp =>
+      'إذا فُقد الجهاز الرئيسي، أدخل كلمة مرور حسابك لجعل هذا الجهاز هو الرئيسي.';
+
+  @override
+  String get deviceWrongPassword => 'كلمة المرور غير صحيحة.';
 }

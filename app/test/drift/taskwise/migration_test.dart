@@ -37,7 +37,7 @@ void main() {
     }
   });
 
-  test('v1 to v2 keeps the data and queues synced rows for upload', () async {
+  test('v1 to v3 keeps the data and queues synced rows for upload', () async {
     final schema = await verifier.schemaAt(1);
     final old = schema.rawDatabase;
     old
@@ -57,7 +57,7 @@ void main() {
       );
 
     final db = AppDatabase(schema.newConnection());
-    await verifier.migrateAndValidate(db, 2);
+    await verifier.migrateAndValidate(db, 3);
 
     final task = await db.select(db.tasks).getSingle();
     expect(task.title, 'Old task');

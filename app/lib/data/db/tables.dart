@@ -98,6 +98,9 @@ class Devices extends Table with SyncColumns {
   TextColumn get type => textEnum<DeviceType>()();
   IntColumn get lastSeenAt =>
       integer().map(const UtcMillisConverter()).nullable()();
+
+  /// The main device manages the others (schema v3; set by the server).
+  BoolColumn get isMain => boolean().withDefault(const Constant(false))();
 }
 
 /// Explicit notify-on-device targets, used when a task's notifyAllDevices

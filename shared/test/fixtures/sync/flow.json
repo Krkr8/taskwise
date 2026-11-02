@@ -128,7 +128,8 @@
             "lastSeenAt": "2026-10-31T12:00:00.000Z",
             "updatedAt": "2026-10-31T12:00:00.000Z",
             "deleted": false,
-            "updatedByDevice": null
+            "updatedByDevice": null,
+            "main": true
           }
         }
       },
@@ -160,7 +161,8 @@
             "lastSeenAt": "2026-10-31T12:00:00.000Z",
             "updatedAt": "2026-10-31T12:00:00.000Z",
             "deleted": false,
-            "updatedByDevice": null
+            "updatedByDevice": null,
+            "main": false
           }
         }
       },
@@ -674,7 +676,7 @@
       }
     },
     {
-      "name": "list devices",
+      "name": "list devices (the first one is the main device)",
       "request": {
         "method": "GET",
         "path": "/api/v1/devices",
@@ -691,7 +693,8 @@
               "lastSeenAt": "2026-10-31T12:00:00.000Z",
               "updatedAt": "2026-10-31T12:00:00.000Z",
               "deleted": false,
-              "updatedByDevice": null
+              "updatedByDevice": null,
+              "main": true
             },
             {
               "id": "0199a3c0-0000-7000-8000-00000000d002",
@@ -700,14 +703,15 @@
               "lastSeenAt": "2026-10-31T12:00:00.000Z",
               "updatedAt": "2026-10-31T12:00:00.000Z",
               "deleted": false,
-              "updatedByDevice": null
+              "updatedByDevice": null,
+              "main": false
             }
           ]
         }
       }
     },
     {
-      "name": "rename a device",
+      "name": "the main device renames another device",
       "request": {
         "method": "PATCH",
         "path": "/api/v1/devices/0199a3c0-0000-7000-8000-00000000d002",
@@ -725,12 +729,142 @@
           "lastSeenAt": "2026-10-31T12:00:00.000Z",
           "updatedAt": "2026-10-31T12:00:00.000Z",
           "deleted": false,
-          "updatedByDevice": null
+          "updatedByDevice": null,
+          "main": false
         }
       }
     },
     {
-      "name": "revoke a device",
+      "name": "any device renames itself",
+      "request": {
+        "method": "PATCH",
+        "path": "/api/v1/devices/0199a3c0-0000-7000-8000-00000000d002",
+        "auth": "iphone",
+        "body": {
+          "name": "iPhone"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "id": "0199a3c0-0000-7000-8000-00000000d002",
+          "name": "iPhone",
+          "type": "ios",
+          "lastSeenAt": "2026-10-31T12:00:00.000Z",
+          "updatedAt": "2026-10-31T12:00:00.000Z",
+          "deleted": false,
+          "updatedByDevice": null,
+          "main": false
+        }
+      }
+    },
+    {
+      "name": "other devices can't rename others",
+      "request": {
+        "method": "PATCH",
+        "path": "/api/v1/devices/0199a3c0-0000-7000-8000-00000000d001",
+        "auth": "iphone",
+        "body": {
+          "name": "x"
+        }
+      },
+      "response": {
+        "status": 403,
+        "body": {
+          "error": {
+            "code": "forbidden",
+            "message": "$string"
+          }
+        }
+      }
+    },
+    {
+      "name": "other devices can't remove others",
+      "request": {
+        "method": "DELETE",
+        "path": "/api/v1/devices/0199a3c0-0000-7000-8000-00000000d001",
+        "auth": "iphone"
+      },
+      "response": {
+        "status": 403,
+        "body": {
+          "error": {
+            "code": "forbidden",
+            "message": "$string"
+          }
+        }
+      }
+    },
+    {
+      "name": "claiming the main role needs the password",
+      "request": {
+        "method": "POST",
+        "path": "/api/v1/devices/claim-main",
+        "auth": "iphone",
+        "body": {
+          "password": "wrong"
+        }
+      },
+      "response": {
+        "status": 403,
+        "body": {
+          "error": {
+            "code": "wrong_password",
+            "message": "$string"
+          }
+        }
+      }
+    },
+    {
+      "name": "claim the main role with the password",
+      "request": {
+        "method": "POST",
+        "path": "/api/v1/devices/claim-main",
+        "auth": "iphone",
+        "body": {
+          "password": "a long password"
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "id": "0199a3c0-0000-7000-8000-00000000d002",
+          "name": "iPhone",
+          "type": "ios",
+          "lastSeenAt": "2026-10-31T12:00:00.000Z",
+          "updatedAt": "2026-10-31T12:00:00.000Z",
+          "deleted": false,
+          "updatedByDevice": null,
+          "main": true
+        }
+      }
+    },
+    {
+      "name": "the main device hands the role back",
+      "request": {
+        "method": "PATCH",
+        "path": "/api/v1/devices/0199a3c0-0000-7000-8000-00000000d001",
+        "auth": "iphone",
+        "body": {
+          "main": true
+        }
+      },
+      "response": {
+        "status": 200,
+        "body": {
+          "id": "0199a3c0-0000-7000-8000-00000000d001",
+          "name": "Fedora Laptop",
+          "type": "linux",
+          "lastSeenAt": "2026-10-31T12:00:00.000Z",
+          "updatedAt": "2026-10-31T12:00:00.000Z",
+          "deleted": false,
+          "updatedByDevice": null,
+          "main": true
+        }
+      }
+    },
+    {
+      "name": "the main device removes another device",
       "request": {
         "method": "DELETE",
         "path": "/api/v1/devices/0199a3c0-0000-7000-8000-00000000d002",
@@ -740,17 +874,18 @@
         "status": 200,
         "body": {
           "id": "0199a3c0-0000-7000-8000-00000000d002",
-          "name": "My iPhone",
+          "name": "iPhone",
           "type": "ios",
           "lastSeenAt": "2026-10-31T12:00:00.000Z",
           "updatedAt": "2026-10-31T12:00:00.000Z",
           "deleted": true,
-          "updatedByDevice": null
+          "updatedByDevice": null,
+          "main": false
         }
       }
     },
     {
-      "name": "a revoked device is refused",
+      "name": "a removed device is refused",
       "request": {
         "method": "GET",
         "path": "/api/v1/sync?since=0",

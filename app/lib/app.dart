@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -28,6 +29,7 @@ class TaskwiseApp extends ConsumerWidget {
     return MaterialApp(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
+      scrollBehavior: const AppScrollBehavior(),
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: switch (settings.theme) {
@@ -66,6 +68,42 @@ class TaskwiseApp extends ConsumerWidget {
         ),
       ),
       home: const AdaptiveShell(),
+    );
+  }
+}
+
+/// Desktop scrolling: besides the wheel and the touchpad, lists can be
+/// dragged with the mouse, and their scrollbars stay visible so they can be
+/// grabbed (Flutter's desktop default allows neither).
+class AppScrollBehavior extends MaterialScrollBehavior {
+  const AppScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    ...super.dragDevices,
+    PointerDeviceKind.mouse,
+  };
+
+  @override
+  Widget buildScrollbar(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) {
+    final desktop = switch (getPlatform(context)) {
+      TargetPlatform.windows ||
+      TargetPlatform.linux ||
+      TargetPlatform.macOS => true,
+      _ => false,
+    };
+    if (!desktop || details.direction != AxisDirection.down) {
+      return super.buildScrollbar(context, child, details);
+    }
+    return Scrollbar(
+      controller: details.controller,
+      thumbVisibility: true,
+      interactive: true,
+      child: child,
     );
   }
 }

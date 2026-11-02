@@ -4053,6 +4053,19 @@ class $DevicesTable extends Devices with TableInfo<$DevicesTable, DeviceRow> {
         type: DriftSqlType.int,
         requiredDuringInsert: false,
       ).withConverter<DateTime?>($DevicesTable.$converterlastSeenAtn);
+  static const VerificationMeta _isMainMeta = const VerificationMeta('isMain');
+  @override
+  late final GeneratedColumn<bool> isMain = GeneratedColumn<bool>(
+    'is_main',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_main" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -4062,6 +4075,7 @@ class $DevicesTable extends Devices with TableInfo<$DevicesTable, DeviceRow> {
     name,
     type,
     lastSeenAt,
+    isMain,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4102,6 +4116,12 @@ class $DevicesTable extends Devices with TableInfo<$DevicesTable, DeviceRow> {
       );
     } else if (isInserting) {
       context.missing(_nameMeta);
+    }
+    if (data.containsKey('is_main')) {
+      context.handle(
+        _isMainMeta,
+        isMain.isAcceptableOrUnknown(data['is_main']!, _isMainMeta),
+      );
     }
     return context;
   }
@@ -4146,6 +4166,10 @@ class $DevicesTable extends Devices with TableInfo<$DevicesTable, DeviceRow> {
           data['${effectivePrefix}last_seen_at'],
         ),
       ),
+      isMain: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_main'],
+      )!,
     );
   }
 
@@ -4172,6 +4196,9 @@ class DeviceRow extends DataClass implements Insertable<DeviceRow> {
   final String name;
   final DeviceType type;
   final DateTime? lastSeenAt;
+
+  /// The main device manages the others (schema v3; set by the server).
+  final bool isMain;
   const DeviceRow({
     required this.id,
     required this.updatedAt,
@@ -4180,6 +4207,7 @@ class DeviceRow extends DataClass implements Insertable<DeviceRow> {
     required this.name,
     required this.type,
     this.lastSeenAt,
+    required this.isMain,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4203,6 +4231,7 @@ class DeviceRow extends DataClass implements Insertable<DeviceRow> {
         $DevicesTable.$converterlastSeenAtn.toSql(lastSeenAt),
       );
     }
+    map['is_main'] = Variable<bool>(isMain);
     return map;
   }
 
@@ -4219,6 +4248,7 @@ class DeviceRow extends DataClass implements Insertable<DeviceRow> {
       lastSeenAt: lastSeenAt == null && nullToAbsent
           ? const Value.absent()
           : Value(lastSeenAt),
+      isMain: Value(isMain),
     );
   }
 
@@ -4237,6 +4267,7 @@ class DeviceRow extends DataClass implements Insertable<DeviceRow> {
         serializer.fromJson<String>(json['type']),
       ),
       lastSeenAt: serializer.fromJson<DateTime?>(json['lastSeenAt']),
+      isMain: serializer.fromJson<bool>(json['isMain']),
     );
   }
   @override
@@ -4252,6 +4283,7 @@ class DeviceRow extends DataClass implements Insertable<DeviceRow> {
         $DevicesTable.$convertertype.toJson(type),
       ),
       'lastSeenAt': serializer.toJson<DateTime?>(lastSeenAt),
+      'isMain': serializer.toJson<bool>(isMain),
     };
   }
 
@@ -4263,6 +4295,7 @@ class DeviceRow extends DataClass implements Insertable<DeviceRow> {
     String? name,
     DeviceType? type,
     Value<DateTime?> lastSeenAt = const Value.absent(),
+    bool? isMain,
   }) => DeviceRow(
     id: id ?? this.id,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -4273,6 +4306,7 @@ class DeviceRow extends DataClass implements Insertable<DeviceRow> {
     name: name ?? this.name,
     type: type ?? this.type,
     lastSeenAt: lastSeenAt.present ? lastSeenAt.value : this.lastSeenAt,
+    isMain: isMain ?? this.isMain,
   );
   DeviceRow copyWithCompanion(DevicesCompanion data) {
     return DeviceRow(
@@ -4287,6 +4321,7 @@ class DeviceRow extends DataClass implements Insertable<DeviceRow> {
       lastSeenAt: data.lastSeenAt.present
           ? data.lastSeenAt.value
           : this.lastSeenAt,
+      isMain: data.isMain.present ? data.isMain.value : this.isMain,
     );
   }
 
@@ -4299,7 +4334,8 @@ class DeviceRow extends DataClass implements Insertable<DeviceRow> {
           ..write('updatedByDevice: $updatedByDevice, ')
           ..write('name: $name, ')
           ..write('type: $type, ')
-          ..write('lastSeenAt: $lastSeenAt')
+          ..write('lastSeenAt: $lastSeenAt, ')
+          ..write('isMain: $isMain')
           ..write(')'))
         .toString();
   }
@@ -4313,6 +4349,7 @@ class DeviceRow extends DataClass implements Insertable<DeviceRow> {
     name,
     type,
     lastSeenAt,
+    isMain,
   );
   @override
   bool operator ==(Object other) =>
@@ -4324,7 +4361,8 @@ class DeviceRow extends DataClass implements Insertable<DeviceRow> {
           other.updatedByDevice == this.updatedByDevice &&
           other.name == this.name &&
           other.type == this.type &&
-          other.lastSeenAt == this.lastSeenAt);
+          other.lastSeenAt == this.lastSeenAt &&
+          other.isMain == this.isMain);
 }
 
 class DevicesCompanion extends UpdateCompanion<DeviceRow> {
@@ -4335,6 +4373,7 @@ class DevicesCompanion extends UpdateCompanion<DeviceRow> {
   final Value<String> name;
   final Value<DeviceType> type;
   final Value<DateTime?> lastSeenAt;
+  final Value<bool> isMain;
   final Value<int> rowid;
   const DevicesCompanion({
     this.id = const Value.absent(),
@@ -4344,6 +4383,7 @@ class DevicesCompanion extends UpdateCompanion<DeviceRow> {
     this.name = const Value.absent(),
     this.type = const Value.absent(),
     this.lastSeenAt = const Value.absent(),
+    this.isMain = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DevicesCompanion.insert({
@@ -4354,6 +4394,7 @@ class DevicesCompanion extends UpdateCompanion<DeviceRow> {
     required String name,
     required DeviceType type,
     this.lastSeenAt = const Value.absent(),
+    this.isMain = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        updatedAt = Value(updatedAt),
@@ -4367,6 +4408,7 @@ class DevicesCompanion extends UpdateCompanion<DeviceRow> {
     Expression<String>? name,
     Expression<String>? type,
     Expression<int>? lastSeenAt,
+    Expression<bool>? isMain,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -4377,6 +4419,7 @@ class DevicesCompanion extends UpdateCompanion<DeviceRow> {
       if (name != null) 'name': name,
       if (type != null) 'type': type,
       if (lastSeenAt != null) 'last_seen_at': lastSeenAt,
+      if (isMain != null) 'is_main': isMain,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -4389,6 +4432,7 @@ class DevicesCompanion extends UpdateCompanion<DeviceRow> {
     Value<String>? name,
     Value<DeviceType>? type,
     Value<DateTime?>? lastSeenAt,
+    Value<bool>? isMain,
     Value<int>? rowid,
   }) {
     return DevicesCompanion(
@@ -4399,6 +4443,7 @@ class DevicesCompanion extends UpdateCompanion<DeviceRow> {
       name: name ?? this.name,
       type: type ?? this.type,
       lastSeenAt: lastSeenAt ?? this.lastSeenAt,
+      isMain: isMain ?? this.isMain,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -4433,6 +4478,9 @@ class DevicesCompanion extends UpdateCompanion<DeviceRow> {
         $DevicesTable.$converterlastSeenAtn.toSql(lastSeenAt.value),
       );
     }
+    if (isMain.present) {
+      map['is_main'] = Variable<bool>(isMain.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -4449,6 +4497,7 @@ class DevicesCompanion extends UpdateCompanion<DeviceRow> {
           ..write('name: $name, ')
           ..write('type: $type, ')
           ..write('lastSeenAt: $lastSeenAt, ')
+          ..write('isMain: $isMain, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -7619,6 +7668,7 @@ typedef $$DevicesTableCreateCompanionBuilder = DevicesCompanion Function({
   required String name,
   required DeviceType type,
   Value<DateTime?> lastSeenAt,
+  Value<bool> isMain,
   Value<int> rowid,
 });
 typedef $$DevicesTableUpdateCompanionBuilder = DevicesCompanion Function({
@@ -7629,6 +7679,7 @@ typedef $$DevicesTableUpdateCompanionBuilder = DevicesCompanion Function({
   Value<String> name,
   Value<DeviceType> type,
   Value<DateTime?> lastSeenAt,
+  Value<bool> isMain,
   Value<int> rowid,
 });
 
@@ -7678,6 +7729,11 @@ class $$DevicesTableFilterComposer
         column: $table.lastSeenAt,
         builder: (column) => ColumnWithTypeConverterFilters(column),
       );
+
+  ColumnFilters<bool> get isMain => $composableBuilder(
+    column: $table.isMain,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$DevicesTableOrderingComposer
@@ -7723,6 +7779,11 @@ class $$DevicesTableOrderingComposer
     column: $table.lastSeenAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get isMain => $composableBuilder(
+    column: $table.isMain,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$DevicesTableAnnotationComposer
@@ -7759,6 +7820,9 @@ class $$DevicesTableAnnotationComposer
         column: $table.lastSeenAt,
         builder: (column) => column,
       );
+
+  GeneratedColumn<bool> get isMain =>
+      $composableBuilder(column: $table.isMain, builder: (column) => column);
 }
 
 class $$DevicesTableTableManager
@@ -7796,6 +7860,7 @@ class $$DevicesTableTableManager
                 Value<String> name = const Value.absent(),
                 Value<DeviceType> type = const Value.absent(),
                 Value<DateTime?> lastSeenAt = const Value.absent(),
+                Value<bool> isMain = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DevicesCompanion(
                 id: id,
@@ -7805,6 +7870,7 @@ class $$DevicesTableTableManager
                 name: name,
                 type: type,
                 lastSeenAt: lastSeenAt,
+                isMain: isMain,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -7816,6 +7882,7 @@ class $$DevicesTableTableManager
                 required String name,
                 required DeviceType type,
                 Value<DateTime?> lastSeenAt = const Value.absent(),
+                Value<bool> isMain = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => DevicesCompanion.insert(
                 id: id,
@@ -7825,6 +7892,7 @@ class $$DevicesTableTableManager
                 name: name,
                 type: type,
                 lastSeenAt: lastSeenAt,
+                isMain: isMain,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

@@ -53,6 +53,14 @@ export const migrations: readonly (readonly string[])[] = [
        data TEXT NOT NULL
      )`,
   ],
+  // 2: the main device (2026-11-02). The first device that signed in, if
+  // still active, becomes the main one.
+  [
+    'ALTER TABLE devices ADD COLUMN is_main INTEGER NOT NULL DEFAULT 0',
+    `UPDATE devices SET is_main = 1 WHERE id = (
+       SELECT id FROM devices WHERE revoked_at IS NULL
+       ORDER BY created_at LIMIT 1)`,
+  ],
 ];
 
 /** Brings the database schema up to date. Safe to run concurrently. */

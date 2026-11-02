@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
 
 import '../../data/app_settings.dart';
+import '../../notifications/reminder_scheduler.dart';
 import '../../state/providers.dart';
 import '../tasks/labels.dart';
 import '../theme/tokens.dart';
@@ -193,6 +194,26 @@ class SettingsPage extends ConsumerWidget {
                     );
                   }
                 },
+              ),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.notifications_active_outlined),
+                  label: Text(l10n.notifTestButton),
+                  onPressed: () async {
+                    final messenger = ScaffoldMessenger.of(context);
+                    final sent = await ref
+                        .read(reminderSchedulerProvider)
+                        .sendTest();
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          sent ? l10n.notifTestSent : l10n.notifTestDenied,
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
               if (isDesktop) ...[
                 _Section(l10n.settingsBackground),

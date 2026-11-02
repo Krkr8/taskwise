@@ -5,6 +5,7 @@ export type ErrorCode =
   | 'bad_request'
   | 'unauthorized'
   | 'forbidden'
+  | 'wrong_password'
   | 'not_found'
   | 'conflict'
   | 'payload_too_large'

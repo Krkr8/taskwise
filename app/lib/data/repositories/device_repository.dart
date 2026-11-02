@@ -23,6 +23,7 @@ class DeviceRepository extends RepositoryBase {
                   updatedAt: row.updatedAt,
                   deleted: row.deleted,
                   updatedByDevice: row.updatedByDevice,
+                  isMain: row.isMain,
                 ),
             ]..sort((a, b) {
               if (a.id == deviceId) return -1;

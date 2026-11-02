@@ -304,5 +304,18 @@
   "notifyOn": "Notify on",
   "notifyAllDevices": "All devices",
   "notifyNoDevice": "No device chosen: this task won't remind anywhere.",
-  "notNotifiedHere": "Doesn't remind on this device"
+  "notNotifiedHere": "Doesn't remind on this device",
+  "notifTestButton": "Send a test notification",
+  "notifTestBody": "Notifications work on this device.",
+  "notifTestDenied": "Notifications are turned off for Taskwise. Turn them on in the system settings.",
+  "notifTestSent": "Sent. If nothing appeared, check the system's notification settings (and Focus / Do Not Disturb).",
+  "reminderPassed": "time passed",
+  "deviceMain": "Main device",
+  "devicesMainHint": "The main device manages the others: only it can remove or rename them.",
+  "deviceMakeMain": "Make main device",
+  "deviceMakeMainConfirm": "Make {name} the main device? This device then can't remove or rename other devices any more.",
+  "@deviceMakeMainConfirm": {"placeholders": {"name": {"type": "String"}}},
+  "deviceClaimMain": "Make this the main device",
+  "deviceClaimMainHelp": "If the main device is lost, enter your account password to make this one the main device.",
+  "deviceWrongPassword": "Wrong password."
 }

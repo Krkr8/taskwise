@@ -97,6 +97,23 @@ class IosNotifier extends ReminderNotifier {
       false;
 
   @override
+  Future<void> showTest({required String title, required String body}) =>
+      _plugin.show(
+        id: ReminderNotifier.testId,
+        title: title,
+        body: body,
+        // Shown even with Taskwise open.
+        notificationDetails: const NotificationDetails(
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBanner: true,
+            presentList: true,
+            presentSound: true,
+          ),
+        ),
+      );
+
+  @override
   Future<void> apply(
     List<PlannedNotification> plan,
     NotificationTexts texts, {
@@ -107,7 +124,9 @@ class IosNotifier extends ReminderNotifier {
       for (final r in await _plugin.pendingNotificationRequests()) r.id: r,
     };
 
-    for (final MapEntry(key: id, value: request) in pending.entries) {
+    // Loop over a copy: entries are removed from [pending] on the way (a
+    // live view would throw, and nothing new would be scheduled).
+    for (final MapEntry(key: id, value: request) in pending.entries.toList()) {
       final want = wanted[id];
       // Same id but a new time or title: reschedule it.
       if (want == null ||

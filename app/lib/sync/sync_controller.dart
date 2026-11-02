@@ -237,6 +237,21 @@ class SyncController extends Notifier<SyncState> {
     await engine.refreshDevices();
   }
 
+  /// Hands the main role to another device (from the main device).
+  Future<void> makeMain(String id) async {
+    final engine = _requireEngine();
+    await engine.api.makeMain(id);
+    await engine.refreshDevices();
+  }
+
+  /// Makes this device the main one; [password] is the account password.
+  /// Throws [SyncHttpException] with code `wrong_password` if it's wrong.
+  Future<void> claimMain(String password) async {
+    final engine = _requireEngine();
+    await engine.api.claimMain(password);
+    await engine.refreshDevices();
+  }
+
   SyncEngine _requireEngine() =>
       _engine ??
       (throw const SyncHttpException(401, 'unauthorized', 'Not signed in'));

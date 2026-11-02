@@ -130,7 +130,9 @@ class DesktopShell with WindowListener {
         if (event is tray.MenuItemClickedEvent) unawaited(showWindow());
       });
       _quitItem?.addListener((event) {
-        if (event is tray.MenuItemClickedEvent) unawaited(quit());
+        // Quit after the tray menu has closed: tearing the icon down from
+        // inside its own menu callback can stall on Windows.
+        if (event is tray.MenuItemClickedEvent) Timer.run(() => quit());
       });
       menu
         ..addItem(_showItem)
@@ -178,11 +180,24 @@ class DesktopShell with WindowListener {
     await windowManager.focus();
   }
 
+  /// Ends Taskwise. Each step is best-effort, and the process exits in the
+  /// end even if a plugin call fails or hangs (seen with the tray on
+  /// Windows), so "Quit" always quits.
   Future<void> quit() async {
-    _trayIcon?.dispose();
-    await _server.close();
-    await windowManager.setPreventClose(false);
-    await windowManager.destroy();
+    Future<void> step(FutureOr<void> Function() action) async {
+      try {
+        await Future.sync(action).timeout(const Duration(seconds: 2));
+      } on Object catch (e) {
+        debugPrint('Quit step failed: $e');
+      }
+    }
+
+    await step(() => _trayIcon?.setVisible(false));
+    await step(() => _trayIcon?.dispose());
+    await step(_server.close);
+    await step(() => windowManager.setPreventClose(false));
+    await step(windowManager.destroy);
+    exit(0);
   }
 
   @override

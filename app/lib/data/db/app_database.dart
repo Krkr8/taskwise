@@ -34,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -49,6 +49,9 @@ class AppDatabase extends _$AppDatabase {
         // Queue everything made before sync existed, so it's uploaded (and
         // merged with the other devices) on the first connect.
         await queueAllForSync();
+      },
+      from2To3: (m, schema) async {
+        await m.addColumn(schema.devices, schema.devices.isMain);
       },
     ),
   );

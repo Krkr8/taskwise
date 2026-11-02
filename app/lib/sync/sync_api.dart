@@ -181,6 +181,20 @@ class SyncApi {
     ),
   );
 
+  /// Makes another device the main one (only the main device may).
+  Future<Device> makeMain(String id) async => Device.fromJson(
+    await _send(
+      'PATCH',
+      '/devices/${Uri.encodeComponent(id)}',
+      body: {'main': true},
+    ),
+  );
+
+  /// Makes this device the main one, confirmed with the account password.
+  Future<Device> claimMain(String password) async => Device.fromJson(
+    await _send('POST', '/devices/claim-main', body: {'password': password}),
+  );
+
   /// Revokes a device's token (this device too: that's signing out).
   Future<void> revokeDevice(String id) =>
       _send('DELETE', '/devices/${Uri.encodeComponent(id)}');

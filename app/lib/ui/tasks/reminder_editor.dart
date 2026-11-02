@@ -79,6 +79,24 @@ class ReminderEditor extends ConsumerWidget {
     await _added(ref);
   }
 
+  /// True when [r] is already in the past for this (one-off, open) task,
+  /// so it won't fire: e.g. a time picked as AM instead of PM.
+  bool _passed(Reminder r, int allDayMinutes, DateTime now) {
+    if (task.done || task.recurrenceRule != null) return false;
+    final fireAt = switch (r) {
+      Reminder(absoluteAt: final at?) => at.toLocal(),
+      Reminder(minutesBeforeDue: final m?) => switch (task.dueDate) {
+        final date? =>
+          date
+              .atLocalTime(task.dueTimeMinutes ?? allDayMinutes)
+              .subtract(Duration(minutes: m)),
+        null => null,
+      },
+      _ => null,
+    };
+    return fireAt != null && fireAt.isBefore(now);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
@@ -89,6 +107,8 @@ class ReminderEditor extends ConsumerWidget {
     final denied = ref.watch(notificationPermissionProvider) == false;
     final repo = ref.read(reminderRepositoryProvider);
     final hasDue = task.dueDate != null;
+    final settings = ref.watch(appSettingsProvider);
+    final now = ref.read(clockProvider)();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,8 +120,18 @@ class ReminderEditor extends ConsumerWidget {
           children: [
             for (final r in reminders)
               InputChip(
-                avatar: const Icon(Icons.notifications_outlined, size: 18),
-                label: Text(reminderLabel(l10n, r, timeFormat)),
+                avatar: Icon(
+                  _passed(r, settings.allDayReminderMinutes, now)
+                      ? Icons.notifications_off_outlined
+                      : Icons.notifications_outlined,
+                  size: 18,
+                ),
+                label: Text(
+                  _passed(r, settings.allDayReminderMinutes, now)
+                      ? '${reminderLabel(l10n, r, timeFormat)} · '
+                            '${l10n.reminderPassed}'
+                      : reminderLabel(l10n, r, timeFormat),
+                ),
                 deleteButtonTooltipMessage: l10n.removeReminder,
                 onDeleted: () => repo.delete(r.id),
               ),

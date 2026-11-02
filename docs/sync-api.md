@@ -24,7 +24,8 @@ If you change the API, change the fixtures first. Then both test suites tell you
 |---|---|---|
 | 400 | `bad_request` | Invalid JSON, a missing or invalid field, a bad query parameter, more than 500 changes in a push |
 | 401 | `unauthorized` | Missing, wrong or revoked device token; wrong password; wrong cron secret |
-| 403 | `forbidden` | Wrong setup secret |
+| 403 | `forbidden` | Wrong setup secret; a device that isn't the main one tries to manage other devices |
+| 403 | `wrong_password` | `POST /devices/claim-main` with a wrong password (not 401, so the app doesn't take it as "signed out") |
 | 404 | `not_found` | Unknown endpoint or device |
 | 409 | `conflict` | `/auth/setup` when the account already exists |
 | 410 | `resync_required` | `GET /sync` with a `since` older than purged deletions (see [Tombstones](#tombstones-and-purging)) |
@@ -74,18 +75,27 @@ Each app install is a **device**. Logging in registers the device and returns it
 The reply:
 ```json
 { "token": "tw_…", "device": { "id": "0199a3c0-…", "name": "Fedora Laptop", "type": "linux",
-  "lastSeenAt": "…", "updatedAt": "…", "deleted": false, "updatedByDevice": null } }
+  "lastSeenAt": "…", "updatedAt": "…", "deleted": false, "updatedByDevice": null, "main": true } }
 ```
 
 - Store the token securely (`flutter_secure_storage`). The server keeps only its SHA-256 hash, so it can't be shown again.
 - Logging in again with the same device id replaces the token, and the old one stops working. It also re-activates a revoked device.
 - **Rate limit:** 5 failed logins within 15 minutes, per client IP or per username, block further attempts with `429` until the 15-minute window ends. A successful login clears the count.
 
-The `device` objects match the shared `Device` model:
+The `device` objects match the shared `Device` model.
 
+**The main device** (`"main": true`) manages the account's devices (owner's request, 2026-11-02):
+- The first device to sign in becomes the main device. If there is no active main device, the next one to sign in becomes it.
+- Only the main device can remove other devices, rename other devices, and pass the role to another device.
+- Any device can rename itself and sign itself out.
+- If the main device signs out or is removed, the most recently seen other device becomes the main one.
+- If the main device is lost, any signed-in device can take the role with the account password: `POST /devices/claim-main`.
+
+The endpoints:
 - `GET /devices` returns `{"devices": [...]}` with all devices, oldest first. Revoked devices are listed as `"deleted": true`.
-- `PATCH /devices/{id}` with `{"name": "Work PC"}` renames a device and returns it.
-- `DELETE /devices/{id}` revokes the device's token and returns the device with `"deleted": true`. From then on that device gets `401` everywhere, until it logs in again. A device may revoke itself (log out).
+- `PATCH /devices/{id}` with `{"name": "Work PC"}` renames a device. With `{"main": true}` it makes that device the main one. The two can be combined. It returns the device.
+- `DELETE /devices/{id}` revokes the device's token and returns the device with `"deleted": true`. From then on that device gets `401` everywhere, until it logs in again (it doesn't get the main role back). A device may always revoke itself (sign out).
+- `POST /devices/claim-main` with `{"password": "…"}` makes the calling device the main one. A wrong password gets `403 wrong_password`. Failures count towards the same rate limit as logins.
 
 `lastSeenAt` is updated at most once a minute, by any authenticated request.
 

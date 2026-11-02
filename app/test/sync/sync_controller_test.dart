@@ -173,6 +173,48 @@ void main() {
     expect(live.map((d) => d.name), ['My laptop']);
   });
 
+  test('the main device: hand it on, take it back with the password', () async {
+    await signIn();
+    await _settle(container);
+    server.devices['other'] = {
+      'id': 'other',
+      'name': 'iPhone',
+      'type': 'ios',
+      'lastSeenAt': null,
+      'updatedAt': '2026-11-01T10:00:00.000Z',
+      'deleted': false,
+      'updatedByDevice': null,
+    };
+    Future<String?> mainId() async => (await (db.select(
+      db.devices,
+    )..where((d) => d.isMain)).getSingleOrNull())?.id;
+
+    await controller().syncNow();
+    expect(await mainId(), deviceId); // The first device to sign in.
+
+    await controller().makeMain('other');
+    expect(await mainId(), 'other');
+    // No longer main: managing others is refused.
+    await expectLater(
+      controller().removeDevice('other'),
+      throwsA(isA<SyncHttpException>().having((e) => e.status, 'status', 403)),
+    );
+
+    await expectLater(
+      controller().claimMain('wrong'),
+      throwsA(
+        isA<SyncHttpException>().having(
+          (e) => e.code,
+          'code',
+          'wrong_password',
+        ),
+      ),
+    );
+    expect(state().phase, isNot(SyncPhase.signedOut));
+    await controller().claimMain(server.password);
+    expect(await mainId(), deviceId);
+  });
+
   test('the banner can be dismissed for good', () async {
     await controller().dismissBanner();
     container.dispose();

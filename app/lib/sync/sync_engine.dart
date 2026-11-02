@@ -188,6 +188,7 @@ class SyncEngine {
                 updatedAt: d.updatedAt,
                 deleted: Value(d.deleted),
                 updatedByDevice: Value(d.updatedByDevice),
+                isMain: Value(d.isMain),
               ),
             );
       }

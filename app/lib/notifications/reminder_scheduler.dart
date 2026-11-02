@@ -85,6 +85,18 @@ class ReminderScheduler {
     return granted;
   }
 
+  /// Shows a test notification now. Returns false if notifications are
+  /// turned off for Taskwise (iOS permission).
+  Future<bool> sendTest() async {
+    await _ready;
+    if (!await requestPermission()) return false;
+    final l10n = lookupAppLocalizations(
+      resolvedLocale(_ref.read(appSettingsProvider)),
+    );
+    await _notifier.showTest(title: l10n.appTitle, body: l10n.notifTestBody);
+    return true;
+  }
+
   Future<void> _replan() async {
     await _ready;
     if (_disposed) return;
