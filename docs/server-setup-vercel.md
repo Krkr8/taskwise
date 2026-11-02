@@ -78,6 +78,14 @@ On the iPhone, **switch Wi-Fi off** (so it uses mobile data), open Safari, and g
 
 If you see `"status":"error"`, the server can't reach the database. Check `DATABASE_URL` and `DATABASE_AUTH_TOKEN` under **Settings → Environment Variables**, fix them, then **Redeploy** (step 3.6). The **Logs** tab in Vercel shows what went wrong.
 
+### If a deploy is "Blocked"
+
+If Vercel shows a deployment as **Blocked** with "Vercel couldn't find a Git account for the commit author", the email in your commits isn't linked to your GitHub account, and on the Hobby plan Vercel only deploys commits it can match to you.
+
+- Run `git log -1 --format=%ae` to see the email your commits use.
+- Add it on GitHub under **Settings → Emails** and confirm it. This also links your earlier commits.
+- Then open the blocked deployment in Vercel and click **Redeploy**, or just push again.
+
 ## 5. Create your account (optional now)
 
 From M6 the app has a setup page for this. You can also do it now from the laptop. Choose a username and a password of at least 10 characters:
