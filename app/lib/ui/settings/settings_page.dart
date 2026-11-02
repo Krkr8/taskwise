@@ -9,6 +9,7 @@ import '../../state/providers.dart';
 import '../tasks/labels.dart';
 import '../theme/tokens.dart';
 import 'categories_page.dart';
+import 'sync_section.dart';
 
 /// Settings destination: appearance, date & time, notifications,
 /// background (desktop) and categories.
@@ -40,6 +41,8 @@ class SettingsPage extends ConsumerWidget {
                 l10n.navSettings,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
+              _Section(l10n.settingsSync),
+              const SyncSection(),
               _Section(l10n.settingsAppearance),
               _Setting(
                 label: l10n.theme,

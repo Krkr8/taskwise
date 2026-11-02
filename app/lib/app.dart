@@ -6,6 +6,7 @@ import 'desktop/desktop_shell.dart';
 import 'l10n/app_localizations.dart';
 import 'notifications/reminder_scheduler.dart';
 import 'state/providers.dart';
+import 'sync/sync_controller.dart';
 import 'ui/shell/adaptive_shell.dart';
 import 'ui/theme/app_theme.dart';
 
@@ -16,8 +17,10 @@ class TaskwiseApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(appSettingsProvider);
-    // Starts the reminder scheduler (kept alive by this watch).
-    ref.watch(reminderSchedulerProvider);
+    // Starts the reminder scheduler and sync (kept alive by these watches).
+    ref
+      ..watch(reminderSchedulerProvider)
+      ..watch(syncControllerProvider);
     ref.listen(
       appSettingsProvider,
       (_, next) => DesktopShell.instance?.apply(next),

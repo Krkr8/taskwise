@@ -117,3 +117,21 @@ class Settings extends Table with SyncColumns {
   TextColumn get value => text()();
   BoolColumn get synced => boolean().withDefault(const Constant(false))();
 }
+
+/// Local changes waiting to be pushed to the sync server (from schema v2).
+///
+/// Filled by SQLite triggers on every synced table (see
+/// `AppDatabase.syncTriggers`), so no write can forget to queue itself. The
+/// sync engine removes an entry once the server has the row's version.
+@DataClassName('OutboxRow')
+class SyncOutbox extends Table {
+  /// Sync API record type, e.g. `task` (docs/sync-api.md).
+  TextColumn get recordType => text()();
+  TextColumn get recordId => text()();
+
+  /// The row's `updatedAt` when it was queued (UTC ms).
+  IntColumn get updatedAt => integer()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {recordType, recordId};
+}

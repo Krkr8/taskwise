@@ -139,6 +139,7 @@ Two types, a task can mix both:
 ### 3.4 Account & devices
 - One account (username + password) on the server, created once with `POST /auth/setup` (setup page in the app). The server is public, so setup requires a long random **setup secret** set as a Vercel environment variable; without it, anyone could claim the account first. Setup is refused once an account exists.
 - Each app install = a **device**. On first launch: enter server address, log in, give the device a name (pre-filled: "Windows PC", "Fedora Laptop", "iPhone"), device type is detected.
+  - Changed in M6 (owner's choice, 2026-11-02): **signing in is optional**. The app opens straight to the tasks; a one-time banner and **Settings → Sync → Connect to your server** open the sign-in screen (server address, username, password, device name; a "First time? Create the account" link adds the setup secret and calls `/auth/setup`). Data already on a device is uploaded and merged when it first connects. Signing out revokes the device and keeps local data.
 - Server issues a per-device token (revocable). Store tokens securely (Windows Credential Manager / libsecret / iOS Keychain via `flutter_secure_storage`).
 - **Settings → Devices:** list devices (name, type, last seen), rename, remove/revoke.
 - New devices are added to "Notify on devices" for tasks that use the default "All devices" (store "all" as a flag, not as a list, so new devices are included automatically).
@@ -180,6 +181,12 @@ Two types, a task can mix both:
 - Sync triggers: app start/resume, after any local change (debounced ~2 s), every 1–2 min while app open, iOS background refresh, iOS geofence wake (if quick), manual "Sync now".
 - After each pull, each device **rebuilds its scheduled local notifications** for tasks targeted at that device (cancel stale ones, schedule new ones; iOS has a 64 pending-notification limit — schedule the soonest 64 and refresh on sync/app open).
 - Device-only settings (theme, language, etc.) can be local; shared data (categories, places, week start) syncs. Decide per setting and document it.
+  - Decided in M6: **synced** settings are week start and the default reminder. **Device-only**: theme, language, time format, snooze options, all-day reminder time, the desktop background options, and the sync bookkeeping (server address, last pulled sequence number).
+- How M6 implements it (2026-11-02):
+  - An **outbox** table (`sync_outbox`, schema v2) is filled by SQLite triggers on every synced table, so no write can forget to queue itself; the v1→v2 migration queues all existing rows.
+  - `SyncEngine` (`app/lib/sync/`) pushes the outbox in batches of 500, pulls pages until up to date (same last-write-wins rule as the server; an unpushed newer local edit is kept), handles `410` with a full resync, and copies the device list from `GET /devices`. `SyncController` runs it at start, on resume, 2 s after a local change, every minute and on "Sync now"; a revoked token shows "Signed out".
+  - The token is kept with `flutter_secure_storage` (Credential Manager / GNOME keyring / iOS Keychain).
+  - **iOS background refresh is deferred to M7** (owner's choice): the iPhone syncs while Taskwise is open.
 - API: JSON over HTTPS, versioned (`/api/v1/...`), token auth in header. Endpoints at minimum: `POST /auth/login`, `POST /auth/setup`, `GET/POST /sync`, `GET/PATCH/DELETE /devices`, `GET /health`. Documented in `docs/sync-api.md`, with JSON fixtures in `shared/test/fixtures/` tested on both sides.
 - The server is public on the internet (Vercel always serves HTTPS). Every endpoint except `/health`, `/auth/login` and `/auth/setup` requires a valid device token.
 - Server backups: the database provider's own backups, plus a daily cron export of all records, keeping the last N. Each device also holds a full copy of the data (local-first), and JSON export is available.
@@ -272,12 +279,11 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 
 ## 7. Progress Log
 
-### Where we left off (2026-10-31)
+### Where we left off (2026-11-02)
 - **M5 is deployed (2026-11-02):** the Vercel project `taskwise` (Root Directory `server`, function region `fra1`, Node 24) uses the Turso database `taskwise` in `aws-eu-central-1`. The server address and all secrets are in the owner's `~/.config/taskwise/server-secrets.env` (not in the repo). Health, auth refusals and the cron job were checked from the laptop, and health from the iPhone on mobile data. No account has been created yet (M6's setup page, or the `curl` in the guide).
-- **Next: M6 (client sync + devices).** Start with plan mode, per section 0. Read `docs/sync-api.md` and the M6 notes in Notes for later first.
-- **Vercel auto-deploys are blocked** until the commit email (`git log -1 --format=%ae`) is added to the owner's GitHub account: Vercel Hobby only deploys commits whose author it can match. Until then, deploys are started with the Vercel API (production deploy from `main`).
-- **Latest release build is v0.1.1** (draft, M2 fixes only). M3 and M4 are on `main` but no release has been built from them. Tagging **v0.2.0** (after bumping `app/pubspec.yaml` to `0.2.0+3`) builds Windows + iPhone; ask the owner before tagging.
-- **Open checks from M4, for the v0.2.0 build:** the M4 test list below on Windows and the iPhone, and that the release workflow still builds Windows and iOS with `tray_manager` (it compiles `cnativeapi` native code; only Linux has been built so far).
+- **M6 is built (2026-11-02) and released as v0.3.0 for device tests.** The owner skipped v0.2.0: v0.3.0 is the first Windows/iPhone build with M3 (calendar), M4 (reminders) and M6 (sync). **Remaining for M6:** the owner's test list below on Fedora, Windows and the iPhone. No account exists on the server yet: the first sign-in uses "First time? Create the account" with the setup secret from `~/.config/taskwise/server-secrets.env`.
+- **Open checks from M4, also in v0.3.0:** the M4 test list on Windows and the iPhone, and that the release workflow builds Windows and iOS with `tray_manager` (`cnativeapi` native code) and `flutter_secure_storage`.
+- **Vercel deploys** run automatically on pushes to `main` (the commit email was verified on GitHub on 2026-11-02).
 - **iPhone install:** with iloader from the laptop (SideStore sign-in is broken by Apple since 2026-10-12, error -80045). Refresh every 7 days with iloader → Import IPA. See `docs/install-ios-sidestore.md`.
 - **M8 starts by asking the owner for their design idea** (they asked for a design milestone; merged into M8).
 - Running app tests on the Fedora laptop: take ccache off `PATH` (see `docs/dev-setup-fedora.md`), and re-run if a file fails with "Unable to connect to flutter_tester process" (or use `--concurrency=1`).
@@ -290,11 +296,27 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 | M3 Calendar + recurrence | ✅ Done | 2026-10-30 | Calendar tab with week (7 day columns listing tasks, all-day first then by time) and month views on all platforms; repeating tasks (RRULE subset in `shared`, editor with presets and Custom, done copy + next occurrence with Undo); upcoming repeats shown faded in the calendar. Selected chips now clearly highlighted. 115 automated tests (shared tests run in 3 timezones in CI). |
 | M4 Time reminders | ✅ Done | 2026-10-31 | Time reminders (relative + absolute, several per task, follow repeats), scheduling engine in `shared`, notifications with Done/Snooze/open, iOS 64-limit scheduling, desktop tray + single instance + start on login, notification settings. A real reminder fired on Fedora (GNOME) with Done/Snooze buttons. Closed by the owner on 2026-10-31 before device tests: **Windows and iPhone are untested** (see Where we left off). 138 automated tests. |
 | M5 Sync server | ✅ Done | 2026-11-02 | TypeScript + Hono server in `server/` (Node 24): account setup with a setup secret, login (argon2id) with database-backed rate limiting, per-device tokens (SHA-256 stored, revocable), devices API, push/pull sync with last-write-wins and a change sequence, daily Vercel Cron (90-day tombstone purge with task children, 7 nightly backups in the database). Generic record store: the server doesn't interpret records. API in `docs/sync-api.md`; contract fixtures in `shared/test/fixtures/sync/` tested by both Dart and TypeScript. Runs on Vercel or Docker (built and run with Podman locally). Dart `server/` placeholder removed; CI has a Node job. Free limits checked 2026-10-31 (Vercel Hobby: 1 M invocations/month, cron daily; Turso Free: 5 GB, 500 M reads, 10 M writes). 228 automated tests (app 53, shared 106, server 69). Deployed on Vercel (`fra1`) with Turso (`aws-eu-central-1`); health checked over HTTPS from the laptop and from the iPhone on mobile data. |
-| M6 Client sync + devices | ⬜ | | |
+| M6 Client sync + devices | 🟡 Built, device tests pending | 2026-11-02 | Optional sign-in from Settings (with account setup), one-time banner, sync engine (trigger-filled outbox, push/pull with last-write-wins, full resync on 410, device list), sync triggers (start, resume, 2 s after changes, every minute, Sync now), status icon, Settings → Sync and → Devices (rename/remove), sign out, "Notify on" per task with each device scheduling only its own reminders. Database schema v2. Live test: two app devices through the real TypeScript server (also in CI). 257 automated tests (app 81 + 1 live, shared 106, server 69). |
 | M7 Location reminders | ⬜ | | |
 | M8 Design + polish | ⬜ | | |
 
 ### How to test the latest milestone
+**M6 (sync), with the v0.3.0 build.** Fedora: `git pull`, then `cd app && flutter run -d linux` (needs `sudo dnf install -y libsecret-devel` once). Windows and iPhone: install v0.3.0 from the draft release (as in `docs/install-windows.md` and `docs/install-ios-sidestore.md`). Quit any running Taskwise first (tray menu → Quit) so the new version starts.
+
+1. **Fedora first, to create the account:** Tasks shows a banner "Sync your devices…". Click **Connect**.
+   - Server address: your Vercel address (in `~/.config/taskwise/server-secrets.env`, `SERVER_URL`).
+   - Click **First time? Create the account**, paste the setup secret (`SETUP_SECRET` in the same file), choose a username and a password of at least 10 characters, keep the device name, and press **Create account and sign in**.
+   - The banner disappears, and a cloud icon with a tick appears at the bottom of the side bar. **Settings → Sync** says "Synced just now".
+2. **Windows, then iPhone:** Connect with the same address, username and password (not the "first time" link). Your existing tasks from each device are merged.
+3. Make a task on one device. Within about 1–2 minutes (or press **Sync now** in Settings, or switch away and back to the app) it appears on the others. Try editing, completing and deleting too.
+4. **Settings → Week starts on** changes on all devices. Theme and language stay per device.
+5. **Settings → Sync → Devices:** all three devices are listed. Rename one; remove none yet.
+6. **Notify on:** open a task with a reminder 5 minutes ahead and under **Notify on** untick everything except the iPhone. Only the iPhone reminds; on the others the 🔔 becomes a crossed-out bell.
+7. **Offline:** turn the laptop's Wi-Fi off, edit a task (the cloud icon shows offline), turn it on: the change arrives on the other devices.
+8. **Sign out** on one device (Settings → Sync): its tasks stay; it no longer syncs, and it is gone from the Devices list on the others.
+
+Also run the **M4 list below on Windows and the iPhone** with this build (reminders were never tested there).
+
 **M5 (sync server).** Follow `docs/server-setup-vercel.md` step by step. In short:
 1. `git pull`. Make the setup and cron secrets (step 1) and keep them in your password manager.
 2. Create the Turso database and copy its URL and token (step 2).
@@ -351,7 +373,9 @@ Automated checks (optional): from the repo root, run `flutter analyze`, then `cd
 - **M6:** after a sync pull, the reminder scheduler re-plans automatically (it watches the tasks and reminders streams). The default reminder setting is marked synced.
 - **Vercel entry file:** Vercel uses the first file among `app.ts`, `index.ts`, `server.ts`, `src/app.ts`, `src/index.ts`, `src/server.ts` that imports `hono` itself. So the app factory lives in `src/api.ts` (not `app.ts`), and `src/index.ts` keeps a value `import { Hono } from 'hono'`. Both mistakes broke the first deploys (FUNCTION_INVOCATION_FAILED, then "No entrypoint found which imports hono").
 - **M5 versions:** TypeScript is pinned to 6.0.3, because 7.0 (the new native compiler) was released on 2026-10-31 itself; move to 7.x once it has settled. `npm install` warns that esbuild's postinstall script (used only by the `tsx` dev runner) isn't approved; it works without it.
-- **M6 (sync client):** follow `docs/sync-api.md`. Push only settings with `synced = true`, as `setting` records `{id: key, value, updatedAt, deleted, updatedByDevice}`. Handle `410 resync_required` by pulling from 0 and dropping local synced records the server doesn't have. Push in batches of at most 500. Devices come from `GET /devices` (revoked = `deleted: true`), not from sync. Device ids are compared as strings to break `updatedAt` ties, so use the same id the device logged in with. The account setup page calls `POST /auth/setup` (needs the setup secret).
+- **Sync (later):** `flutter_secure_storage` is pinned to 10.0.0 because 11.x needs `win32` 6, while `launch_at_startup` 0.5.1 (start on login) still needs `win32` 5. Move up when `launch_at_startup` does. When two devices had categories or tags with the same name before connecting, both copies are kept (merge them by hand). Signing in to a different server re-uploads everything.
+- **M7:** add iOS background refresh for sync here (deferred from M6), together with the geofence wake-ups.
+- **Done in M6, for reference:** follow `docs/sync-api.md`. Push only settings with `synced = true`, as `setting` records `{id: key, value, updatedAt, deleted, updatedByDevice}`. Handle `410 resync_required` by pulling from 0 and dropping local synced records the server doesn't have. Push in batches of at most 500. Devices come from `GET /devices` (revoked = `deleted: true`), not from sync. Device ids are compared as strings to break `updatedAt` ties, so use the same id the device logged in with. The account setup page calls `POST /auth/setup` (needs the setup secret).
 - **Server (later):** backups are stored in the same Turso database; an off-site copy (e.g. a GitHub Actions job downloading one) could be added. On a self-hosted server without a proxy, `X-Forwarded-For` can be spoofed, so only the per-username login limit is reliable there.
 - **M6:** every table has `id` (UUID v7), `updatedAt` (UTC ms), `deleted`, `updatedByDevice`. `settings.synced` marks shared keys (only `week_start` so far). `task_target_devices` exists for "Notify on devices". Tombstoned tasks keep their subtasks and tag links (needed for undo), and the server's 90-day purge should remove the children too. The device name is pre-filled ("Fedora Laptop") and becomes editable in M6.
 - **M7:** the `places` table and `Place` model exist (default radius 30 m).

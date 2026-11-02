@@ -16,7 +16,7 @@ class CategoryRepository extends RepositoryBase {
               (c) => OrderingTerm.asc(c.name.collate(Collate.noCase)),
             ]))
           .watch()
-          .map((rows) => rows.map(_toCategory).toList());
+          .map((rows) => rows.map(toCategory).toList());
 
   Future<Category> createCategory(String name, int colorValue) async {
     final category = Category(
@@ -71,7 +71,7 @@ class CategoryRepository extends RepositoryBase {
     );
   });
 
-  static Category _toCategory(CategoryRow row) => Category(
+  static Category toCategory(CategoryRow row) => Category(
     id: row.id,
     name: row.name,
     colorValue: row.colorValue,

@@ -728,4 +728,227 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get trayQuit => 'Quit Taskwise';
+
+  @override
+  String get settingsSync => 'Sync';
+
+  @override
+  String get syncNotConnectedHint =>
+      'Keep your tasks the same on all your devices through your own Taskwise server.';
+
+  @override
+  String get syncConnect => 'Connect to your server';
+
+  @override
+  String syncSignedInAs(String username) {
+    return 'Signed in as $username';
+  }
+
+  @override
+  String syncStatusSynced(String when) {
+    return 'Synced $when';
+  }
+
+  @override
+  String get syncStatusNever => 'Not synced yet';
+
+  @override
+  String get syncStatusSyncing => 'Syncing…';
+
+  @override
+  String get syncStatusOffline =>
+      'Offline. Changes will sync when the server can be reached.';
+
+  @override
+  String get syncStatusSignedOut =>
+      'Signed out. Sign in again to keep syncing.';
+
+  @override
+  String syncStatusError(String message) {
+    return 'Sync problem: $message';
+  }
+
+  @override
+  String get syncNow => 'Sync now';
+
+  @override
+  String get syncSignOut => 'Sign out';
+
+  @override
+  String syncSignOutConfirm(String server) {
+    return 'Sign out of $server? This device stops syncing. Your tasks stay on it.';
+  }
+
+  @override
+  String get syncSignInAgain => 'Sign in again';
+
+  @override
+  String get timeJustNow => 'just now';
+
+  @override
+  String timeMinutesAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count min ago',
+      one: '1 min ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeHoursAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hours ago',
+      one: '1 hour ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeDaysAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days ago',
+      one: 'yesterday',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get signInTitle => 'Connect to your server';
+
+  @override
+  String get signInServer => 'Server address';
+
+  @override
+  String get signInServerHint => 'e.g. your-app.vercel.app';
+
+  @override
+  String get signInUsername => 'Username';
+
+  @override
+  String get signInPassword => 'Password';
+
+  @override
+  String get signInDeviceName => 'Name of this device';
+
+  @override
+  String get signInButton => 'Sign in';
+
+  @override
+  String get signInCreateAccount => 'First time? Create the account';
+
+  @override
+  String get signInCreateAccountHelp =>
+      'Enter the setup secret you set on the server (SETUP_SECRET). It\'s only needed this once. Choose a password of at least 10 characters.';
+
+  @override
+  String get signInSetupSecret => 'Setup secret';
+
+  @override
+  String get signInCreateButton => 'Create account and sign in';
+
+  @override
+  String get signInHaveAccount => 'I already have an account';
+
+  @override
+  String get fieldRequired => 'Required';
+
+  @override
+  String get passwordTooShort => 'At least 10 characters';
+
+  @override
+  String get signInErrorUnreachable =>
+      'Can\'t reach the server. Check the address and your connection.';
+
+  @override
+  String get signInErrorBadAddress =>
+      'That doesn\'t look like a server address.';
+
+  @override
+  String get signInErrorNotTaskwise =>
+      'That address answered, but it isn\'t a Taskwise server.';
+
+  @override
+  String get signInErrorWrongPassword => 'Wrong username or password.';
+
+  @override
+  String signInErrorRateLimited(int minutes) {
+    return 'Too many failed tries. Try again in $minutes min.';
+  }
+
+  @override
+  String get signInErrorWrongSecret => 'Wrong setup secret.';
+
+  @override
+  String get signInErrorAccountExists =>
+      'The account already exists. Sign in instead.';
+
+  @override
+  String get signInErrorSetupDisabled =>
+      'Account setup is turned off on the server (SETUP_SECRET isn\'t set).';
+
+  @override
+  String signInErrorOther(String message) {
+    return 'Something went wrong: $message';
+  }
+
+  @override
+  String get syncBannerText =>
+      'Sync your devices: connect to your Taskwise server.';
+
+  @override
+  String get syncBannerConnect => 'Connect';
+
+  @override
+  String get syncBannerLater => 'Not now';
+
+  @override
+  String get devicesTitle => 'Devices';
+
+  @override
+  String get devicesSubtitle => 'Rename or remove your devices';
+
+  @override
+  String get deviceThis => 'This device';
+
+  @override
+  String deviceLastSeen(String when) {
+    return 'Last seen $when';
+  }
+
+  @override
+  String get deviceRename => 'Rename';
+
+  @override
+  String get deviceName => 'Device name';
+
+  @override
+  String get deviceRemove => 'Remove';
+
+  @override
+  String deviceRemoveConfirm(String name) {
+    return 'Remove $name? It stops syncing until it signs in again with your password.';
+  }
+
+  @override
+  String get deviceActionFailed =>
+      'Couldn\'t reach the server. Try again when you\'re online.';
+
+  @override
+  String get notifyOn => 'Notify on';
+
+  @override
+  String get notifyAllDevices => 'All devices';
+
+  @override
+  String get notifyNoDevice =>
+      'No device chosen: this task won\'t remind anywhere.';
+
+  @override
+  String get notNotifiedHere => 'Doesn\'t remind on this device';
 }

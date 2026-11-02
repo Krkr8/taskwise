@@ -7,6 +7,7 @@ import '../../desktop/desktop_shell.dart';
 import '../../state/providers.dart';
 import '../calendar/calendar_page.dart';
 import '../settings/settings_page.dart';
+import '../settings/sync_section.dart';
 import '../tasks/labels.dart';
 import '../tasks/task_detail.dart';
 import '../tasks/task_list_page.dart';
@@ -24,12 +25,12 @@ class AdaptiveShell extends ConsumerStatefulWidget {
 }
 
 class _AdaptiveShellState extends ConsumerState<AdaptiveShell> {
-  int _index = 0;
+  void _select(int index) => ref.read(shellTabProvider.notifier).select(index);
 
   void _openRequested(String taskId) {
     ref.read(openTaskRequestProvider.notifier).clear();
     unawaited(DesktopShell.instance?.showWindow());
-    setState(() => _index = 0);
+    _select(ShellTabNotifier.tasks);
     if (MediaQuery.sizeOf(context).width >= Breakpoints.listDetail) {
       ref.read(selectedTaskIdProvider.notifier).select(taskId);
     } else {
@@ -48,7 +49,8 @@ class _AdaptiveShellState extends ConsumerState<AdaptiveShell> {
     });
     final l10n = context.l10n;
     final compact = MediaQuery.sizeOf(context).width < Breakpoints.compact;
-    final page = IndexedStack(index: _index, children: _pages);
+    final index = ref.watch(shellTabProvider);
+    final page = IndexedStack(index: index, children: _pages);
     final destinations = [
       (Icons.check_circle_outline, Icons.check_circle, l10n.navTasks),
       (Icons.calendar_month_outlined, Icons.calendar_month, l10n.navCalendar),
@@ -59,8 +61,8 @@ class _AdaptiveShellState extends ConsumerState<AdaptiveShell> {
       return Scaffold(
         body: page,
         bottomNavigationBar: NavigationBar(
-          selectedIndex: _index,
-          onDestinationSelected: (i) => setState(() => _index = i),
+          selectedIndex: index,
+          onDestinationSelected: _select,
           destinations: [
             for (final (icon, selected, label) in destinations)
               NavigationDestination(
@@ -76,10 +78,21 @@ class _AdaptiveShellState extends ConsumerState<AdaptiveShell> {
       body: Row(
         children: [
           NavigationRail(
-            selectedIndex: _index,
-            onDestinationSelected: (i) => setState(() => _index = i),
+            selectedIndex: index,
+            onDestinationSelected: _select,
             labelType: NavigationRailLabelType.all,
             groupAlignment: -1,
+            trailing: Expanded(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: Spacing.md),
+                  child: SyncStatusIcon(
+                    onTap: () => _select(ShellTabNotifier.settings),
+                  ),
+                ),
+              ),
+            ),
             destinations: [
               for (final (icon, selected, label) in destinations)
                 NavigationRailDestination(

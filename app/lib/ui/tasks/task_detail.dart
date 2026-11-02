@@ -7,6 +7,7 @@ import 'package:taskwise_shared/taskwise_shared.dart';
 import '../../data/repositories/task_repository.dart';
 import '../../state/providers.dart';
 import '../theme/tokens.dart';
+import 'device_targets_editor.dart';
 import 'labels.dart';
 import 'reminder_editor.dart';
 import 'repeat_editor.dart';
@@ -332,6 +333,8 @@ class _TaskEditorState extends ConsumerState<_TaskEditor> {
               const SizedBox(height: Spacing.md),
               _Label(l10n.reminders),
               ReminderEditor(task: task),
+              const SizedBox(height: Spacing.sm),
+              DeviceTargetsEditor(task: task),
               const SizedBox(height: Spacing.lg),
               _Label(l10n.priority),
               // Chips size to their labels and wrap as whole chips, so longer

@@ -46,6 +46,28 @@ jobs:
         working-directory: app
         run: flutter test
 
+      # Two app devices syncing through the real TypeScript server, on a
+      # fresh in-memory database (app/test/sync/live_server_test.dart).
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Test app against the sync server
+        run: |
+          (cd server && npm ci)
+          (cd server && DATABASE_URL=:memory: SETUP_SECRET=live-test-secret \
+            PORT=8787 npx tsx src/node.ts > /tmp/server.log 2>&1 &)
+          for i in $(seq 1 30); do
+            curl -fs http://localhost:8787/api/v1/health && break
+            sleep 1
+          done
+          cd app
+          TASKWISE_TEST_SERVER=http://localhost:8787 \
+            TASKWISE_TEST_SETUP_SECRET=live-test-secret \
+            flutter test --tags live || { cat /tmp/server.log; exit 1; }
+
       # Dates and recurrence must not depend on the device timezone or DST.
       - name: Test shared (several timezones)
         working-directory: shared

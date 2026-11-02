@@ -5291,6 +5291,277 @@ class SettingsCompanion extends UpdateCompanion<SettingRow> {
   }
 }
 
+class $SyncOutboxTable extends SyncOutbox
+    with TableInfo<$SyncOutboxTable, OutboxRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SyncOutboxTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _recordTypeMeta = const VerificationMeta(
+    'recordType',
+  );
+  @override
+  late final GeneratedColumn<String> recordType = GeneratedColumn<String>(
+    'record_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _recordIdMeta = const VerificationMeta(
+    'recordId',
+  );
+  @override
+  late final GeneratedColumn<String> recordId = GeneratedColumn<String>(
+    'record_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [recordType, recordId, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'sync_outbox';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<OutboxRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('record_type')) {
+      context.handle(
+        _recordTypeMeta,
+        recordType.isAcceptableOrUnknown(data['record_type']!, _recordTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_recordTypeMeta);
+    }
+    if (data.containsKey('record_id')) {
+      context.handle(
+        _recordIdMeta,
+        recordId.isAcceptableOrUnknown(data['record_id']!, _recordIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_recordIdMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {recordType, recordId};
+  @override
+  OutboxRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return OutboxRow(
+      recordType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}record_type'],
+      )!,
+      recordId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}record_id'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $SyncOutboxTable createAlias(String alias) {
+    return $SyncOutboxTable(attachedDatabase, alias);
+  }
+}
+
+class OutboxRow extends DataClass implements Insertable<OutboxRow> {
+  /// Sync API record type, e.g. `task` (docs/sync-api.md).
+  final String recordType;
+  final String recordId;
+
+  /// The row's `updatedAt` when it was queued (UTC ms).
+  final int updatedAt;
+  const OutboxRow({
+    required this.recordType,
+    required this.recordId,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['record_type'] = Variable<String>(recordType);
+    map['record_id'] = Variable<String>(recordId);
+    map['updated_at'] = Variable<int>(updatedAt);
+    return map;
+  }
+
+  SyncOutboxCompanion toCompanion(bool nullToAbsent) {
+    return SyncOutboxCompanion(
+      recordType: Value(recordType),
+      recordId: Value(recordId),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory OutboxRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return OutboxRow(
+      recordType: serializer.fromJson<String>(json['recordType']),
+      recordId: serializer.fromJson<String>(json['recordId']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'recordType': serializer.toJson<String>(recordType),
+      'recordId': serializer.toJson<String>(recordId),
+      'updatedAt': serializer.toJson<int>(updatedAt),
+    };
+  }
+
+  OutboxRow copyWith({String? recordType, String? recordId, int? updatedAt}) =>
+      OutboxRow(
+        recordType: recordType ?? this.recordType,
+        recordId: recordId ?? this.recordId,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  OutboxRow copyWithCompanion(SyncOutboxCompanion data) {
+    return OutboxRow(
+      recordType: data.recordType.present
+          ? data.recordType.value
+          : this.recordType,
+      recordId: data.recordId.present ? data.recordId.value : this.recordId,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('OutboxRow(')
+          ..write('recordType: $recordType, ')
+          ..write('recordId: $recordId, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(recordType, recordId, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is OutboxRow &&
+          other.recordType == this.recordType &&
+          other.recordId == this.recordId &&
+          other.updatedAt == this.updatedAt);
+}
+
+class SyncOutboxCompanion extends UpdateCompanion<OutboxRow> {
+  final Value<String> recordType;
+  final Value<String> recordId;
+  final Value<int> updatedAt;
+  final Value<int> rowid;
+  const SyncOutboxCompanion({
+    this.recordType = const Value.absent(),
+    this.recordId = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SyncOutboxCompanion.insert({
+    required String recordType,
+    required String recordId,
+    required int updatedAt,
+    this.rowid = const Value.absent(),
+  }) : recordType = Value(recordType),
+       recordId = Value(recordId),
+       updatedAt = Value(updatedAt);
+  static Insertable<OutboxRow> custom({
+    Expression<String>? recordType,
+    Expression<String>? recordId,
+    Expression<int>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (recordType != null) 'record_type': recordType,
+      if (recordId != null) 'record_id': recordId,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SyncOutboxCompanion copyWith({
+    Value<String>? recordType,
+    Value<String>? recordId,
+    Value<int>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return SyncOutboxCompanion(
+      recordType: recordType ?? this.recordType,
+      recordId: recordId ?? this.recordId,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (recordType.present) {
+      map['record_type'] = Variable<String>(recordType.value);
+    }
+    if (recordId.present) {
+      map['record_id'] = Variable<String>(recordId.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SyncOutboxCompanion(')
+          ..write('recordType: $recordType, ')
+          ..write('recordId: $recordId, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -5305,6 +5576,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $TaskTargetDevicesTable taskTargetDevices =
       $TaskTargetDevicesTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
+  late final $SyncOutboxTable syncOutbox = $SyncOutboxTable(this);
   late final Index tasksDeletedDone = Index(
     'tasks_deleted_done',
     'CREATE INDEX tasks_deleted_done ON tasks (deleted, done)',
@@ -5344,6 +5616,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     devices,
     taskTargetDevices,
     settings,
+    syncOutbox,
     tasksDeletedDone,
     subtasksTask,
     taskTagsTask,
@@ -8057,6 +8330,174 @@ typedef $$SettingsTableProcessedTableManager =
       SettingRow,
       PrefetchHooks Function()
     >;
+typedef $$SyncOutboxTableCreateCompanionBuilder = SyncOutboxCompanion Function({
+  required String recordType,
+  required String recordId,
+  required int updatedAt,
+  Value<int> rowid,
+});
+typedef $$SyncOutboxTableUpdateCompanionBuilder = SyncOutboxCompanion Function({
+  Value<String> recordType,
+  Value<String> recordId,
+  Value<int> updatedAt,
+  Value<int> rowid,
+});
+
+class $$SyncOutboxTableFilterComposer
+    extends Composer<_$AppDatabase, $SyncOutboxTable> {
+  $$SyncOutboxTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get recordType => $composableBuilder(
+    column: $table.recordType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get recordId => $composableBuilder(
+    column: $table.recordId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$SyncOutboxTableOrderingComposer
+    extends Composer<_$AppDatabase, $SyncOutboxTable> {
+  $$SyncOutboxTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get recordType => $composableBuilder(
+    column: $table.recordType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get recordId => $composableBuilder(
+    column: $table.recordId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$SyncOutboxTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SyncOutboxTable> {
+  $$SyncOutboxTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get recordType => $composableBuilder(
+    column: $table.recordType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get recordId =>
+      $composableBuilder(column: $table.recordId, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$SyncOutboxTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SyncOutboxTable,
+          OutboxRow,
+          $$SyncOutboxTableFilterComposer,
+          $$SyncOutboxTableOrderingComposer,
+          $$SyncOutboxTableAnnotationComposer,
+          $$SyncOutboxTableCreateCompanionBuilder,
+          $$SyncOutboxTableUpdateCompanionBuilder,
+          (
+            OutboxRow,
+            BaseReferences<_$AppDatabase, $SyncOutboxTable, OutboxRow>,
+          ),
+          OutboxRow,
+          PrefetchHooks Function()
+        > {
+  $$SyncOutboxTableTableManager(_$AppDatabase db, $SyncOutboxTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SyncOutboxTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SyncOutboxTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SyncOutboxTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> recordType = const Value.absent(),
+                Value<String> recordId = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SyncOutboxCompanion(
+                recordType: recordType,
+                recordId: recordId,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String recordType,
+                required String recordId,
+                required int updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => SyncOutboxCompanion.insert(
+                recordType: recordType,
+                recordId: recordId,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$SyncOutboxTable, OutboxRow>(table),
+                  BaseReferences<_$AppDatabase, $SyncOutboxTable, OutboxRow>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$SyncOutboxTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SyncOutboxTable,
+      OutboxRow,
+      $$SyncOutboxTableFilterComposer,
+      $$SyncOutboxTableOrderingComposer,
+      $$SyncOutboxTableAnnotationComposer,
+      $$SyncOutboxTableCreateCompanionBuilder,
+      $$SyncOutboxTableUpdateCompanionBuilder,
+      (OutboxRow, BaseReferences<_$AppDatabase, $SyncOutboxTable, OutboxRow>),
+      OutboxRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -8080,4 +8521,6 @@ class $AppDatabaseManager {
       $$TaskTargetDevicesTableTableManager(_db, _db.taskTargetDevices);
   $$SettingsTableTableManager get settings =>
       $$SettingsTableTableManager(_db, _db.settings);
+  $$SyncOutboxTableTableManager get syncOutbox =>
+      $$SyncOutboxTableTableManager(_db, _db.syncOutbox);
 }

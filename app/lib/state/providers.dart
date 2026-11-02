@@ -6,6 +6,7 @@ import 'package:taskwise_shared/taskwise_shared.dart';
 import '../data/app_settings.dart';
 import '../data/db/app_database.dart';
 import '../data/repositories/category_repository.dart';
+import '../data/repositories/device_repository.dart';
 import '../data/repositories/reminder_repository.dart';
 import '../data/repositories/repository_base.dart';
 import '../data/repositories/settings_repository.dart';
@@ -57,6 +58,14 @@ final reminderRepositoryProvider = Provider(
 
 final settingsRepositoryProvider = Provider(
   (ref) => SettingsRepository(
+    ref.watch(databaseProvider),
+    deviceId: ref.watch(deviceIdProvider),
+    clock: ref.watch(clockProvider),
+  ),
+);
+
+final deviceRepositoryProvider = Provider(
+  (ref) => DeviceRepository(
     ref.watch(databaseProvider),
     deviceId: ref.watch(deviceIdProvider),
     clock: ref.watch(clockProvider),
@@ -118,6 +127,24 @@ final categoriesByIdProvider = Provider<Map<String, Category>>(
       c.id: c,
   },
 );
+
+/// Active devices, this one first.
+final devicesProvider = StreamProvider<List<Device>>(
+  (ref) => ref.watch(deviceRepositoryProvider).watchDevices(),
+);
+
+/// Explicit notify-on-device targets per task id (only for tasks whose
+/// `notifyAllDevices` flag is false).
+final taskTargetsProvider = StreamProvider<Map<String, Set<String>>>(
+  (ref) => ref.watch(taskRepositoryProvider).watchAllTaskTargets(),
+);
+
+/// Whether a task notifies on this device.
+bool notifiesHere(
+  Task task,
+  Map<String, Set<String>> targets,
+  String deviceId,
+) => task.notifyAllDevices || (targets[task.id]?.contains(deviceId) ?? false);
 
 // ---------------------------------------------------------------- list view
 
@@ -252,6 +279,21 @@ final taskIdsWithRemindersProvider = Provider<Set<String>>(
 /// Active snoozes on this device.
 final snoozesProvider = StreamProvider<List<Snooze>>(
   (ref) => ref.watch(settingsRepositoryProvider).watchSnoozes(),
+);
+
+/// The shell's selected destination: 0 Tasks, 1 Calendar, 2 Settings.
+class ShellTabNotifier extends Notifier<int> {
+  static const tasks = 0;
+  static const settings = 2;
+
+  @override
+  int build() => tasks;
+
+  void select(int index) => state = index;
+}
+
+final shellTabProvider = NotifierProvider<ShellTabNotifier, int>(
+  ShellTabNotifier.new,
 );
 
 /// A task the app was asked to open (from a notification). The shell shows

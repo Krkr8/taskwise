@@ -756,4 +756,232 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get trayQuit => 'إنهاء Taskwise';
+
+  @override
+  String get settingsSync => 'المزامنة';
+
+  @override
+  String get syncNotConnectedHint =>
+      'اجعل مهامك متطابقة على كل أجهزتك عبر خادم Taskwise الخاص بك.';
+
+  @override
+  String get syncConnect => 'الاتصال بخادمك';
+
+  @override
+  String syncSignedInAs(String username) {
+    return 'تم تسجيل الدخول باسم $username';
+  }
+
+  @override
+  String syncStatusSynced(String when) {
+    return 'تمت المزامنة $when';
+  }
+
+  @override
+  String get syncStatusNever => 'لم تتم المزامنة بعد';
+
+  @override
+  String get syncStatusSyncing => 'جارٍ المزامنة…';
+
+  @override
+  String get syncStatusOffline =>
+      'غير متصل. ستُزامَن التغييرات عند الوصول إلى الخادم.';
+
+  @override
+  String get syncStatusSignedOut =>
+      'تم تسجيل الخروج. سجّل الدخول مجددًا لمتابعة المزامنة.';
+
+  @override
+  String syncStatusError(String message) {
+    return 'مشكلة في المزامنة: $message';
+  }
+
+  @override
+  String get syncNow => 'زامن الآن';
+
+  @override
+  String get syncSignOut => 'تسجيل الخروج';
+
+  @override
+  String syncSignOutConfirm(String server) {
+    return 'تسجيل الخروج من $server؟ سيتوقف هذا الجهاز عن المزامنة، وتبقى مهامك عليه.';
+  }
+
+  @override
+  String get syncSignInAgain => 'سجّل الدخول مجددًا';
+
+  @override
+  String get timeJustNow => 'الآن';
+
+  @override
+  String timeMinutesAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'منذ $count دقيقة',
+      few: 'منذ $count دقائق',
+      two: 'منذ دقيقتين',
+      one: 'منذ دقيقة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeHoursAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'منذ $count ساعة',
+      few: 'منذ $count ساعات',
+      two: 'منذ ساعتين',
+      one: 'منذ ساعة',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeDaysAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'منذ $count يومًا',
+      few: 'منذ $count أيام',
+      two: 'منذ يومين',
+      one: 'أمس',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get signInTitle => 'الاتصال بخادمك';
+
+  @override
+  String get signInServer => 'عنوان الخادم';
+
+  @override
+  String get signInServerHint => 'مثال: your-app.vercel.app';
+
+  @override
+  String get signInUsername => 'اسم المستخدم';
+
+  @override
+  String get signInPassword => 'كلمة المرور';
+
+  @override
+  String get signInDeviceName => 'اسم هذا الجهاز';
+
+  @override
+  String get signInButton => 'تسجيل الدخول';
+
+  @override
+  String get signInCreateAccount => 'أول مرة؟ أنشئ الحساب';
+
+  @override
+  String get signInCreateAccountHelp =>
+      'أدخل سر الإعداد الذي وضعته على الخادم (SETUP_SECRET). يُطلب مرة واحدة فقط. اختر كلمة مرور من 10 أحرف على الأقل.';
+
+  @override
+  String get signInSetupSecret => 'سر الإعداد';
+
+  @override
+  String get signInCreateButton => 'إنشاء الحساب وتسجيل الدخول';
+
+  @override
+  String get signInHaveAccount => 'لدي حساب بالفعل';
+
+  @override
+  String get fieldRequired => 'مطلوب';
+
+  @override
+  String get passwordTooShort => '10 أحرف على الأقل';
+
+  @override
+  String get signInErrorUnreachable =>
+      'تعذّر الوصول إلى الخادم. تحقّق من العنوان ومن اتصالك.';
+
+  @override
+  String get signInErrorBadAddress => 'لا يبدو هذا عنوان خادم.';
+
+  @override
+  String get signInErrorNotTaskwise =>
+      'أجاب هذا العنوان، لكنه ليس خادم Taskwise.';
+
+  @override
+  String get signInErrorWrongPassword =>
+      'اسم المستخدم أو كلمة المرور غير صحيحة.';
+
+  @override
+  String signInErrorRateLimited(int minutes) {
+    return 'محاولات فاشلة كثيرة. حاول مجددًا بعد $minutes د.';
+  }
+
+  @override
+  String get signInErrorWrongSecret => 'سر الإعداد غير صحيح.';
+
+  @override
+  String get signInErrorAccountExists =>
+      'الحساب موجود بالفعل. سجّل الدخول بدلًا من ذلك.';
+
+  @override
+  String get signInErrorSetupDisabled =>
+      'إعداد الحساب معطّل على الخادم (لم يُضبط SETUP_SECRET).';
+
+  @override
+  String signInErrorOther(String message) {
+    return 'حدث خطأ: $message';
+  }
+
+  @override
+  String get syncBannerText => 'زامن أجهزتك: اتصل بخادم Taskwise الخاص بك.';
+
+  @override
+  String get syncBannerConnect => 'اتصال';
+
+  @override
+  String get syncBannerLater => 'ليس الآن';
+
+  @override
+  String get devicesTitle => 'الأجهزة';
+
+  @override
+  String get devicesSubtitle => 'أعد تسمية أجهزتك أو أزلها';
+
+  @override
+  String get deviceThis => 'هذا الجهاز';
+
+  @override
+  String deviceLastSeen(String when) {
+    return 'آخر ظهور $when';
+  }
+
+  @override
+  String get deviceRename => 'إعادة التسمية';
+
+  @override
+  String get deviceName => 'اسم الجهاز';
+
+  @override
+  String get deviceRemove => 'إزالة';
+
+  @override
+  String deviceRemoveConfirm(String name) {
+    return 'إزالة $name؟ سيتوقف عن المزامنة حتى يسجّل الدخول مجددًا بكلمة مرورك.';
+  }
+
+  @override
+  String get deviceActionFailed =>
+      'تعذّر الوصول إلى الخادم. حاول مجددًا عند الاتصال.';
+
+  @override
+  String get notifyOn => 'التنبيه على';
+
+  @override
+  String get notifyAllDevices => 'كل الأجهزة';
+
+  @override
+  String get notifyNoDevice =>
+      'لم يُختر أي جهاز: لن تذكّر هذه المهمة على أي جهاز.';
+
+  @override
+  String get notNotifiedHere => 'لا تذكّر على هذا الجهاز';
 }

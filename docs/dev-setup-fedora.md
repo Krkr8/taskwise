@@ -4,10 +4,10 @@ These steps set up a Fedora 44 (GNOME) machine to build and run the Taskwise Lin
 
 ## 1. System packages
 
-Flutter's Linux desktop toolchain needs clang, CMake, Ninja, pkg-config, GTK 3 headers and the C++ standard library headers. The tray icon (`tray_manager`) also needs the X11 and Xi headers:
+Flutter's Linux desktop toolchain needs clang, CMake, Ninja, pkg-config, GTK 3 headers and the C++ standard library headers. The tray icon (`tray_manager`) also needs the X11 and Xi headers, and the sign-in token store (`flutter_secure_storage`, which keeps the token in the GNOME keyring) needs libsecret:
 
 ```bash
-sudo dnf install -y git clang cmake ninja-build pkgconf-pkg-config gtk3-devel libstdc++-devel libX11-devel libXi-devel xz
+sudo dnf install -y git clang cmake ninja-build pkgconf-pkg-config gtk3-devel libstdc++-devel libX11-devel libXi-devel libsecret-devel xz
 ```
 
 The GitHub CLI is optional but handy for checking CI runs:

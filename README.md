@@ -2,7 +2,7 @@
 
 A personal, self-hosted to-do and reminders app for Windows, Linux and iOS, with a small sync server you host free on Vercel.
 
-> Status: early development. The app works on its own on each device (milestones M1–M4), and the sync server is ready (M5); syncing in the app arrives in M6. See [SPEC.md](SPEC.md) for the full specification and progress log.
+> Status: early development. Tasks, calendar, repeats and reminders work on Windows, Linux and iPhone, and sync between them through your own server (milestones M1–M6). Location reminders (M7) and the design pass (M8) are next. See [SPEC.md](SPEC.md) for the full specification and progress log.
 
 ## Install
 

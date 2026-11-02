@@ -25,7 +25,25 @@ abstract final class SettingKeys {
   /// uses it to show reminders missed while the app wasn't running.
   static const remindersCheckedAt = 'reminders_checked_at';
   static const thisDeviceId = 'this_device_id';
+
+  // Sync (all device-only).
+  static const serverUrl = 'sync_server_url';
+  static const syncUsername = 'sync_username';
+
+  /// Change sequence number of the last pulled change (docs/sync-api.md).
+  static const syncSeq = 'sync_seq';
+  static const lastSyncedAt = 'sync_last_synced_at';
+  static const syncBannerDismissed = 'sync_banner_dismissed';
 }
+
+/// The device-only sync bookkeeping kept in settings.
+typedef SyncSettings = ({
+  String? serverUrl,
+  String? username,
+  int seq,
+  DateTime? lastSyncedAt,
+  bool bannerDismissed,
+});
 
 /// Reads and writes key/value settings.
 class SettingsRepository extends RepositoryBase {
@@ -109,6 +127,62 @@ class SettingsRepository extends RepositoryBase {
     at.toUtc().toIso8601String(),
     synced: false,
   );
+
+  // ------------------------------------------------------------------ sync
+
+  Future<SyncSettings> getSyncSettings() async {
+    final rows =
+        await (db.select(db.settings)..where(
+              (s) => s.id.isIn([
+                SettingKeys.serverUrl,
+                SettingKeys.syncUsername,
+                SettingKeys.syncSeq,
+                SettingKeys.lastSyncedAt,
+                SettingKeys.syncBannerDismissed,
+              ]),
+            ))
+            .get();
+    final values = {for (final row in rows) row.id: row.value};
+    return (
+      serverUrl: values[SettingKeys.serverUrl],
+      username: values[SettingKeys.syncUsername],
+      seq: int.tryParse(values[SettingKeys.syncSeq] ?? '') ?? 0,
+      lastSyncedAt: DateTime.tryParse(values[SettingKeys.lastSyncedAt] ?? ''),
+      bannerDismissed: values[SettingKeys.syncBannerDismissed] == 'true',
+    );
+  }
+
+  /// Remembers the server this device signs in to, starting from the first
+  /// change; or forgets it (signed out) when [serverUrl] is null.
+  Future<void> setSyncAccount({String? serverUrl, String? username}) =>
+      db.transaction(() async {
+        if (serverUrl == null) {
+          await (db.delete(db.settings)..where(
+                (s) => s.id.isIn([
+                  SettingKeys.serverUrl,
+                  SettingKeys.syncUsername,
+                  SettingKeys.lastSyncedAt,
+                ]),
+              ))
+              .go();
+        } else {
+          await _put(SettingKeys.serverUrl, serverUrl, synced: false);
+          await _put(SettingKeys.syncUsername, username ?? '', synced: false);
+        }
+        await setSyncSeq(0);
+      });
+
+  Future<void> setSyncSeq(int seq) =>
+      _put(SettingKeys.syncSeq, '$seq', synced: false);
+
+  Future<void> setLastSyncedAt(DateTime at) => _put(
+    SettingKeys.lastSyncedAt,
+    at.toUtc().toIso8601String(),
+    synced: false,
+  );
+
+  Future<void> setSyncBannerDismissed() =>
+      _put(SettingKeys.syncBannerDismissed, 'true', synced: false);
 
   SimpleSelectStatement<$SettingsTable, SettingRow> _liveRows() =>
       db.select(db.settings)..where((s) => s.deleted.not());

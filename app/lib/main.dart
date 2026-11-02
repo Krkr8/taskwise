@@ -14,6 +14,7 @@ import 'notifications/ios_notifier.dart';
 import 'notifications/notifier.dart';
 import 'notifications/reminder_scheduler.dart';
 import 'state/providers.dart';
+import 'sync/sync_controller.dart';
 
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,6 +55,7 @@ Future<void> main(List<String> args) async {
         deviceIdProvider.overrideWithValue(deviceId),
         initialSettingsProvider.overrideWithValue(settings),
         reminderNotifierProvider.overrideWithValue(notifier),
+        deviceTypeProvider.overrideWithValue(type),
       ],
       child: const TaskwiseApp(),
     ),
@@ -72,7 +74,8 @@ DeviceType _detectDeviceType() {
   return DeviceType.other;
 }
 
-/// Pre-filled device name (SPEC.md section 3.4); editable from M6.
+/// Pre-filled device name (SPEC.md section 3.4); changed when signing in
+/// or in Settings → Devices.
 String _defaultDeviceName(DeviceType type) => switch (type) {
   DeviceType.windows => 'Windows PC',
   DeviceType.ios => 'iPhone',

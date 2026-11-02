@@ -45,7 +45,7 @@ class TaskRepository extends RepositoryBase {
       (rows) => [
         for (final row in rows)
           TaskEntry(
-            task: _toTask(db.tasks.map(row.data)),
+            task: toTask(db.tasks.map(row.data)),
             subtaskCount: row.read<int>('subtask_count'),
             subtasksDone: row.read<int>('subtasks_done'),
             tagIds: switch (row.readNullable<String>('tag_ids')) {
@@ -61,13 +61,13 @@ class TaskRepository extends RepositoryBase {
   Stream<Task?> watchTask(String id) =>
       (db.select(db.tasks)..where((t) => t.id.equals(id) & t.deleted.not()))
           .watchSingleOrNull()
-          .map((row) => row == null ? null : _toTask(row));
+          .map((row) => row == null ? null : toTask(row));
 
   Future<Task?> getTask(String id) async {
     final row = await (db.select(
       db.tasks,
     )..where((t) => t.id.equals(id))).getSingleOrNull();
-    return row == null ? null : _toTask(row);
+    return row == null ? null : toTask(row);
   }
 
   /// Creates a task. Throws [ArgumentError] if [title] is blank.
@@ -90,7 +90,7 @@ class TaskRepository extends RepositoryBase {
       updatedAt: at,
       updatedByDevice: deviceId,
     );
-    await db.into(db.tasks).insert(_toCompanion(task));
+    await db.into(db.tasks).insert(toCompanion(task));
     return task;
   }
 
@@ -193,7 +193,7 @@ class TaskRepository extends RepositoryBase {
       updatedAt: at,
       updatedByDevice: deviceId,
     );
-    await db.into(db.tasks).insert(_toCompanion(next));
+    await db.into(db.tasks).insert(toCompanion(next));
 
     final subtasks = await (db.select(
       db.subtasks,
@@ -202,7 +202,7 @@ class TaskRepository extends RepositoryBase {
       await db
           .into(db.subtasks)
           .insert(
-            _toSubtaskCompanion(
+            toSubtaskCompanion(
               Subtask(
                 id: newId(),
                 taskId: next.id,
@@ -279,7 +279,7 @@ class TaskRepository extends RepositoryBase {
             ..where((s) => s.taskId.equals(taskId) & s.deleted.not())
             ..orderBy([(s) => OrderingTerm.asc(s.sortOrder)]))
           .watch()
-          .map((rows) => rows.map(_toSubtask).toList());
+          .map((rows) => rows.map(toSubtask).toList());
 
   /// Appends a subtask to the end of the checklist.
   Future<Subtask> addSubtask(String taskId, String title) {
@@ -299,7 +299,7 @@ class TaskRepository extends RepositoryBase {
         updatedAt: now(),
         updatedByDevice: deviceId,
       );
-      await db.into(db.subtasks).insert(_toSubtaskCompanion(subtask));
+      await db.into(db.subtasks).insert(toSubtaskCompanion(subtask));
       return subtask;
     });
   }
@@ -341,7 +341,7 @@ class TaskRepository extends RepositoryBase {
               (t) => OrderingTerm.asc(t.name.collate(Collate.noCase)),
             ]))
           .watch()
-          .map((rows) => rows.map(_toTag).toList());
+          .map((rows) => rows.map(toTag).toList());
 
   /// Ids of the tags on a task.
   Stream<Set<String>> watchTaskTagIds(String taskId) =>
@@ -363,7 +363,7 @@ class TaskRepository extends RepositoryBase {
                 )
                 ..limit(1))
               .getSingleOrNull();
-      if (existing != null) return _toTag(existing);
+      if (existing != null) return toTag(existing);
       final tag = Tag(
         id: newId(),
         name: trimmed,
@@ -427,6 +427,72 @@ class TaskRepository extends RepositoryBase {
         }
       });
 
+  // ------------------------------------------------- device targeting
+
+  /// Device ids each task notifies on, for tasks that don't notify on all
+  /// devices (the `notifyAllDevices` flag is false). Keyed by task id.
+  Stream<Map<String, Set<String>>> watchAllTaskTargets() =>
+      (db.select(
+        db.taskTargetDevices,
+      )..where((t) => t.deleted.not())).watch().map((rows) {
+        final targets = <String, Set<String>>{};
+        for (final row in rows) {
+          (targets[row.taskId] ??= {}).add(row.deviceId);
+        }
+        return targets;
+      });
+
+  /// Makes a task notify on all devices ([all], the default, which includes
+  /// devices added later) or only on [deviceIds]. Like [setTaskTags],
+  /// removed targets are tombstoned and re-added ones revived.
+  Future<void> setTaskTargets(
+    String taskId, {
+    required bool all,
+    Set<String> deviceIds = const {},
+  }) => db.transaction(() async {
+    final at = now();
+    await (db.update(db.tasks)..where((t) => t.id.equals(taskId))).write(
+      TasksCompanion(
+        notifyAllDevices: Value(all),
+        updatedAt: Value(at),
+        updatedByDevice: Value(deviceId),
+      ),
+    );
+    final wanted = all ? const <String>{} : deviceIds;
+    final rows = await (db.select(
+      db.taskTargetDevices,
+    )..where((t) => t.taskId.equals(taskId))).get();
+    rows.sort((a, b) => (a.deleted ? 1 : 0) - (b.deleted ? 1 : 0));
+    final linked = <String>{};
+    for (final row in rows) {
+      final keep = wanted.contains(row.deviceId) && linked.add(row.deviceId);
+      if (row.deleted == keep) {
+        await (db.update(
+          db.taskTargetDevices,
+        )..where((t) => t.id.equals(row.id))).write(
+          TaskTargetDevicesCompanion(
+            deleted: Value(!keep),
+            updatedAt: Value(at),
+            updatedByDevice: Value(deviceId),
+          ),
+        );
+      }
+    }
+    for (final target in wanted.difference(linked)) {
+      await db
+          .into(db.taskTargetDevices)
+          .insert(
+            TaskTargetDevicesCompanion.insert(
+              id: newId(),
+              taskId: taskId,
+              deviceId: target,
+              updatedAt: at,
+              updatedByDevice: Value(deviceId),
+            ),
+          );
+    }
+  });
+
   /// [utc] moved by [days] calendar days in local wall-clock time.
   static DateTime _shiftDays(DateTime utc, int days) {
     final local = utc.toLocal();
@@ -441,7 +507,7 @@ class TaskRepository extends RepositoryBase {
 
   // -------------------------------------------------------------- mapping
 
-  static Task _toTask(TaskRow row) => Task(
+  static Task toTask(TaskRow row) => Task(
     id: row.id,
     title: row.title,
     notes: row.notes,
@@ -459,7 +525,7 @@ class TaskRepository extends RepositoryBase {
     updatedByDevice: row.updatedByDevice,
   );
 
-  static TasksCompanion _toCompanion(Task task) => TasksCompanion.insert(
+  static TasksCompanion toCompanion(Task task) => TasksCompanion.insert(
     id: task.id,
     title: task.title,
     notes: Value(task.notes),
@@ -477,7 +543,7 @@ class TaskRepository extends RepositoryBase {
     updatedByDevice: Value(task.updatedByDevice),
   );
 
-  static Subtask _toSubtask(SubtaskRow row) => Subtask(
+  static Subtask toSubtask(SubtaskRow row) => Subtask(
     id: row.id,
     taskId: row.taskId,
     title: row.title,
@@ -488,7 +554,7 @@ class TaskRepository extends RepositoryBase {
     updatedByDevice: row.updatedByDevice,
   );
 
-  static SubtasksCompanion _toSubtaskCompanion(Subtask s) =>
+  static SubtasksCompanion toSubtaskCompanion(Subtask s) =>
       SubtasksCompanion.insert(
         id: s.id,
         taskId: s.taskId,
@@ -500,7 +566,7 @@ class TaskRepository extends RepositoryBase {
         updatedByDevice: Value(s.updatedByDevice),
       );
 
-  static Tag _toTag(TagRow row) => Tag(
+  static Tag toTag(TagRow row) => Tag(
     id: row.id,
     name: row.name,
     updatedAt: row.updatedAt,

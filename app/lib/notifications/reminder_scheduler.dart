@@ -50,7 +50,8 @@ class ReminderScheduler {
       ..listen(taskEntriesProvider, (_, _) => schedule())
       ..listen(timeRemindersProvider, (_, _) => schedule())
       ..listen(appSettingsProvider, (_, _) => schedule())
-      ..listen(snoozesProvider, (_, _) => schedule());
+      ..listen(snoozesProvider, (_, _) => schedule())
+      ..listen(taskTargetsProvider, (_, _) => schedule());
     _ready = _init();
     // The horizon slides and "today" changes: re-plan now and then, and
     // when the app comes back to the foreground.
@@ -101,8 +102,14 @@ class ReminderScheduler {
           ? now
           : (checked.isBefore(floor) ? floor : checked.toLocal());
     }
+    // Only tasks that notify on this device (SPEC.md section 3.1).
+    final targets = _ref.read(taskTargetsProvider).value ?? const {};
+    final deviceId = _ref.read(deviceIdProvider);
     final plan = planNotifications(
-      tasks: entries.map((e) => e.task),
+      tasks: [
+        for (final e in entries)
+          if (notifiesHere(e.task, targets, deviceId)) e.task,
+      ],
       reminders: reminders,
       now: now,
       after: after,

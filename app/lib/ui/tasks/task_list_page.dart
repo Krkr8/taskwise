@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
 
 import '../../state/providers.dart';
+import '../../sync/sync_controller.dart';
+import '../settings/sign_in_page.dart';
+import '../settings/sync_section.dart';
 import '../theme/tokens.dart';
 import 'labels.dart';
 import 'task_detail.dart';
@@ -91,11 +94,25 @@ class _TaskListPane extends ConsumerWidget {
               Spacing.lg,
               Spacing.sm,
             ),
-            child: Text(
-              l10n.navTasks,
-              style: Theme.of(context).textTheme.headlineSmall,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.navTasks,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                ),
+                // Desktop shows it in the side rail instead.
+                if (MediaQuery.sizeOf(context).width < Breakpoints.compact)
+                  SyncStatusIcon(
+                    onTap: () => ref
+                        .read(shellTabProvider.notifier)
+                        .select(ShellTabNotifier.settings),
+                  ),
+              ],
             ),
           ),
+          const _SyncBanner(),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: Spacing.lg),
             child: TaskToolbar(),
@@ -339,4 +356,62 @@ class _NoSelection extends StatelessWidget {
     icon: Icons.touch_app_outlined,
     text: context.l10n.selectTaskHint,
   );
+}
+
+/// One-time invitation to connect to a sync server (owner's choice: sign-in
+/// is optional, 2026-11-02).
+class _SyncBanner extends ConsumerWidget {
+  const _SyncBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sync = ref.watch(syncControllerProvider);
+    if (!sync.loaded || sync.connected || sync.bannerDismissed) {
+      return const SizedBox.shrink();
+    }
+    final l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        Spacing.lg,
+        Spacing.xs,
+        Spacing.lg,
+        Spacing.sm,
+      ),
+      child: Card.filled(
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            Spacing.md,
+            Spacing.sm,
+            Spacing.sm,
+            Spacing.sm,
+          ),
+          child: Wrap(
+            alignment: WrapAlignment.end,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: Spacing.sm,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.cloud_outlined),
+                  const SizedBox(width: Spacing.sm),
+                  Flexible(child: Text(l10n.syncBannerText)),
+                ],
+              ),
+              TextButton(
+                onPressed: () =>
+                    ref.read(syncControllerProvider.notifier).dismissBanner(),
+                child: Text(l10n.syncBannerLater),
+              ),
+              FilledButton.tonal(
+                onPressed: () => showSignInPage(context),
+                child: Text(l10n.syncBannerConnect),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

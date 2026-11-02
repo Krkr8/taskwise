@@ -50,6 +50,15 @@ extension TaskLabels on AppLocalizations {
     return pattern.format(date.atLocalTime());
   }
 
+  /// How long ago [at] was: "just now", "5 min ago", "2 hours ago"...
+  String timeAgo(DateTime at, DateTime now) {
+    final elapsed = now.difference(at);
+    if (elapsed.inMinutes < 1) return timeJustNow;
+    if (elapsed.inHours < 1) return timeMinutesAgo(elapsed.inMinutes);
+    if (elapsed.inDays < 1) return timeHoursAgo(elapsed.inHours);
+    return timeDaysAgo(elapsed.inDays);
+  }
+
   /// A clock time, e.g. "9:30 AM" or "09:30".
   String clockTime(int minutesAfterMidnight, TimeFormat format) {
     final at = DateTime(2000, 1, 1, 0, minutesAfterMidnight);

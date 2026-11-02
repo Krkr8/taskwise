@@ -539,6 +539,8 @@ void main() {
       200,
       scrollable: find.byType(Scrollable).first,
     );
+    await tester.ensureVisible(find.text('15 min before'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('15 min before'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('10 min')); // ignored: 3 already picked

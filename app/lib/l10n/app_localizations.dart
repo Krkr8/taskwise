@@ -1189,6 +1189,348 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Quit Taskwise'**
   String get trayQuit;
+
+  /// No description provided for @settingsSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync'**
+  String get settingsSync;
+
+  /// No description provided for @syncNotConnectedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep your tasks the same on all your devices through your own Taskwise server.'**
+  String get syncNotConnectedHint;
+
+  /// No description provided for @syncConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to your server'**
+  String get syncConnect;
+
+  /// No description provided for @syncSignedInAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in as {username}'**
+  String syncSignedInAs(String username);
+
+  /// No description provided for @syncStatusSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced {when}'**
+  String syncStatusSynced(String when);
+
+  /// No description provided for @syncStatusNever.
+  ///
+  /// In en, this message translates to:
+  /// **'Not synced yet'**
+  String get syncStatusNever;
+
+  /// No description provided for @syncStatusSyncing.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing…'**
+  String get syncStatusSyncing;
+
+  /// No description provided for @syncStatusOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline. Changes will sync when the server can be reached.'**
+  String get syncStatusOffline;
+
+  /// No description provided for @syncStatusSignedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed out. Sign in again to keep syncing.'**
+  String get syncStatusSignedOut;
+
+  /// No description provided for @syncStatusError.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync problem: {message}'**
+  String syncStatusError(String message);
+
+  /// No description provided for @syncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get syncNow;
+
+  /// No description provided for @syncSignOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get syncSignOut;
+
+  /// No description provided for @syncSignOutConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out of {server}? This device stops syncing. Your tasks stay on it.'**
+  String syncSignOutConfirm(String server);
+
+  /// No description provided for @syncSignInAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in again'**
+  String get syncSignInAgain;
+
+  /// No description provided for @timeJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'just now'**
+  String get timeJustNow;
+
+  /// No description provided for @timeMinutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 min ago} other{{count} min ago}}'**
+  String timeMinutesAgo(int count);
+
+  /// No description provided for @timeHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 hour ago} other{{count} hours ago}}'**
+  String timeHoursAgo(int count);
+
+  /// No description provided for @timeDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{yesterday} other{{count} days ago}}'**
+  String timeDaysAgo(int count);
+
+  /// No description provided for @signInTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to your server'**
+  String get signInTitle;
+
+  /// No description provided for @signInServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Server address'**
+  String get signInServer;
+
+  /// No description provided for @signInServerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. your-app.vercel.app'**
+  String get signInServerHint;
+
+  /// No description provided for @signInUsername.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get signInUsername;
+
+  /// No description provided for @signInPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get signInPassword;
+
+  /// No description provided for @signInDeviceName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name of this device'**
+  String get signInDeviceName;
+
+  /// No description provided for @signInButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get signInButton;
+
+  /// No description provided for @signInCreateAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'First time? Create the account'**
+  String get signInCreateAccount;
+
+  /// No description provided for @signInCreateAccountHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the setup secret you set on the server (SETUP_SECRET). It\'s only needed this once. Choose a password of at least 10 characters.'**
+  String get signInCreateAccountHelp;
+
+  /// No description provided for @signInSetupSecret.
+  ///
+  /// In en, this message translates to:
+  /// **'Setup secret'**
+  String get signInSetupSecret;
+
+  /// No description provided for @signInCreateButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account and sign in'**
+  String get signInCreateButton;
+
+  /// No description provided for @signInHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'I already have an account'**
+  String get signInHaveAccount;
+
+  /// No description provided for @fieldRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get fieldRequired;
+
+  /// No description provided for @passwordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'At least 10 characters'**
+  String get passwordTooShort;
+
+  /// No description provided for @signInErrorUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t reach the server. Check the address and your connection.'**
+  String get signInErrorUnreachable;
+
+  /// No description provided for @signInErrorBadAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'That doesn\'t look like a server address.'**
+  String get signInErrorBadAddress;
+
+  /// No description provided for @signInErrorNotTaskwise.
+  ///
+  /// In en, this message translates to:
+  /// **'That address answered, but it isn\'t a Taskwise server.'**
+  String get signInErrorNotTaskwise;
+
+  /// No description provided for @signInErrorWrongPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong username or password.'**
+  String get signInErrorWrongPassword;
+
+  /// No description provided for @signInErrorRateLimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many failed tries. Try again in {minutes} min.'**
+  String signInErrorRateLimited(int minutes);
+
+  /// No description provided for @signInErrorWrongSecret.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong setup secret.'**
+  String get signInErrorWrongSecret;
+
+  /// No description provided for @signInErrorAccountExists.
+  ///
+  /// In en, this message translates to:
+  /// **'The account already exists. Sign in instead.'**
+  String get signInErrorAccountExists;
+
+  /// No description provided for @signInErrorSetupDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Account setup is turned off on the server (SETUP_SECRET isn\'t set).'**
+  String get signInErrorSetupDisabled;
+
+  /// No description provided for @signInErrorOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong: {message}'**
+  String signInErrorOther(String message);
+
+  /// No description provided for @syncBannerText.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync your devices: connect to your Taskwise server.'**
+  String get syncBannerText;
+
+  /// No description provided for @syncBannerConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get syncBannerConnect;
+
+  /// No description provided for @syncBannerLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get syncBannerLater;
+
+  /// No description provided for @devicesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Devices'**
+  String get devicesTitle;
+
+  /// No description provided for @devicesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename or remove your devices'**
+  String get devicesSubtitle;
+
+  /// No description provided for @deviceThis.
+  ///
+  /// In en, this message translates to:
+  /// **'This device'**
+  String get deviceThis;
+
+  /// No description provided for @deviceLastSeen.
+  ///
+  /// In en, this message translates to:
+  /// **'Last seen {when}'**
+  String deviceLastSeen(String when);
+
+  /// No description provided for @deviceRename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get deviceRename;
+
+  /// No description provided for @deviceName.
+  ///
+  /// In en, this message translates to:
+  /// **'Device name'**
+  String get deviceName;
+
+  /// No description provided for @deviceRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get deviceRemove;
+
+  /// No description provided for @deviceRemoveConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name}? It stops syncing until it signs in again with your password.'**
+  String deviceRemoveConfirm(String name);
+
+  /// No description provided for @deviceActionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach the server. Try again when you\'re online.'**
+  String get deviceActionFailed;
+
+  /// No description provided for @notifyOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Notify on'**
+  String get notifyOn;
+
+  /// No description provided for @notifyAllDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'All devices'**
+  String get notifyAllDevices;
+
+  /// No description provided for @notifyNoDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'No device chosen: this task won\'t remind anywhere.'**
+  String get notifyNoDevice;
+
+  /// No description provided for @notNotifiedHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Doesn\'t remind on this device'**
+  String get notNotifiedHere;
 }
 
 class _AppLocalizationsDelegate
