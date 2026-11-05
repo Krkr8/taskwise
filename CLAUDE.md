@@ -12,6 +12,7 @@
   - `cd shared && dart test`
   - `cd server && npm test`
   - The live two-device sync test needs a local server: see the top of `app/test/sync/live_server_test.dart`.
+  - Location reminders without the iPhone: `tools/geofence_sim/run.sh` (walk simulator over the real Swift `GeofenceEngine`, in podman), `run.sh test` (Swift unit tests on Linux), and `cd app && flutter test integration_test/location_test.dart -d linux` (real app in a window; add `--dart-define=SHOTS=<dir>` for screenshots).
 - Releases:
   - Push a tag `v<version>` (bump `app/pubspec.yaml` first). The release workflow builds draft releases for Linux, Windows and unsigned iOS.
   - Download the files for the owner with `gh release download v<version> --dir ~/Downloads/taskwise-<version>`.

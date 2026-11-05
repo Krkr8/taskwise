@@ -7,37 +7,32 @@ import UserNotifications
 /// entirely natively: iOS may relaunch Taskwise in the background for a
 /// region event without starting any Flutter UI, so no Dart runs here.
 ///
-/// How it works (SPEC.md section 3.3):
-/// 1. Each reminder gets an outer region (Core Location region monitoring,
-///    ~150 m) because iOS geofences are unreliable below that.
-/// 2. Entering an outer region starts precise location updates for a few
-///    minutes; GeofenceDecider decides when the phone is within the
-///    reminder's radius (default 30 m), then the updates stop.
-/// 3. Leaving uses the precise fixes when they run, and the outer region's
-///    exit as the backup trigger.
-/// 4. iOS allows 20 regions per app: with more reminders, the 20 nearest
-///    are monitored and significant location changes pick them again.
+/// The decisions are made by GeofenceEngine (GeofenceDecider.swift), which
+/// the walk simulator in tools/geofence_sim also runs. This class connects
+/// it to Core Location (SPEC.md section 3.3):
+/// - each reminder gets an outer region (~150 m) because iOS geofences are
+///   unreliable below that; region events start precise updates for a few
+///   minutes, and the engine decides from the fixes;
+/// - after lingering near a place, a small "near" region is watched;
+/// - iOS allows 20 regions per app: with more reminders, the nearest are
+///   monitored and significant location changes pick them again.
 ///
 /// Created in AppDelegate's didFinishLaunching so region events reach it
 /// after a background relaunch.
-final class LocationReminderManager: NSObject, CLLocationManagerDelegate {
+final class LocationReminderManager: NSObject, CLLocationManagerDelegate, GeofenceHost {
   static let shared = LocationReminderManager()
 
   /// iOS allows 20 monitored regions per app.
   private static let regionLimit = 20
-  /// Longest precise-updates session after entering a region.
-  private static let preciseTimeout: TimeInterval = 5 * 60
   private static let regionPrefix = "taskwise.loc."
+  private static let nearPrefix = "taskwise.near."
   private static let eventLimit = 50
 
   private let manager = CLLocationManager()
   private let defaults = UserDefaults.standard
-  private var entries: [GeofenceEntry] = []
-  private var states: [String: GeofenceState] = [:]
+  private var engine = GeofenceEngine()
   private var events: [String] = []
 
-  /// Reminders still undecided in the running precise session.
-  private var pendingIds = Set<String>()
   private var preciseActive = false
   private var preciseTimer: Timer?
   private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
@@ -47,8 +42,11 @@ final class LocationReminderManager: NSObject, CLLocationManagerDelegate {
   private var locationCallbacks: [([String: Any]?) -> Void] = []
   private var started = false
 
+  private var entries: [GeofenceEntry] { engine.entries }
+
   private enum Keys {
     static let states = "taskwise.location.states"
+    static let near = "taskwise.location.near"
     static let events = "taskwise.location.events"
     static let askedAlways = "taskwise.location.askedAlways"
   }
@@ -66,23 +64,20 @@ final class LocationReminderManager: NSObject, CLLocationManagerDelegate {
     started = true
     manager.delegate = self
     manager.pausesLocationUpdatesAutomatically = false
-    entries = loadEntries()
-    states = loadStates()
     events = defaults.stringArray(forKey: Keys.events) ?? []
+    engine = GeofenceEngine(
+      entries: loadEntries(), states: loadStates(),
+      nearIds: Set(defaults.stringArray(forKey: Keys.near) ?? []))
+    engine.host = self
     refreshRegions()
   }
 
   /// Replaces the reminders (from Dart) and updates the monitored regions.
   func setEntries(_ newEntries: [GeofenceEntry]) {
     start()
-    let changed = newEntries != entries
-    entries = newEntries
-    // Forget state of reminders that are gone or moved.
-    let byId = Dictionary(uniqueKeysWithValues: newEntries.map { ($0.id, $0) })
-    states = states.filter { byId[$0.key] != nil }
+    if engine.setEntries(newEntries) { log("reminders: \(newEntries.count)") }
     saveEntries()
-    saveStates()
-    if changed { log("reminders: \(newEntries.count)") }
+    saveEngine()
     refreshRegions()
   }
 
@@ -94,102 +89,103 @@ final class LocationReminderManager: NSObject, CLLocationManagerDelegate {
     let here = (lastFix ?? manager.location).map {
       (latitude: $0.coordinate.latitude, longitude: $0.coordinate.longitude)
     }
-    let chosen = GeofenceDecider.nearest(entries, limit: Self.regionLimit, from: here)
-    let wanted = Dictionary(uniqueKeysWithValues: chosen.map { (Self.regionPrefix + $0.id, $0) })
+    let nearEntries = entries.filter { engine.nearIds.contains($0.id) }
+    let chosen = GeofenceDecider.nearest(
+      entries, limit: max(0, Self.regionLimit - nearEntries.count), from: here)
+    var wanted: [String: CLCircularRegion] = [:]
+    for entry in chosen {
+      let region = makeRegion(entry, near: false)
+      wanted[region.identifier] = region
+    }
+    for entry in nearEntries {
+      let region = makeRegion(entry, near: true)
+      wanted[region.identifier] = region
+    }
 
-    for region in manager.monitoredRegions where region.identifier.hasPrefix(Self.regionPrefix) {
-      guard let entry = wanted[region.identifier],
+    for region in manager.monitoredRegions where isOurs(region.identifier) {
+      guard let want = wanted[region.identifier],
         let circle = region as? CLCircularRegion,
-        sameRegion(circle, entry)
+        sameRegion(circle, want)
       else {
         manager.stopMonitoring(for: region)
         continue
       }
     }
     let monitored = Set(manager.monitoredRegions.map(\.identifier))
-    for (identifier, entry) in wanted where !monitored.contains(identifier) {
-      let region = makeRegion(entry)
+    for (identifier, region) in wanted where !monitored.contains(identifier) {
       manager.startMonitoring(for: region)
       // Ask where we are now, so a reminder added while at the place knows.
-      manager.requestState(for: region)
+      // Not for near regions: only walking into one counts.
+      if identifier.hasPrefix(Self.regionPrefix) { manager.requestState(for: region) }
     }
 
     // More reminders than regions: re-pick the nearest as the phone moves.
-    if entries.count > Self.regionLimit {
+    if entries.count > Self.regionLimit - nearEntries.count {
       manager.startMonitoringSignificantLocationChanges()
     } else {
       manager.stopMonitoringSignificantLocationChanges()
     }
   }
 
-  private func makeRegion(_ entry: GeofenceEntry) -> CLCircularRegion {
+  private func isOurs(_ identifier: String) -> Bool {
+    identifier.hasPrefix(Self.regionPrefix) || identifier.hasPrefix(Self.nearPrefix)
+  }
+
+  private func makeRegion(_ entry: GeofenceEntry, near: Bool) -> CLCircularRegion {
+    let maximum = manager.maximumRegionMonitoringDistance
     let region = CLCircularRegion(
       center: CLLocationCoordinate2D(latitude: entry.latitude, longitude: entry.longitude),
-      radius: GeofenceDecider.outerRadius(
-        for: entry, maximum: manager.maximumRegionMonitoringDistance),
-      identifier: Self.regionPrefix + entry.id
+      radius: near
+        ? GeofenceDecider.nearRadius(for: entry, maximum: maximum)
+        : GeofenceDecider.outerRadius(for: entry, maximum: maximum),
+      identifier: (near ? Self.nearPrefix : Self.regionPrefix) + entry.id
     )
     region.notifyOnEntry = true
-    region.notifyOnExit = true
+    region.notifyOnExit = !near
     return region
   }
 
-  private func sameRegion(_ region: CLCircularRegion, _ entry: GeofenceEntry) -> Bool {
-    let wanted = makeRegion(entry)
-    return abs(region.center.latitude - wanted.center.latitude) < 1e-7
-      && abs(region.center.longitude - wanted.center.longitude) < 1e-7
-      && abs(region.radius - wanted.radius) < 0.5
+  private func sameRegion(_ a: CLCircularRegion, _ b: CLCircularRegion) -> Bool {
+    abs(a.center.latitude - b.center.latitude) < 1e-7
+      && abs(a.center.longitude - b.center.longitude) < 1e-7
+      && abs(a.radius - b.radius) < 0.5
   }
 
-  private func entry(for region: CLRegion) -> GeofenceEntry? {
-    guard region.identifier.hasPrefix(Self.regionPrefix) else { return nil }
-    let id = String(region.identifier.dropFirst(Self.regionPrefix.count))
-    return entries.first { $0.id == id }
+  /// The reminder id and whether it's a near region.
+  private func parse(_ region: CLRegion) -> (id: String, near: Bool)? {
+    if region.identifier.hasPrefix(Self.regionPrefix) {
+      return (String(region.identifier.dropFirst(Self.regionPrefix.count)), false)
+    }
+    if region.identifier.hasPrefix(Self.nearPrefix) {
+      return (String(region.identifier.dropFirst(Self.nearPrefix.count)), true)
+    }
+    return nil
   }
 
   // MARK: - Region events
 
   func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
-    guard let entry = entry(for: region) else { return }
-    log("enter \(short(entry))")
-    var state = states[entry.id] ?? GeofenceState()
-    GeofenceDecider.enteredOuter(entry: entry, state: &state)
-    states[entry.id] = state
-    saveStates()
-    startPrecise(for: [entry.id])
+    guard let parsed = parse(region) else { return }
+    if parsed.near {
+      engine.enteredNear(id: parsed.id, now: Date())
+    } else {
+      engine.entered(id: parsed.id, now: Date())
+    }
+    saveEngine()
   }
 
   func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
-    guard let entry = entry(for: region) else { return }
-    log("exit \(short(entry))")
-    var state = states[entry.id] ?? GeofenceState()
-    let fire = GeofenceDecider.exitedOuter(entry: entry, state: &state, now: Date())
-    states[entry.id] = state
-    saveStates()
-    pendingIds.remove(entry.id)
-    if fire { notify(entry, reason: "left area") }
-    if pendingIds.isEmpty { stopPrecise() }
+    guard let parsed = parse(region), !parsed.near else { return }
+    engine.exited(id: parsed.id, now: Date())
+    saveEngine()
   }
 
   func locationManager(
     _ manager: CLLocationManager, didDetermineState state: CLRegionState, for region: CLRegion
   ) {
-    guard let entry = entry(for: region) else { return }
-    switch state {
-    case .inside:
-      log("inside \(short(entry))")
-      // E.g. a reminder added at the place: check how close we are.
-      startPrecise(for: [entry.id])
-    case .outside:
-      var s = states[entry.id] ?? GeofenceState()
-      if entry.arrive && !s.armed {
-        s.armed = true
-        states[entry.id] = s
-        saveStates()
-      }
-    default:
-      break
-    }
+    guard let parsed = parse(region), !parsed.near, state != .unknown else { return }
+    engine.determined(id: parsed.id, inside: state == .inside, now: Date())
+    saveEngine()
   }
 
   func locationManager(
@@ -198,27 +194,28 @@ final class LocationReminderManager: NSObject, CLLocationManagerDelegate {
     log("monitoring failed \(region?.identifier ?? "?"): \(error.localizedDescription)")
   }
 
-  // MARK: - Precise updates
+  // MARK: - GeofenceHost
 
-  private func startPrecise(for ids: [String]) {
+  func startPreciseUpdates() -> Bool {
     guard authorization() == .authorizedAlways || authorization() == .authorizedWhenInUse else {
-      log("no permission for precise updates")
-      return
+      return false
     }
-    pendingIds.formUnion(ids)
-    preciseTimer?.invalidate()
-    preciseTimer = Timer.scheduledTimer(withTimeInterval: Self.preciseTimeout, repeats: false) {
-      [weak self] _ in
-      self?.log("precise timeout")
-      self?.pendingIds.removeAll()
-      self?.stopPrecise()
-    }
-    if preciseActive { return }
     preciseActive = true
     if backgroundTask == .invalid {
       backgroundTask = UIApplication.shared.beginBackgroundTask(withName: "taskwise.location") {
-        [weak self] in self?.stopPrecise()
+        [weak self] in
+        guard let self = self else { return }
+        // iOS is about to suspend the app: end the check now.
+        self.log("background time ended")
+        self.endBackgroundTask()
       }
+    }
+    // Checks the engine's time limit even when no fixes arrive.
+    preciseTimer?.invalidate()
+    preciseTimer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in
+      guard let self = self else { return }
+      self.engine.checkTimeout(now: Date())
+      self.saveEngine()
     }
     manager.desiredAccuracy = kCLLocationAccuracyBest
     manager.distanceFilter = kCLDistanceFilterNone
@@ -227,23 +224,43 @@ final class LocationReminderManager: NSObject, CLLocationManagerDelegate {
       manager.showsBackgroundLocationIndicator = false
     }
     manager.startUpdatingLocation()
-    log("precise on")
+    return true
   }
 
-  private func stopPrecise() {
+  func stopPreciseUpdates() {
     preciseTimer?.invalidate()
     preciseTimer = nil
     if preciseActive {
       manager.stopUpdatingLocation()
       manager.allowsBackgroundLocationUpdates = false
       preciseActive = false
-      log("precise off")
     }
+    endBackgroundTask()
+  }
+
+  private func endBackgroundTask() {
     if backgroundTask != .invalid {
       UIApplication.shared.endBackgroundTask(backgroundTask)
       backgroundTask = .invalid
     }
   }
+
+  func watchNear(_ entry: GeofenceEntry) {
+    refreshRegions()
+  }
+
+  func stopWatchingNear(id: String) {
+    for region in manager.monitoredRegions where region.identifier == Self.nearPrefix + id {
+      manager.stopMonitoring(for: region)
+    }
+    refreshRegions()
+  }
+
+  func show(_ entry: GeofenceEntry, reason: String) {
+    notify(entry, reason: reason)
+  }
+
+  // MARK: - Precise updates
 
   func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
     guard let fix = locations.last else { return }
@@ -253,38 +270,16 @@ final class LocationReminderManager: NSObject, CLLocationManagerDelegate {
       locationCallbacks.removeAll()
       callbacks.forEach { $0(Self.describe(fix)) }
     }
-    if !preciseActive {
+    if !engine.preciseActive {
       // A significant location change (more than 20 reminders): re-pick
       // the nearest regions.
-      if entries.count > Self.regionLimit { refreshRegions() }
+      if entries.count > Self.regionLimit - engine.nearIds.count { refreshRegions() }
       return
     }
-    let now = Date()
-    for id in pendingIds {
-      guard let entry = entries.first(where: { $0.id == id }) else {
-        pendingIds.remove(id)
-        continue
-      }
-      let distance = fix.distance(
-        from: CLLocation(latitude: entry.latitude, longitude: entry.longitude))
-      var state = states[id] ?? GeofenceState()
-      let verdict = GeofenceDecider.evaluate(
-        entry: entry, state: &state, distance: distance,
-        accuracy: fix.horizontalAccuracy, now: now)
-      states[id] = state
-      switch verdict {
-      case .fire:
-        log("\(short(entry)) at \(Int(distance)) m ±\(Int(fix.horizontalAccuracy))")
-        notify(entry, reason: entry.arrive ? "arrived" : "left")
-        pendingIds.remove(id)
-      case .settled:
-        pendingIds.remove(id)
-      case .pending:
-        break
-      }
-    }
-    saveStates()
-    if pendingIds.isEmpty { stopPrecise() }
+    engine.fix(
+      latitude: fix.coordinate.latitude, longitude: fix.coordinate.longitude,
+      accuracy: fix.horizontalAccuracy, now: Date())
+    saveEngine()
   }
 
   func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
@@ -415,17 +410,21 @@ final class LocationReminderManager: NSObject, CLLocationManagerDelegate {
   func debugState() -> [String: Any] {
     start()
     let regions: [[String: Any]] = manager.monitoredRegions.compactMap { region in
-      guard let circle = region as? CLCircularRegion,
-        region.identifier.hasPrefix(Self.regionPrefix)
-      else { return nil }
-      let id = String(region.identifier.dropFirst(Self.regionPrefix.count))
-      let state = states[id]
-      let entry = entries.first { $0.id == id }
-      var label = "outside"
-      if let entry = entry, let state = state {
+      guard let circle = region as? CLCircularRegion, let parsed = parse(region) else {
+        return nil
+      }
+      let id = parsed.id
+      let near = parsed.near
+      let state = engine.states[id]
+      let entry = engine.entry(id: id)
+      var label = near ? "near area" : "outside"
+      if !near, let entry = entry, let state = state {
         label = entry.arrive
           ? (state.armed ? "armed" : "waiting to leave")
           : (state.wasInside ? "inside" : "outside")
+      }
+      if let check = engine.pending[id] {
+        label += check == .confirmExit ? ", checking exit" : ", checking"
       }
       return [
         "id": entry.map { "\($0.title) (\($0.arrive ? "arrive" : "leave"), \(Int($0.radius)) m)" }
@@ -441,7 +440,7 @@ final class LocationReminderManager: NSObject, CLLocationManagerDelegate {
       "entries": entries.count,
       "regions": regions,
       "events": Array(events.reversed()),
-      "preciseActive": preciseActive,
+      "preciseActive": engine.preciseActive,
     ]
     if let fix = lastFix ?? manager.location {
       result["lastFix"] = Self.describe(fix)
@@ -449,7 +448,7 @@ final class LocationReminderManager: NSObject, CLLocationManagerDelegate {
     return result
   }
 
-  private func log(_ text: String) {
+  func log(_ text: String) {
     let formatter = DateFormatter()
     formatter.dateFormat = "MM-dd HH:mm:ss"
     events.append("\(formatter.string(from: Date())) \(text)")
@@ -457,10 +456,6 @@ final class LocationReminderManager: NSObject, CLLocationManagerDelegate {
       events.removeFirst(events.count - Self.eventLimit)
     }
     defaults.set(events, forKey: Keys.events)
-  }
-
-  private func short(_ entry: GeofenceEntry) -> String {
-    "\(entry.arrive ? "arrive" : "leave") \"\(entry.title)\""
   }
 
   // MARK: - Storage
@@ -480,7 +475,9 @@ final class LocationReminderManager: NSObject, CLLocationManagerDelegate {
   }
 
   private func saveEntries() {
-    guard let url = entriesURL, let data = try? JSONEncoder().encode(entries) else { return }
+    guard let url = entriesURL, let data = try? JSONEncoder().encode(engine.entries) else {
+      return
+    }
     // Readable after the first unlock, so a relaunch while locked works.
     try? data.write(to: url, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
   }
@@ -490,9 +487,12 @@ final class LocationReminderManager: NSObject, CLLocationManagerDelegate {
     return (try? JSONDecoder().decode([String: GeofenceState].self, from: data)) ?? [:]
   }
 
-  private func saveStates() {
-    if let data = try? JSONEncoder().encode(states) {
+  /// Saves what the engine learned (after every event: iOS may suspend
+  /// or end the app at any time).
+  private func saveEngine() {
+    if let data = try? JSONEncoder().encode(engine.states) {
       defaults.set(data, forKey: Keys.states)
     }
+    defaults.set(Array(engine.nearIds), forKey: Keys.near)
   }
 }

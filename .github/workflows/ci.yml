@@ -79,6 +79,18 @@ jobs:
 
   # The sync server (TypeScript, deployed on Vercel). Its contract tests
   # read the JSON fixtures in shared/test/fixtures/sync.
+  # Location reminders' Swift logic (GeofenceEngine) is platform-free, so the
+  # walk simulator and the Swift unit tests run on Linux too.
+  location-logic:
+    runs-on: ubuntu-24.04
+    container: swift:6.1
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Swift unit tests
+        run: tools/geofence_sim/run.sh test
+      - name: Walk simulator
+        run: tools/geofence_sim/run.sh
+
   server:
     runs-on: ubuntu-24.04
     defaults:

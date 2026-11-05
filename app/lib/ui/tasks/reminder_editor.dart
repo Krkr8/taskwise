@@ -197,7 +197,11 @@ class ReminderEditor extends ConsumerWidget {
                       : Icons.place_outlined,
                   size: 18,
                 ),
-                label: Text(locationReminderLabel(l10n, r, places)),
+                label: Text(
+                  locationReminderLabel(l10n, r, places),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 tooltip: phone ? null : l10n.locOnlyIphone,
                 onPressed: () =>
                     unawaited(_pickLocation(context, ref, existing: r)),
