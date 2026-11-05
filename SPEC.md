@@ -280,7 +280,8 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 
 ## 7. Progress Log
 
-### Where we left off (2026-11-03)
+### Where we left off (2026-11-05)
+- **Status for a new chat:** M6 is done and committed (`c2df079`). CI is green, and the server on Vercel runs that commit. **v0.3.1** is built (draft release `v0.3.1`), and its files are in `~/Downloads/taskwise-0.3.1/` (`-windows-x64.zip`, `-ios-unsigned.ipa`, `-linux-x64.tar.gz`). The owner hasn't reported v0.3.1 results yet. **First ask them how the v0.3.1 checks went** (list under "How to test the latest milestone"). Fix anything that failed as a v0.3.x patch, then start **M7 in plan mode**.
 - **M6 is closed (2026-11-03).** The owner tested v0.3.0 (sync connected on Fedora, Windows and iPhone) and reported four things, all done in **v0.3.1**:
   1. **Settings didn't scroll on Windows.** Mouse wheel and touchpad scrolling worked in tests, so the likely cause is scrolling by dragging, which Flutter turns off for the mouse on desktop. Mouse dragging is now allowed and scrollbars stay visible on desktop (`AppScrollBehavior` in `app/lib/app.dart`). **Confirm on Windows**, and ask how the owner scrolls if it still fails.
   2. **Tray → Quit didn't quit on Windows.** Quit now runs after the tray menu closes, every step is best-effort with a timeout, and the process always exits (`DesktopShell.quit`). **Confirm on Windows.**
