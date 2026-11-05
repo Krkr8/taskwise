@@ -5,6 +5,10 @@ import 'package:taskwise_shared/taskwise_shared.dart';
 import '../../state/providers.dart';
 import 'labels.dart';
 
+/// How long an Undo snackbar stays before it fades away. Flutter keeps
+/// snackbars with an action until dismissed unless `persist` is false.
+const undoSnackBarDuration = Duration(seconds: 5);
+
 /// Deletes a task (tombstone) and offers Undo in a snackbar.
 Future<void> deleteTaskWithUndo(
   BuildContext context,
@@ -25,6 +29,8 @@ Future<void> deleteTaskWithUndo(
     ..hideCurrentSnackBar()
     ..showSnackBar(
       SnackBar(
+        persist: false,
+        duration: undoSnackBarDuration,
         content: Text(l10n.taskDeleted),
         action: SnackBarAction(
           label: l10n.undo,
@@ -55,6 +61,8 @@ Future<void> setTaskDone(
     ..hideCurrentSnackBar()
     ..showSnackBar(
       SnackBar(
+        persist: false,
+        duration: undoSnackBarDuration,
         content: Text(
           next?.dueDate == null
               ? l10n.doneSeriesEnded

@@ -1,7 +1,7 @@
 name: taskwise
 description: "Personal self-hosted to-do and reminders app."
 publish_to: none
-version: 0.3.1+4
+version: 0.3.2+5
 resolution: workspace
 
 environment:

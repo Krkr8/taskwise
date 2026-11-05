@@ -158,6 +158,21 @@ void main() {
     expect(find.text('Call the bank'), findsOneWidget);
   });
 
+  appTest('the Undo snackbar fades away by itself', (tester, repo) async {
+    await repo.createTask(title: 'Call the bank');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Call the bank'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Delete task'));
+    await tester.pumpAndSettle();
+    expect(find.text('Undo'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 6));
+    await tester.pumpAndSettle();
+    expect(find.text('Task deleted'), findsNothing);
+    expect(find.text('Undo'), findsNothing);
+  });
+
   appTest('editing in the detail panel saves title, priority and subtasks', (
     tester,
     repo,
