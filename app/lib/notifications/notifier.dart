@@ -4,25 +4,38 @@ import 'package:taskwise_shared/taskwise_shared.dart';
 
 /// What the user did with a notification.
 sealed class NotificationAction {
-  const NotificationAction(this.taskId, this.occurrence);
+  const NotificationAction(
+    this.taskId,
+    this.occurrence, {
+    this.fromLocation = false,
+  });
 
   final String taskId;
   final LocalDate occurrence;
+
+  /// From a location reminder: it isn't tied to an occurrence, so Done
+  /// completes the task as it is now.
+  final bool fromLocation;
 }
 
 /// Tapped the notification: open the task.
 final class OpenTaskAction extends NotificationAction {
-  const OpenTaskAction(super.taskId, super.occurrence);
+  const OpenTaskAction(super.taskId, super.occurrence, {super.fromLocation});
 }
 
 /// Pressed Done.
 final class DoneAction extends NotificationAction {
-  const DoneAction(super.taskId, super.occurrence);
+  const DoneAction(super.taskId, super.occurrence, {super.fromLocation});
 }
 
 /// Pressed a Snooze button.
 final class SnoozeAction extends NotificationAction {
-  const SnoozeAction(super.taskId, super.occurrence, this.minutes);
+  const SnoozeAction(
+    super.taskId,
+    super.occurrence,
+    this.minutes, {
+    super.fromLocation,
+  });
 
   final int minutes;
 }
@@ -65,16 +78,22 @@ abstract final class ActionIds {
   static NotificationAction? parse(String? actionId, String? payload) {
     final data = NotificationPayload.decode(payload);
     if (data == null) return null;
+    final location = data.location;
     if (actionId == done && !data.projected) {
-      return DoneAction(data.taskId, data.occurrence);
+      return DoneAction(data.taskId, data.occurrence, fromLocation: location);
     }
     if (actionId != null && actionId.startsWith(snoozePrefix)) {
       final minutes = int.tryParse(actionId.substring(snoozePrefix.length));
       if (minutes != null && minutes > 0) {
-        return SnoozeAction(data.taskId, data.occurrence, minutes);
+        return SnoozeAction(
+          data.taskId,
+          data.occurrence,
+          minutes,
+          fromLocation: location,
+        );
       }
     }
-    return OpenTaskAction(data.taskId, data.occurrence);
+    return OpenTaskAction(data.taskId, data.occurrence, fromLocation: location);
   }
 }
 
@@ -88,7 +107,27 @@ final class NotificationPayload {
     required this.projected,
     required this.fireAt,
     required this.title,
+    this.location = false,
   });
+
+  /// The payload of a location reminder's notification. It has no
+  /// occurrence of its own: [occurrence] is the task's due date (or
+  /// [noDate]) when the reminder was handed to the phone.
+  factory NotificationPayload.location({
+    required String taskId,
+    required LocalDate? dueDate,
+    required String title,
+  }) => NotificationPayload(
+    taskId: taskId,
+    occurrence: dueDate ?? noDate,
+    projected: false,
+    fireAt: DateTime.fromMillisecondsSinceEpoch(0),
+    title: title,
+    location: true,
+  );
+
+  /// Stands in for the occurrence of a task without a due date.
+  static final noDate = LocalDate(1970, 1, 1);
 
   factory NotificationPayload.of(PlannedNotification p) => NotificationPayload(
     taskId: p.taskId,
@@ -104,12 +143,16 @@ final class NotificationPayload {
   final DateTime fireAt;
   final String title;
 
+  /// From a location reminder.
+  final bool location;
+
   String encode() => jsonEncode({
     't': taskId,
     'o': occurrence.toIso(),
     'p': projected,
     'f': fireAt.millisecondsSinceEpoch,
     'n': title,
+    if (location) 'l': true,
   });
 
   static NotificationPayload? decode(String? text) {
@@ -122,6 +165,7 @@ final class NotificationPayload {
         projected: json['p'] as bool? ?? false,
         fireAt: DateTime.fromMillisecondsSinceEpoch(json['f']! as int),
         title: json['n'] as String? ?? '',
+        location: json['l'] as bool? ?? false,
       );
     } on Object {
       return null;

@@ -1603,6 +1603,360 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Wrong password.'**
   String get deviceWrongPassword;
+
+  /// No description provided for @notifSnoozedNoDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Snoozed'**
+  String get notifSnoozedNoDate;
+
+  /// No description provided for @reminderAtLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'At a location…'**
+  String get reminderAtLocation;
+
+  /// No description provided for @locArrive.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrive'**
+  String get locArrive;
+
+  /// No description provided for @locLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave'**
+  String get locLeave;
+
+  /// No description provided for @locChipArrive.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrive at {place}'**
+  String locChipArrive(String place);
+
+  /// No description provided for @locChipLeave.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave {place}'**
+  String locChipLeave(String place);
+
+  /// No description provided for @locDroppedPin.
+  ///
+  /// In en, this message translates to:
+  /// **'dropped pin'**
+  String get locDroppedPin;
+
+  /// No description provided for @meters.
+  ///
+  /// In en, this message translates to:
+  /// **'{meters} m'**
+  String meters(int meters);
+
+  /// No description provided for @locOnlyIphone.
+  ///
+  /// In en, this message translates to:
+  /// **'Only reminds on the iPhone'**
+  String get locOnlyIphone;
+
+  /// No description provided for @locPickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Location reminder'**
+  String get locPickerTitle;
+
+  /// No description provided for @locPlacePickerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the place'**
+  String get locPlacePickerTitle;
+
+  /// No description provided for @locSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for an address or place'**
+  String get locSearchHint;
+
+  /// No description provided for @locSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get locSearch;
+
+  /// No description provided for @locSearchNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing found. Try other words, or tap the map.'**
+  String get locSearchNoResults;
+
+  /// No description provided for @locSearchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Search didn\'t work. Check your connection, or tap the map.'**
+  String get locSearchFailed;
+
+  /// No description provided for @locTapToDrop.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the map to put the pin where the place is.'**
+  String get locTapToDrop;
+
+  /// No description provided for @locRadius.
+  ///
+  /// In en, this message translates to:
+  /// **'Radius'**
+  String get locRadius;
+
+  /// No description provided for @locRemindWhen.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind me when I'**
+  String get locRemindWhen;
+
+  /// No description provided for @locSaveAsPlace.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as a place'**
+  String get locSaveAsPlace;
+
+  /// No description provided for @locPlaceName.
+  ///
+  /// In en, this message translates to:
+  /// **'Place name'**
+  String get locPlaceName;
+
+  /// No description provided for @locUseMyLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Use my location'**
+  String get locUseMyLocation;
+
+  /// No description provided for @locNoFix.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t get your location.'**
+  String get locNoFix;
+
+  /// No description provided for @locNeedPin.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a place first: search, tap the map or pick a saved place.'**
+  String get locNeedPin;
+
+  /// No description provided for @locNotifArrived.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re at {place}'**
+  String locNotifArrived(String place);
+
+  /// No description provided for @locNotifArrivedNoName.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re at the place for this task'**
+  String get locNotifArrivedNoName;
+
+  /// No description provided for @locNotifLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'You left {place}'**
+  String locNotifLeft(String place);
+
+  /// No description provided for @locNotifLeftNoName.
+  ///
+  /// In en, this message translates to:
+  /// **'You left the place for this task'**
+  String get locNotifLeftNoName;
+
+  /// No description provided for @placesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved places'**
+  String get placesTitle;
+
+  /// No description provided for @placesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Home, work and other places for location reminders'**
+  String get placesSubtitle;
+
+  /// No description provided for @placesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved places yet.'**
+  String get placesEmpty;
+
+  /// No description provided for @addPlace.
+  ///
+  /// In en, this message translates to:
+  /// **'Add place'**
+  String get addPlace;
+
+  /// No description provided for @editPlace.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit place'**
+  String get editPlace;
+
+  /// No description provided for @deletePlaceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete place?'**
+  String get deletePlaceTitle;
+
+  /// No description provided for @deletePlaceBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{name}\"? Location reminders that use it keep working.'**
+  String deletePlaceBody(String name);
+
+  /// No description provided for @defaultLocationRadius.
+  ///
+  /// In en, this message translates to:
+  /// **'Default radius for location reminders'**
+  String get defaultLocationRadius;
+
+  /// No description provided for @settingsLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location reminders'**
+  String get settingsLocation;
+
+  /// No description provided for @locPermissionStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Location access'**
+  String get locPermissionStatus;
+
+  /// No description provided for @locPermAlways.
+  ///
+  /// In en, this message translates to:
+  /// **'Always'**
+  String get locPermAlways;
+
+  /// No description provided for @locPermWhenInUse.
+  ///
+  /// In en, this message translates to:
+  /// **'While using the app'**
+  String get locPermWhenInUse;
+
+  /// No description provided for @locPermDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get locPermDenied;
+
+  /// No description provided for @locPermNotDetermined.
+  ///
+  /// In en, this message translates to:
+  /// **'Not asked yet'**
+  String get locPermNotDetermined;
+
+  /// No description provided for @locPermRestricted.
+  ///
+  /// In en, this message translates to:
+  /// **'Restricted'**
+  String get locPermRestricted;
+
+  /// No description provided for @locPermDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Location in the background'**
+  String get locPermDialogTitle;
+
+  /// No description provided for @locPermDialogBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Taskwise reminds you when you arrive at or leave a place, even when the app is closed. For that, iOS needs to allow location access \"Always\".\n\niOS asks twice: first choose \"Allow While Using App\". Later iOS asks again; then choose \"Change to Always Allow\". If it doesn\'t ask, open Settings → Taskwise → Location and choose \"Always\".\n\nYour location stays on your phone.'**
+  String get locPermDialogBody;
+
+  /// No description provided for @locPermContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get locPermContinue;
+
+  /// No description provided for @locBannerNotAlways.
+  ///
+  /// In en, this message translates to:
+  /// **'Location reminders need location access set to \"Always\".'**
+  String get locBannerNotAlways;
+
+  /// No description provided for @locBannerDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location access is off for Taskwise, so location reminders can\'t remind you.'**
+  String get locBannerDenied;
+
+  /// No description provided for @openSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Settings'**
+  String get openSettings;
+
+  /// No description provided for @locDebugTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Location debug'**
+  String get locDebugTitle;
+
+  /// No description provided for @locDebugSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What the phone watches and what happened'**
+  String get locDebugSubtitle;
+
+  /// No description provided for @locDebugEntries.
+  ///
+  /// In en, this message translates to:
+  /// **'Location reminders on this phone: {count}'**
+  String locDebugEntries(int count);
+
+  /// No description provided for @locDebugRegions.
+  ///
+  /// In en, this message translates to:
+  /// **'Watched areas'**
+  String get locDebugRegions;
+
+  /// No description provided for @locDebugEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent events'**
+  String get locDebugEvents;
+
+  /// No description provided for @locDebugNoEvents.
+  ///
+  /// In en, this message translates to:
+  /// **'No events yet.'**
+  String get locDebugNoEvents;
+
+  /// No description provided for @locDebugPrecise.
+  ///
+  /// In en, this message translates to:
+  /// **'Precise tracking is running'**
+  String get locDebugPrecise;
+
+  /// No description provided for @locDebugLastFix.
+  ///
+  /// In en, this message translates to:
+  /// **'Last position: ±{accuracy} m'**
+  String locDebugLastFix(int accuracy);
+
+  /// No description provided for @locDebugAway.
+  ///
+  /// In en, this message translates to:
+  /// **'{distance} m away'**
+  String locDebugAway(int distance);
+
+  /// No description provided for @refresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get refresh;
+
+  /// No description provided for @syncBackgroundHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The iPhone also syncs in the background now and then (iOS decides when).'**
+  String get syncBackgroundHint;
 }
 
 class _AppLocalizationsDelegate

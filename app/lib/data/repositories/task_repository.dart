@@ -246,6 +246,7 @@ class TaskRepository extends RepositoryBase {
                 longitude: r.longitude,
                 radiusMeters: r.radiusMeters,
                 trigger: r.trigger,
+                label: r.label,
                 updatedAt: at,
                 updatedByDevice: deviceId,
               ),

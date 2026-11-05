@@ -42,6 +42,9 @@ class TaskTile extends ConsumerWidget {
     final hasReminders = ref
         .watch(taskIdsWithRemindersProvider)
         .contains(task.id);
+    final hasLocation = ref
+        .watch(taskIdsWithLocationProvider)
+        .contains(task.id);
     final remindsHere = notifiesHere(
       task,
       ref.watch(taskTargetsProvider).value ?? const {},
@@ -62,6 +65,15 @@ class TaskTile extends ConsumerWidget {
             remindsHere
                 ? Icons.notifications_outlined
                 : Icons.notifications_off_outlined,
+            size: 16,
+            color: scheme.onSurfaceVariant,
+          ),
+        ),
+      if (hasLocation)
+        Tooltip(
+          message: l10n.settingsLocation,
+          child: Icon(
+            Icons.place_outlined,
             size: 16,
             color: scheme.onSurfaceVariant,
           ),

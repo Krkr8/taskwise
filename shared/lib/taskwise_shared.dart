@@ -7,6 +7,7 @@ export 'src/app_info.dart';
 export 'src/logic/task_entry.dart';
 export 'src/logic/task_grouping.dart';
 export 'src/logic/calendar.dart';
+export 'src/logic/location_plan.dart';
 export 'src/logic/recurrence.dart';
 export 'src/logic/reminder_schedule.dart';
 export 'src/logic/task_query.dart';

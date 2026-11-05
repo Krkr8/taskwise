@@ -2754,6 +2754,15 @@ class $RemindersTable extends Reminders
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   ).withConverter<LocationTrigger?>($RemindersTable.$convertertriggern);
+  static const VerificationMeta _labelMeta = const VerificationMeta('label');
+  @override
+  late final GeneratedColumn<String> label = GeneratedColumn<String>(
+    'label',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -2769,6 +2778,7 @@ class $RemindersTable extends Reminders
     longitude,
     radiusMeters,
     trigger,
+    label,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -2846,6 +2856,12 @@ class $RemindersTable extends Reminders
         ),
       );
     }
+    if (data.containsKey('label')) {
+      context.handle(
+        _labelMeta,
+        label.isAcceptableOrUnknown(data['label']!, _labelMeta),
+      );
+    }
     return context;
   }
 
@@ -2915,6 +2931,10 @@ class $RemindersTable extends Reminders
           data['${effectivePrefix}trigger'],
         ),
       ),
+      label: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}label'],
+      ),
     );
   }
 
@@ -2951,6 +2971,9 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
   final double? longitude;
   final int? radiusMeters;
   final LocationTrigger? trigger;
+
+  /// Name of a spot that isn't a saved place (schema v4).
+  final String? label;
   const ReminderRow({
     required this.id,
     required this.updatedAt,
@@ -2965,6 +2988,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
     this.longitude,
     this.radiusMeters,
     this.trigger,
+    this.label,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3010,6 +3034,9 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
         $RemindersTable.$convertertriggern.toSql(trigger),
       );
     }
+    if (!nullToAbsent || label != null) {
+      map['label'] = Variable<String>(label);
+    }
     return map;
   }
 
@@ -3044,6 +3071,9 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
       trigger: trigger == null && nullToAbsent
           ? const Value.absent()
           : Value(trigger),
+      label: label == null && nullToAbsent
+          ? const Value.absent()
+          : Value(label),
     );
   }
 
@@ -3070,6 +3100,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
       trigger: $RemindersTable.$convertertriggern.fromJson(
         serializer.fromJson<String?>(json['trigger']),
       ),
+      label: serializer.fromJson<String?>(json['label']),
     );
   }
   @override
@@ -3093,6 +3124,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
       'trigger': serializer.toJson<String?>(
         $RemindersTable.$convertertriggern.toJson(trigger),
       ),
+      'label': serializer.toJson<String?>(label),
     };
   }
 
@@ -3110,6 +3142,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
     Value<double?> longitude = const Value.absent(),
     Value<int?> radiusMeters = const Value.absent(),
     Value<LocationTrigger?> trigger = const Value.absent(),
+    Value<String?> label = const Value.absent(),
   }) => ReminderRow(
     id: id ?? this.id,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -3128,6 +3161,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
     longitude: longitude.present ? longitude.value : this.longitude,
     radiusMeters: radiusMeters.present ? radiusMeters.value : this.radiusMeters,
     trigger: trigger.present ? trigger.value : this.trigger,
+    label: label.present ? label.value : this.label,
   );
   ReminderRow copyWithCompanion(RemindersCompanion data) {
     return ReminderRow(
@@ -3152,6 +3186,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
           ? data.radiusMeters.value
           : this.radiusMeters,
       trigger: data.trigger.present ? data.trigger.value : this.trigger,
+      label: data.label.present ? data.label.value : this.label,
     );
   }
 
@@ -3170,7 +3205,8 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
           ..write('latitude: $latitude, ')
           ..write('longitude: $longitude, ')
           ..write('radiusMeters: $radiusMeters, ')
-          ..write('trigger: $trigger')
+          ..write('trigger: $trigger, ')
+          ..write('label: $label')
           ..write(')'))
         .toString();
   }
@@ -3190,6 +3226,7 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
     longitude,
     radiusMeters,
     trigger,
+    label,
   );
   @override
   bool operator ==(Object other) =>
@@ -3207,7 +3244,8 @@ class ReminderRow extends DataClass implements Insertable<ReminderRow> {
           other.latitude == this.latitude &&
           other.longitude == this.longitude &&
           other.radiusMeters == this.radiusMeters &&
-          other.trigger == this.trigger);
+          other.trigger == this.trigger &&
+          other.label == this.label);
 }
 
 class RemindersCompanion extends UpdateCompanion<ReminderRow> {
@@ -3224,6 +3262,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
   final Value<double?> longitude;
   final Value<int?> radiusMeters;
   final Value<LocationTrigger?> trigger;
+  final Value<String?> label;
   final Value<int> rowid;
   const RemindersCompanion({
     this.id = const Value.absent(),
@@ -3239,6 +3278,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
     this.longitude = const Value.absent(),
     this.radiusMeters = const Value.absent(),
     this.trigger = const Value.absent(),
+    this.label = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   RemindersCompanion.insert({
@@ -3255,6 +3295,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
     this.longitude = const Value.absent(),
     this.radiusMeters = const Value.absent(),
     this.trigger = const Value.absent(),
+    this.label = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        updatedAt = Value(updatedAt),
@@ -3274,6 +3315,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
     Expression<double>? longitude,
     Expression<int>? radiusMeters,
     Expression<String>? trigger,
+    Expression<String>? label,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -3290,6 +3332,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
       if (longitude != null) 'longitude': longitude,
       if (radiusMeters != null) 'radius_meters': radiusMeters,
       if (trigger != null) 'trigger': trigger,
+      if (label != null) 'label': label,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -3308,6 +3351,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
     Value<double?>? longitude,
     Value<int?>? radiusMeters,
     Value<LocationTrigger?>? trigger,
+    Value<String?>? label,
     Value<int>? rowid,
   }) {
     return RemindersCompanion(
@@ -3324,6 +3368,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
       longitude: longitude ?? this.longitude,
       radiusMeters: radiusMeters ?? this.radiusMeters,
       trigger: trigger ?? this.trigger,
+      label: label ?? this.label,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -3378,6 +3423,9 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
         $RemindersTable.$convertertriggern.toSql(trigger.value),
       );
     }
+    if (label.present) {
+      map['label'] = Variable<String>(label.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -3400,6 +3448,7 @@ class RemindersCompanion extends UpdateCompanion<ReminderRow> {
           ..write('longitude: $longitude, ')
           ..write('radiusMeters: $radiusMeters, ')
           ..write('trigger: $trigger, ')
+          ..write('label: $label, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -7020,6 +7069,7 @@ typedef $$RemindersTableCreateCompanionBuilder = RemindersCompanion Function({
   Value<double?> longitude,
   Value<int?> radiusMeters,
   Value<LocationTrigger?> trigger,
+  Value<String?> label,
   Value<int> rowid,
 });
 typedef $$RemindersTableUpdateCompanionBuilder = RemindersCompanion Function({
@@ -7036,6 +7086,7 @@ typedef $$RemindersTableUpdateCompanionBuilder = RemindersCompanion Function({
   Value<double?> longitude,
   Value<int?> radiusMeters,
   Value<LocationTrigger?> trigger,
+  Value<String?> label,
   Value<int> rowid,
 });
 
@@ -7116,6 +7167,11 @@ class $$RemindersTableFilterComposer
     column: $table.trigger,
     builder: (column) => ColumnWithTypeConverterFilters(column),
   );
+
+  ColumnFilters<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnFilters(column),
+  );
 }
 
 class $$RemindersTableOrderingComposer
@@ -7191,6 +7247,11 @@ class $$RemindersTableOrderingComposer
     column: $table.trigger,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get label => $composableBuilder(
+    column: $table.label,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$RemindersTableAnnotationComposer
@@ -7249,6 +7310,9 @@ class $$RemindersTableAnnotationComposer
 
   GeneratedColumnWithTypeConverter<LocationTrigger?, String> get trigger =>
       $composableBuilder(column: $table.trigger, builder: (column) => column);
+
+  GeneratedColumn<String> get label =>
+      $composableBuilder(column: $table.label, builder: (column) => column);
 }
 
 class $$RemindersTableTableManager
@@ -7295,6 +7359,7 @@ class $$RemindersTableTableManager
                 Value<double?> longitude = const Value.absent(),
                 Value<int?> radiusMeters = const Value.absent(),
                 Value<LocationTrigger?> trigger = const Value.absent(),
+                Value<String?> label = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => RemindersCompanion(
                 id: id,
@@ -7310,6 +7375,7 @@ class $$RemindersTableTableManager
                 longitude: longitude,
                 radiusMeters: radiusMeters,
                 trigger: trigger,
+                label: label,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -7327,6 +7393,7 @@ class $$RemindersTableTableManager
                 Value<double?> longitude = const Value.absent(),
                 Value<int?> radiusMeters = const Value.absent(),
                 Value<LocationTrigger?> trigger = const Value.absent(),
+                Value<String?> label = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => RemindersCompanion.insert(
                 id: id,
@@ -7342,6 +7409,7 @@ class $$RemindersTableTableManager
                 longitude: longitude,
                 radiusMeters: radiusMeters,
                 trigger: trigger,
+                label: label,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'data/app_settings.dart';
 import 'desktop/desktop_shell.dart';
 import 'l10n/app_localizations.dart';
+import 'location/location_reminder_sync.dart';
 import 'notifications/reminder_scheduler.dart';
 import 'state/providers.dart';
 import 'sync/sync_controller.dart';
@@ -18,9 +19,10 @@ class TaskwiseApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(appSettingsProvider);
-    // Starts the reminder scheduler and sync (kept alive by these watches).
+    // Starts the reminder scheduler, location reminders and sync (kept alive by these watches).
     ref
       ..watch(reminderSchedulerProvider)
+      ..watch(locationReminderSyncProvider)
       ..watch(syncControllerProvider);
     ref.listen(
       appSettingsProvider,

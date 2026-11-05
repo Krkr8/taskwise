@@ -2,17 +2,23 @@ import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:taskwise/app.dart';
 import 'package:taskwise/data/app_settings.dart';
 import 'package:taskwise/data/db/app_database.dart';
 import 'package:taskwise/data/repositories/settings_repository.dart';
 import 'package:taskwise/data/repositories/task_repository.dart';
+import 'package:taskwise/location/geocoder.dart';
+import 'package:taskwise/location/location_platform.dart';
+import 'package:taskwise/location/location_reminder_sync.dart';
 import 'package:taskwise/main.dart' show configureIntl;
 import 'package:taskwise/notifications/notifier.dart';
 import 'package:taskwise/notifications/reminder_scheduler.dart';
 import 'package:taskwise/state/providers.dart';
+import 'package:taskwise/ui/location/location_picker_page.dart';
 import 'package:taskwise/ui/tasks/task_detail.dart';
 import 'package:taskwise/ui/theme/app_theme.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
@@ -34,6 +40,7 @@ void appTest(
   Size size = _desktop,
   AppSettings settings = const AppSettings(language: AppLanguage.en),
   ReminderNotifier? notifier,
+  List<Override> overrides = const [],
 }) {
   testWidgets(description, (tester) async {
     configureIntl();
@@ -61,6 +68,10 @@ void appTest(
           initialSettingsProvider.overrideWithValue(settings),
           if (notifier != null)
             reminderNotifierProvider.overrideWithValue(notifier),
+          // No network in tests: a fake address search and no map tiles.
+          geocoderProvider.overrideWithValue(_FakeGeocoder()),
+          mapTilesEnabledProvider.overrideWithValue(false),
+          ...overrides,
         ],
         child: const TaskwiseApp(),
       ),
@@ -574,6 +585,192 @@ void main() {
     expect(saved!.defaultReminder, DefaultReminder.min15);
     expect(saved.snoozeMinutes, [10, 15, 60]);
   });
+  // ------------------------------------------------------------- M7
+
+  appTest('a location reminder from an address search', (tester, repo) async {
+    final task = await repo.createTask(title: 'Buy bread');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Buy bread'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Add reminder'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('At a location…'));
+    await tester.pumpAndSettle();
+    expect(find.byType(LocationPickerPage), findsOneWidget);
+    expect(find.text('Only reminds on the iPhone'), findsOneWidget);
+
+    // Saving without a place explains what to do.
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Choose a place first'), findsOneWidget);
+
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Search for an address or place'),
+      'bakery',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Corner Bakery'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Leave'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LocationPickerPage), findsNothing);
+    expect(find.text('Leave Corner Bakery · 30 m'), findsOneWidget);
+    expect(find.text('Only reminds on the iPhone'), findsOneWidget);
+    expect(find.byTooltip('Location reminders'), findsOneWidget); // the row
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(MaterialApp)),
+    );
+    final saved = await tester.runAsync(
+      () => container
+          .read(reminderRepositoryProvider)
+          .watchLocationForTask(task.id)
+          .first,
+    );
+    expect(saved!.single.label, 'Corner Bakery');
+    expect(saved.single.latitude, 33.3);
+    expect(saved.single.trigger, LocationTrigger.leave);
+  });
+
+  appTest('saved places: add one on the map, then use it', (
+    tester,
+    repo,
+  ) async {
+    await repo.createTask(title: 'Water plants');
+    await tester.tap(find.text('Settings').first);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Saved places'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text('Saved places'));
+    await tester.pumpAndSettle();
+    expect(find.text('No saved places yet.'), findsOneWidget);
+
+    await tester.tap(find.text('Add place'));
+    await tester.pumpAndSettle();
+    // Drop a pin (the map waits a moment to tell a tap from a double tap).
+    await tester.tap(find.byType(FlutterMap));
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Tap the map to put the pin where the place is.'),
+      findsNothing,
+    );
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Place name'),
+      'Home',
+    );
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(find.text('Home'), findsOneWidget);
+
+    // The place is offered when adding a location reminder.
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Tasks').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Water plants'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add reminder'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('At a location…'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Home'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(find.text('Arrive at Home · 30 m'), findsOneWidget);
+  });
+
+  appTest('iPhone: the first location reminder explains the permission', (
+    tester,
+    repo,
+  ) async {
+    await repo.createTask(title: 'Buy bread');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Buy bread'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add reminder'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('At a location…'));
+    await tester.pumpAndSettle();
+    expect(find.text('Only reminds on the iPhone'), findsNothing);
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Search for an address or place'),
+      'bakery',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.search);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Corner Bakery'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Location in the background'), findsOneWidget);
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.text('Continue'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(_iphone.requests, 1);
+    // "While using" only: the banner says reminders need "Always".
+    expect(
+      find.text('Location reminders need location access set to "Always".'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Open Settings'));
+    expect(_iphone.settingsOpened, 1);
+  }, overrides: [locationPlatformProvider.overrideWithValue(_iphone)]);
+
+  appTest('Done on a location notification completes a task without a date', (
+    tester,
+    repo,
+  ) async {
+    final task = await repo.createTask(title: 'Buy bread');
+    await tester.pumpAndSettle();
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(MaterialApp)),
+    );
+    final payload = NotificationPayload.location(
+      taskId: task.id,
+      dueDate: null,
+      title: 'Buy bread',
+    ).encode();
+    final action = ActionIds.parse(ActionIds.done, payload)!;
+    await tester.runAsync(
+      () => container.read(reminderSchedulerProvider).handleAction(action),
+    );
+    final done = await tester.runAsync(() => repo.getTask(task.id));
+    expect(done!.done, isTrue);
+  });
+}
+
+final _iphone = FakeLocationPlatform(
+  afterRequest: LocationPermission.whenInUse,
+);
+
+class _FakeGeocoder implements Geocoder {
+  @override
+  String get attribution => 'test';
+
+  @override
+  Future<List<GeocodeResult>> search(String query, {String? language}) async =>
+      [
+        (
+          name: 'Corner Bakery',
+          address: 'Corner Bakery, Main Street, Baghdad',
+          latitude: 33.3,
+          longitude: 44.4,
+        ),
+      ];
 }
 
 NoopNotifier _notifier = NoopNotifier();

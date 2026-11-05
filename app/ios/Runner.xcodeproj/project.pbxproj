@@ -16,6 +16,10 @@
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
+		7A1E00012F00000100000002 /* GeofenceDecider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1E00012F00000100000001 /* GeofenceDecider.swift */; };
+		7A1E00012F00000100000004 /* LocationReminderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1E00012F00000100000003 /* LocationReminderManager.swift */; };
+		7A1E00012F00000100000006 /* LocationRemindersPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1E00012F00000100000005 /* LocationRemindersPlugin.swift */; };
+		7A1E00012F00000100000009 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 7A1E00012F00000100000007 /* InfoPlist.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -59,6 +63,10 @@
 		97C146FD1CF9000F007C117D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		7A1E00012F00000100000001 /* GeofenceDecider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeofenceDecider.swift; sourceTree = "<group>"; };
+		7A1E00012F00000100000003 /* LocationReminderManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationReminderManager.swift; sourceTree = "<group>"; };
+		7A1E00012F00000100000005 /* LocationRemindersPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationRemindersPlugin.swift; sourceTree = "<group>"; };
+		7A1E00012F00000100000008 /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -123,6 +131,10 @@
 				1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */,
 				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
 				7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */,
+				7A1E00012F00000100000001 /* GeofenceDecider.swift */,
+				7A1E00012F00000100000003 /* LocationReminderManager.swift */,
+				7A1E00012F00000100000005 /* LocationRemindersPlugin.swift */,
+				7A1E00012F00000100000007 /* InfoPlist.strings */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 			);
 			path = Runner;
@@ -198,6 +210,7 @@
 			knownRegions = (
 				en,
 				Base,
+				ar,
 			);
 			mainGroup = 97C146E51CF9000F007C117D;
 			packageReferences = (
@@ -229,6 +242,7 @@
 				3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */,
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
+				7A1E00012F00000100000009 /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -284,6 +298,9 @@
 				74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */,
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 				7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */,
+				7A1E00012F00000100000002 /* GeofenceDecider.swift in Sources */,
+				7A1E00012F00000100000004 /* LocationReminderManager.swift in Sources */,
+				7A1E00012F00000100000006 /* LocationRemindersPlugin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -312,6 +329,14 @@
 				97C147001CF9000F007C117D /* Base */,
 			);
 			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+		7A1E00012F00000100000007 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				7A1E00012F00000100000008 /* ar */,
+			);
+			name = InfoPlist.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */

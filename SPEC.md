@@ -135,6 +135,13 @@ Two types, a task can mix both:
 - Required permissions: "Always" location, notifications. Write clear permission explanation texts in both languages. Handle the user denying "Always" gracefully (show a banner explaining location reminders won't work).
 - Info.plist: location usage descriptions, `UIBackgroundModes` → `location`, `fetch`.
 - Don't fire the same reminder repeatedly: debounce (e.g., don't re-fire "arrive" for the same reminder within X minutes; configurable; one-shot vs every time option).
+- How M7 implements it (2026-11-05):
+  - **Every time** (owner's choice): a location reminder fires each time its trigger happens while the task is open, at most once per 30 minutes; "arrive" needs a leave in between. No one-shot option and no time windows yet.
+  - A reminder points to a saved place (`placeId`, so moving "Home" moves its reminders) or to a spot (`latitude`/`longitude` plus a `label`, schema v4). Deleting a place turns its reminders into spots. Radius 30-500 m; default radius is a synced setting.
+  - Map picker: `flutter_map` + OpenStreetMap tiles; address search with Nominatim behind a swappable `Geocoder` (search on submit only, max 1 request/s, `User-Agent: Taskwise (+repo URL)`).
+  - **iPhone, native Swift** (`app/ios/Runner/LocationReminder*.swift`, `GeofenceDecider.swift`): Dart hands the planned entries (`planLocationReminders` in `shared`, notification texts already localised) over the `taskwise/location` channel; Swift does region monitoring, the precise check and the notification itself, so nothing depends on Dart running after a background relaunch. Outer region: arrive `max(150, r+100)` m, leave `max(100, r+70)` m. Entering it runs precise updates for up to 5 minutes. Arrive fires within the radius with a fix accurate to `max(r, 25)` m. Leave fires when clearly outside (`r + max(accuracy, 20)` m) while precise updates run, otherwise on the outer region's exit. More than 20 reminders: the 20 nearest are monitored and significant location changes re-pick them.
+  - Location notifications use the same category and payload as time reminders (Done, Snooze, tap open the task). Done completes the task as it is; Snooze comes back as a time notification.
+  - Settings → Location reminders: saved places, default radius, and on the iPhone the permission status and a debug screen (watched areas, last position, the last 50 events).
 
 ### 3.4 Account & devices
 - One account (username + password) on the server, created once with `POST /auth/setup` (setup page in the app). The server is public, so setup requires a long random **setup secret** set as a Vercel environment variable; without it, anyone could claim the account first. Setup is refused once an account exists.
@@ -187,7 +194,7 @@ Two types, a task can mix both:
   - An **outbox** table (`sync_outbox`, schema v2) is filled by SQLite triggers on every synced table, so no write can forget to queue itself; the v1→v2 migration queues all existing rows.
   - `SyncEngine` (`app/lib/sync/`) pushes the outbox in batches of 500, pulls pages until up to date (same last-write-wins rule as the server; an unpushed newer local edit is kept), handles `410` with a full resync, and copies the device list from `GET /devices`. `SyncController` runs it at start, on resume, 2 s after a local change, every minute and on "Sync now"; a revoked token shows "Signed out".
   - The token is kept with `flutter_secure_storage` (Credential Manager / GNOME keyring / iOS Keychain).
-  - **iOS background refresh is deferred to M7** (owner's choice): the iPhone syncs while Taskwise is open.
+  - **iOS background refresh (M7):** `workmanager` runs a background-refresh task (`io.github.krkr8.taskwise.sync`) in a second Flutter engine when iOS allows it: one sync, then the time notifications and the watched places are re-planned (`app/lib/background/background_sync.dart`). The token is stored "after first unlock" so it can be read while the phone is locked (older tokens are moved over on the next read). Location events themselves need no sync: they are handled natively.
 - API: JSON over HTTPS, versioned (`/api/v1/...`), token auth in header. Endpoints at minimum: `POST /auth/login`, `POST /auth/setup`, `GET/POST /sync`, `GET/PATCH/DELETE /devices`, `GET /health`. Documented in `docs/sync-api.md`, with JSON fixtures in `shared/test/fixtures/` tested on both sides.
 - The server is public on the internet (Vercel always serves HTTPS). Every endpoint except `/health`, `/auth/login` and `/auth/setup` requires a valid device token.
 - Server backups: the database provider's own backups, plus a daily cron export of all records, keeping the last N. Each device also holds a full copy of the data (local-first), and JSON export is available.
@@ -281,17 +288,13 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 ## 7. Progress Log
 
 ### Where we left off (2026-11-05)
-- **Status for a new chat:** The owner confirmed **v0.3.1 works** on all devices (2026-11-05). Their only request: the Undo snackbar never went away. Flutter keeps a snackbar with an action until it is dismissed, so Undo snackbars now set `persist: false` and fade after 5 seconds (`app/lib/ui/tasks/task_actions.dart`). Released as **v0.3.2** (draft release; files in `~/Downloads/taskwise-0.3.2/`). **Next: M7 in plan mode.**
-- **M6 is closed (2026-11-03).** The owner tested v0.3.0 (sync connected on Fedora, Windows and iPhone) and reported four things, all done in **v0.3.1**:
-  1. **Settings didn't scroll on Windows.** Mouse wheel and touchpad scrolling worked in tests, so the likely cause is scrolling by dragging, which Flutter turns off for the mouse on desktop. Mouse dragging is now allowed and scrollbars stay visible on desktop (`AppScrollBehavior` in `app/lib/app.dart`). **Confirm on Windows**, and ask how the owner scrolls if it still fails.
-  2. **Tray → Quit didn't quit on Windows.** Quit now runs after the tray menu closes, every step is best-effort with a timeout, and the process always exits (`DesktopShell.quit`). **Confirm on Windows.**
-  3. **Notifications stopped after connecting.**
-     - Found a real iPhone bug: the iOS notifier removed entries from a map while looping over it, so rescheduling threw whenever a pending notification changed (common with sync). Fixed in `ios_notifier.dart`.
-     - The owner's test reminder on the iPhone was for 11:12 **AM** on a task added at 23:10, already in the past. Reminders that can't fire any more now show "time passed".
-     - Added **Settings → Notifications → Send a test notification** to check each device.
-     - Windows notifications were never seen working (M4 was never tested there). **Check them on Windows with the test button first.**
-  4. **A main device** that manages the account's devices (see 3.4). Server migration 2 makes the oldest active device main, which is the Fedora laptop.
-- **Next:** **M7 (location reminders, iPhone)**, starting in plan mode. M7 also adds iOS background refresh for sync (deferred from M6).
+- **Status for a new chat:** **M7 is built** (location reminders + iOS background sync) and released as **v0.4.0** (draft release; files in `~/Downloads/taskwise-0.4.0/`). All automated tests pass, including the Swift `GeofenceDecider` tests on a simulator (new **iOS** workflow, `.github/workflows/ios.yml`). **M7 is not closed yet:** the owner still has to do the real-world walk test on the iPhone (list under "How to test the latest milestone"). **First ask how it went**, look at Settings → Location reminders → Location debug with them if something didn't fire, fix as v0.4.x, then close M7 and start **M8** (ask for the design idea first).
+- v0.3.1 was confirmed on all devices (2026-11-05); v0.3.2 made the Undo bar fade after 5 seconds.
+- **Things to watch in the M7 device test** (all untestable without the phone):
+  - Region events with the app swiped away (iOS relaunches it in the background; `LocationReminderManager` starts in `AppDelegate`).
+  - Precise updates started from the background need "Always" location access.
+  - "Leave" fires at roughly 100 m when no precise updates are running (outer region exit), not at 30 m. The owner should know this; continuous tracking at home would drain the battery.
+  - Background sync: iOS decides when it runs (rarely for a sideloaded app that's seldom opened). Settings → Sync's "Synced …" time shows whether it ran.
 - **Server:** the Vercel project `taskwise` (Root Directory `server`, function region `fra1`, Node 24) with the Turso database `taskwise` (`aws-eu-central-1`). Pushes to `main` deploy automatically. The server address and secrets are in the owner's `~/.config/taskwise/server-secrets.env` (never in the repo). The account exists (created from Fedora on 2026-11-02). The owner was asked to delete the Vercel token (pasted in chat) at vercel.com/account/tokens and from that file.
 - **Release files:** the release workflow builds drafts; Claude Code downloads them for the owner with `gh release download v<version> --dir ~/Downloads/taskwise-<version>`. The owner copies the Windows zip to the PC (or downloads it from the draft release while signed in to GitHub), and installs the .ipa with iloader → Import IPA.
 - **iPhone install:** with iloader from the laptop (SideStore sign-in is broken by Apple since 2026-10-12, error -80045). Refresh every 7 days with iloader → Import IPA. See `docs/install-ios-sidestore.md`.
@@ -307,21 +310,33 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 | M4 Time reminders | ✅ Done | 2026-10-31 | Time reminders (relative + absolute, several per task, follow repeats), scheduling engine in `shared`, notifications with Done/Snooze/open, iOS 64-limit scheduling, desktop tray + single instance + start on login, notification settings. A real reminder fired on Fedora (GNOME) with Done/Snooze buttons. Closed by the owner on 2026-10-31 before device tests: **Windows and iPhone are untested** (see Where we left off). 138 automated tests. |
 | M5 Sync server | ✅ Done | 2026-11-02 | TypeScript + Hono server in `server/` (Node 24): account setup with a setup secret, login (argon2id) with database-backed rate limiting, per-device tokens (SHA-256 stored, revocable), devices API, push/pull sync with last-write-wins and a change sequence, daily Vercel Cron (90-day tombstone purge with task children, 7 nightly backups in the database). Generic record store: the server doesn't interpret records. API in `docs/sync-api.md`; contract fixtures in `shared/test/fixtures/sync/` tested by both Dart and TypeScript. Runs on Vercel or Docker (built and run with Podman locally). Dart `server/` placeholder removed; CI has a Node job. Free limits checked 2026-10-31 (Vercel Hobby: 1 M invocations/month, cron daily; Turso Free: 5 GB, 500 M reads, 10 M writes). 228 automated tests (app 53, shared 106, server 69). Deployed on Vercel (`fra1`) with Turso (`aws-eu-central-1`); health checked over HTTPS from the laptop and from the iPhone on mobile data. |
 | M6 Client sync + devices | ✅ Done | 2026-11-03 | Optional sign-in from Settings (with account setup), one-time banner, sync engine (trigger-filled outbox, push/pull with last-write-wins, full resync on 410, device list), sync triggers (start, resume, 2 s after changes, every minute, Sync now), status icon, Settings → Sync and → Devices, sign out, "Notify on" per task with each device scheduling only its own reminders. Owner-tested v0.3.0: sync connects on Fedora, Windows and iPhone. Closed with the v0.3.1 fixes (Windows scrolling and tray Quit, iOS rescheduling bug, test-notification button, "time passed" reminders) and the **main device** (manages the other devices). Database schema v3. Live test: two app devices through the real TypeScript server (also in CI). 276 automated tests (app 85 incl. 1 live, shared 112, server 79). v0.3.1 confirmed by the owner on all devices (2026-11-05); v0.3.2 makes the Undo snackbar fade after 5 s. |
-| M7 Location reminders | ⬜ | | |
+| M7 Location reminders | 🔶 Built, device test pending | 2026-11-05 | Map picker (flutter_map + OSM, Nominatim search behind a swappable `Geocoder`), saved places, location reminders on every device (Arrive / Leave, 30-500 m, fire every time, 30 min debounce), schema v4 (`reminders.label`). iPhone: native Swift geofencing (outer region + precise check, 20-region limit, debug screen), permission explanation and banner (EN/AR, Arabic `InfoPlist.strings`). iOS background refresh sync with `workmanager` 0.10.10; token readable after first unlock. New iOS CI workflow runs the Swift tests. 300 automated tests (app 102 + 1 live, shared 119, server 79) + 9 Swift tests. |
 | M8 Design + polish | ⬜ | | |
 
 ### How to test the latest milestone
-**v0.3.2 (Undo fades away).** Install v0.3.2 as before. Delete a task, or complete a repeating one: the "Undo" bar at the bottom disappears by itself after about 5 seconds.
+**M7 (location reminders), with v0.4.0.** Files in `~/Downloads/taskwise-0.4.0/` on the laptop. Fedora: `git pull`, then `cd app && flutter run -d linux`. Windows: unzip the new zip over the old folder. iPhone: iloader → Import IPA → `taskwise-0.4.0-ios-unsigned.ipa`. Quit Taskwise first everywhere (tray → Quit). Your tasks and sign-in are kept.
 
-**v0.3.1 (M6 fixes and the main device).** Install v0.3.1 on Windows and the iPhone (files in `~/Downloads/taskwise-0.3.1/` on the laptop). Fedora: `git pull`, then `cd app && flutter run -d linux`. Quit Taskwise first everywhere (tray → Quit). Your sign-in and tasks are kept.
+*At home, on Fedora (or Windows):*
+1. **Settings → Location reminders → Saved places → Add place.** Type your street or area in the search box and press Enter (or the arrow), pick a result, then tap the map exactly on your front door. Name it "Home" and press **Save**. Optionally add "Work" or a shop the same way.
+2. Make a task "Test: arrive home". **Add reminder → At a location…** → tap the **Home** chip → **Arrive** → **Save**. The task shows "Arrive at Home · 30 m", a 📍 in the list, and "Only reminds on the iPhone".
+3. Make a task "Test: leave home" with a location reminder at Home, **Leave**.
+4. Within a minute or two both tasks appear on the iPhone (or open Taskwise there).
 
-1. **Windows, Settings:** scroll with the mouse wheel, by dragging with the mouse, and with the scrollbar on the right.
-2. **Windows, tray:** right-click the tray icon → **Quit Taskwise**. Taskwise closes completely, and its icon disappears from the tray.
-3. **Every device:** **Settings → Notifications → Send a test notification**. A Taskwise notification appears. If not:
-   - Windows: Settings → System → Notifications (Taskwise on, Do not disturb off).
-   - iPhone: Settings → Notifications → Taskwise.
-4. **Reminder on each device:** a task due in 5 minutes (check AM/PM) with **At due time**. It reminds you. A reminder whose time is already over shows "time passed".
-5. **Main device:** Settings → Sync → Devices on Fedora shows "Main device · This device", and the ⋯ menu of the other devices has **Remove** and **Make main device**. On the iPhone, other devices have no ⋯ menu, and there is a **Make this the main device** button (asks for your password).
+*On the iPhone:*
+5. Open Taskwise and one of the two tasks. If Taskwise asks about location: read the explanation, press **Continue**, choose **Allow While Using App**, and when iOS asks again, **Change to Always Allow**. If it never asks for "Always": iPhone **Settings → Taskwise → Location → Always**, and turn **Precise Location** on.
+6. **Settings → Location reminders → Location debug:** "Location access: Always", 2 location reminders, and both watched areas listed. Keep this screen in mind: it shows what happened if a reminder doesn't fire.
+7. Swipe Taskwise away (close it completely). Lock the phone.
+
+*The walk (the real test):*
+8. **Leave:** walk (or drive) away from home, at least 200 m. "Test: leave home · You left Home" appears, usually around 100-150 m from home.
+9. **Arrive:** come back. "Test: arrive home · You're at Home" appears when you're close to the door, about 30 m. Press **Done** on it: the task is ticked off.
+10. Open **Location debug** and press refresh: the events list shows "enter", "precise on", "notify …". Please send a screenshot of it, especially if something didn't fire or fired at the wrong place.
+11. Make a third task with **Arrive** at a shop or a friend's place (search it on the map). Next time you go there, it reminds you. It reminds again on later visits until you tick the task off.
+
+*Background sync (needs a few hours):*
+12. Leave Taskwise closed on the iPhone. On Fedora, make a task with a time reminder for this evening. Without opening Taskwise on the iPhone, it may still remind you: iOS lets Taskwise sync in the background now and then (iOS decides when; sometimes only after you've used the app for a few days). Afterwards, Settings → Sync on the iPhone shows when it last synced.
+
+Also on Windows/Fedora: Settings → **Default radius for location reminders** changes on all devices.
 
 **M6 (sync), with the v0.3.0 build.** Fedora: `git pull`, then `cd app && flutter run -d linux` (needs `sudo dnf install -y libsecret-devel` once). Windows and iPhone: install v0.3.0 from the draft release (as in `docs/install-windows.md` and `docs/install-ios-sidestore.md`). Quit any running Taskwise first (tray menu → Quit) so the new version starts.
 
@@ -375,7 +390,8 @@ Automated checks (optional): from the repo root, run `flutter analyze`, then `cd
 
 ### Known issues
 - **iPhone:** SideStore can't sign in to Apple right now (-80045/-80046, Apple-side change from 2026-10-12). Taskwise is installed and refreshed weekly with iloader over USB instead. See Troubleshooting in `docs/install-ios-sidestore.md`.
-- **Please review the Arabic text** (`app/lib/l10n/app_ar.arb`). Claude Code wrote the translations, and a native speaker should check them (M3 added the repeat and calendar texts, including Arabic plural forms).
+- **Please review the Arabic text** (`app/lib/l10n/app_ar.arb`). Claude Code wrote the translations, and a native speaker should check them (M3 added the repeat and calendar texts, including Arabic plural forms; M7 added the location texts and `ios/Runner/ar.lproj/InfoPlist.strings`).
+- **Location reminders:** "Leave" usually fires 100-150 m from the place (when the phone leaves the watched area), not at the 30 m radius. Accuracy indoors and in dense streets can be worse than 30 m; the debug screen shows the last position's accuracy. The map and address search need internet.
 - `flutter pub get` reports that some packages "have newer versions incompatible with dependency constraints". This is expected and comes from the version pins below.
 - Grouping is by date only: a task due at 9:00 today stays in **Today** after 9:00 rather than moving to Overdue. Its due label shows the time.
 - The sort choice and collapsed groups reset when the app restarts (kept in memory only).
@@ -396,11 +412,12 @@ Automated checks (optional): from the repo root, run `flutter analyze`, then `cd
 - **Vercel entry file:** Vercel uses the first file among `app.ts`, `index.ts`, `server.ts`, `src/app.ts`, `src/index.ts`, `src/server.ts` that imports `hono` itself. So the app factory lives in `src/api.ts` (not `app.ts`), and `src/index.ts` keeps a value `import { Hono } from 'hono'`. Both mistakes broke the first deploys (FUNCTION_INVOCATION_FAILED, then "No entrypoint found which imports hono").
 - **M5 versions:** TypeScript is pinned to 6.0.3, because 7.0 (the new native compiler) was released on 2026-10-31 itself; move to 7.x once it has settled. `npm install` warns that esbuild's postinstall script (used only by the `tsx` dev runner) isn't approved; it works without it.
 - **Sync (later):** `flutter_secure_storage` is pinned to 10.0.0 because 11.x needs `win32` 6, while `launch_at_startup` 0.5.1 (start on login) still needs `win32` 5. Move up when `launch_at_startup` does. When two devices had categories or tags with the same name before connecting, both copies are kept (merge them by hand). Signing in to a different server re-uploads everything.
-- **M7:** add iOS background refresh for sync here (deferred from M6), together with the geofence wake-ups.
 - **Account (later):** changing the account password isn't possible yet (only by resetting the database). The main device would be the natural place for it.
 - **Done in M6, for reference:** follow `docs/sync-api.md`. Push only settings with `synced = true`, as `setting` records `{id: key, value, updatedAt, deleted, updatedByDevice}`. Handle `410 resync_required` by pulling from 0 and dropping local synced records the server doesn't have. Push in batches of at most 500. Devices come from `GET /devices` (revoked = `deleted: true`), not from sync. Device ids are compared as strings to break `updatedAt` ties, so use the same id the device logged in with. The account setup page calls `POST /auth/setup` (needs the setup secret).
 - **Server (later):** backups are stored in the same Turso database; an off-site copy (e.g. a GitHub Actions job downloading one) could be added. On a self-hosted server without a proxy, `X-Forwarded-For` can be spoofed, so only the per-username login limit is reliable there.
 - **M6:** every table has `id` (UUID v7), `updatedAt` (UTC ms), `deleted`, `updatedByDevice`. `settings.synced` marks shared keys (only `week_start` so far). `task_target_devices` exists for "Notify on devices". Tombstoned tasks keep their subtasks and tag links (needed for undo), and the server's 90-day purge should remove the children too. The device name is pre-filled ("Fedora Laptop") and becomes editable in M6.
-- **M7:** the `places` table and `Place` model exist (default radius 30 m).
+- **M7 (later):** time windows / days for location reminders and a one-shot option are not built (SPEC 3.3 "nice to have"). A repeating task's next copy is open at once, so its location reminder is active before its due date. No sync on geofence wake-ups (location events don't need it). Location notifications from the native side only exist on iOS; desktop never fires them. The Linux/Windows map needs internet for tiles and search.
+- **M7, Riverpod 3:** providers nobody listens to are paused, so code outside the widget tree (background sync, tests) must `container.listen` a provider before awaiting it.
+- **M7, iOS:** the background engine registers all plugins plus `LocationRemindersPlugin` (`AppDelegate.swift`). With UIScene, workmanager's launch handlers must be registered in `didFinishLaunching` (done). The database uses drift's `shareAcrossIsolates`, so the background engine talks to the app's database isolate when the app is alive.
 - **M8:** JSON export/import can reuse the shared models' `toJson`/`fromJson`. An accent colour picker can hook into `AppTheme.seed`.
 - **Testing tip:** in widget tests, drift query streams wait on the fake test clock. Read the database with plain queries inside `tester.runAsync`, and unmount the app at the end of each test (see `appTest` in `app/test/widget/app_test.dart`).

@@ -31,7 +31,12 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<!-- Location reminders (M7). Arabic versions go in ar.lproj/InfoPlist.strings with the permission flow. -->
+	<!-- Background sync (M7): the task id used by workmanager (AppDelegate.swift, background_sync.dart). -->
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>io.github.krkr8.taskwise.sync</string>
+	</array>
+	<!-- Location reminders (M7). The Arabic texts are in ar.lproj/InfoPlist.strings. -->
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Taskwise uses your location in the background to remind you about tasks when you arrive at or leave a place, even when the app is closed. Your location never leaves your phone.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

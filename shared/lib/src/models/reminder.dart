@@ -7,7 +7,8 @@ import 'sync_record.dart';
 /// - [ReminderKind.time]: either [absoluteAt] (a fixed moment) or
 ///   [minutesBeforeDue] (relative to the task's due time; 0 = at due time).
 /// - [ReminderKind.location]: [placeId] or explicit coordinates, plus
-///   [radiusMeters] and [trigger].
+///   [radiusMeters] and [trigger]. [label] names a spot that isn't a saved
+///   place (e.g. the address picked from a search).
 final class Reminder implements SyncRecord {
   const Reminder({
     required this.id,
@@ -20,6 +21,7 @@ final class Reminder implements SyncRecord {
     this.longitude,
     this.radiusMeters,
     this.trigger,
+    this.label,
     required this.updatedAt,
     this.deleted = false,
     this.updatedByDevice,
@@ -39,6 +41,7 @@ final class Reminder implements SyncRecord {
       final String name => LocationTrigger.values.byName(name),
       _ => null,
     },
+    label: json['label'] as String?,
     updatedAt: JsonFields.parseRequiredDateTime(json['updatedAt']),
     deleted: json['deleted'] as bool? ?? false,
     updatedByDevice: json['updatedByDevice'] as String?,
@@ -55,6 +58,7 @@ final class Reminder implements SyncRecord {
   final double? longitude;
   final int? radiusMeters;
   final LocationTrigger? trigger;
+  final String? label;
   @override
   final DateTime updatedAt;
   @override
@@ -73,6 +77,7 @@ final class Reminder implements SyncRecord {
     'longitude': longitude,
     'radiusMeters': radiusMeters,
     'trigger': trigger?.name,
+    'label': label,
     'updatedAt': JsonFields.dateTime(updatedAt),
     'deleted': deleted,
     'updatedByDevice': updatedByDevice,
@@ -91,6 +96,7 @@ final class Reminder implements SyncRecord {
       other.longitude == longitude &&
       other.radiusMeters == radiusMeters &&
       other.trigger == trigger &&
+      other.label == label &&
       other.updatedAt == updatedAt &&
       other.deleted == deleted &&
       other.updatedByDevice == updatedByDevice;
@@ -107,6 +113,7 @@ final class Reminder implements SyncRecord {
     longitude,
     radiusMeters,
     trigger,
+    label,
     updatedAt,
     deleted,
     updatedByDevice,

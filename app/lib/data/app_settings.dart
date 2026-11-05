@@ -36,6 +36,7 @@ final class AppSettings {
     this.weekStart = WeekStart.sunday,
     this.timeFormat = TimeFormat.h12,
     this.defaultReminder = DefaultReminder.none,
+    this.defaultLocationRadius = Place.defaultRadiusMeters,
     this.snoozeMinutes = defaultSnoozeMinutes,
     this.allDayReminderMinutes = 9 * 60,
     this.keepRunningInBackground = true,
@@ -54,6 +55,9 @@ final class AppSettings {
   final WeekStart weekStart;
   final TimeFormat timeFormat;
   final DefaultReminder defaultReminder;
+
+  /// Radius new location reminders start with, in metres.
+  final int defaultLocationRadius;
 
   /// Snooze lengths offered on notifications, in minutes (1 to 3, sorted).
   final List<int> snoozeMinutes;
@@ -74,6 +78,7 @@ final class AppSettings {
     WeekStart? weekStart,
     TimeFormat? timeFormat,
     DefaultReminder? defaultReminder,
+    int? defaultLocationRadius,
     List<int>? snoozeMinutes,
     int? allDayReminderMinutes,
     bool? keepRunningInBackground,
@@ -84,6 +89,7 @@ final class AppSettings {
     weekStart: weekStart ?? this.weekStart,
     timeFormat: timeFormat ?? this.timeFormat,
     defaultReminder: defaultReminder ?? this.defaultReminder,
+    defaultLocationRadius: defaultLocationRadius ?? this.defaultLocationRadius,
     snoozeMinutes: snoozeMinutes ?? this.snoozeMinutes,
     allDayReminderMinutes: allDayReminderMinutes ?? this.allDayReminderMinutes,
     keepRunningInBackground:
@@ -99,6 +105,7 @@ final class AppSettings {
       other.weekStart == weekStart &&
       other.timeFormat == timeFormat &&
       other.defaultReminder == defaultReminder &&
+      other.defaultLocationRadius == defaultLocationRadius &&
       other.snoozeMinutes.join(',') == snoozeMinutes.join(',') &&
       other.allDayReminderMinutes == allDayReminderMinutes &&
       other.keepRunningInBackground == keepRunningInBackground &&
@@ -111,6 +118,7 @@ final class AppSettings {
     weekStart,
     timeFormat,
     defaultReminder,
+    defaultLocationRadius,
     Object.hashAll(snoozeMinutes),
     allDayReminderMinutes,
     keepRunningInBackground,

@@ -993,4 +993,207 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deviceWrongPassword => 'Wrong password.';
+
+  @override
+  String get notifSnoozedNoDate => 'Snoozed';
+
+  @override
+  String get reminderAtLocation => 'At a location…';
+
+  @override
+  String get locArrive => 'Arrive';
+
+  @override
+  String get locLeave => 'Leave';
+
+  @override
+  String locChipArrive(String place) {
+    return 'Arrive at $place';
+  }
+
+  @override
+  String locChipLeave(String place) {
+    return 'Leave $place';
+  }
+
+  @override
+  String get locDroppedPin => 'dropped pin';
+
+  @override
+  String meters(int meters) {
+    return '$meters m';
+  }
+
+  @override
+  String get locOnlyIphone => 'Only reminds on the iPhone';
+
+  @override
+  String get locPickerTitle => 'Location reminder';
+
+  @override
+  String get locPlacePickerTitle => 'Choose the place';
+
+  @override
+  String get locSearchHint => 'Search for an address or place';
+
+  @override
+  String get locSearch => 'Search';
+
+  @override
+  String get locSearchNoResults =>
+      'Nothing found. Try other words, or tap the map.';
+
+  @override
+  String get locSearchFailed =>
+      'Search didn\'t work. Check your connection, or tap the map.';
+
+  @override
+  String get locTapToDrop => 'Tap the map to put the pin where the place is.';
+
+  @override
+  String get locRadius => 'Radius';
+
+  @override
+  String get locRemindWhen => 'Remind me when I';
+
+  @override
+  String get locSaveAsPlace => 'Save as a place';
+
+  @override
+  String get locPlaceName => 'Place name';
+
+  @override
+  String get locUseMyLocation => 'Use my location';
+
+  @override
+  String get locNoFix => 'Couldn\'t get your location.';
+
+  @override
+  String get locNeedPin =>
+      'Choose a place first: search, tap the map or pick a saved place.';
+
+  @override
+  String locNotifArrived(String place) {
+    return 'You\'re at $place';
+  }
+
+  @override
+  String get locNotifArrivedNoName => 'You\'re at the place for this task';
+
+  @override
+  String locNotifLeft(String place) {
+    return 'You left $place';
+  }
+
+  @override
+  String get locNotifLeftNoName => 'You left the place for this task';
+
+  @override
+  String get placesTitle => 'Saved places';
+
+  @override
+  String get placesSubtitle =>
+      'Home, work and other places for location reminders';
+
+  @override
+  String get placesEmpty => 'No saved places yet.';
+
+  @override
+  String get addPlace => 'Add place';
+
+  @override
+  String get editPlace => 'Edit place';
+
+  @override
+  String get deletePlaceTitle => 'Delete place?';
+
+  @override
+  String deletePlaceBody(String name) {
+    return 'Delete \"$name\"? Location reminders that use it keep working.';
+  }
+
+  @override
+  String get defaultLocationRadius => 'Default radius for location reminders';
+
+  @override
+  String get settingsLocation => 'Location reminders';
+
+  @override
+  String get locPermissionStatus => 'Location access';
+
+  @override
+  String get locPermAlways => 'Always';
+
+  @override
+  String get locPermWhenInUse => 'While using the app';
+
+  @override
+  String get locPermDenied => 'Off';
+
+  @override
+  String get locPermNotDetermined => 'Not asked yet';
+
+  @override
+  String get locPermRestricted => 'Restricted';
+
+  @override
+  String get locPermDialogTitle => 'Location in the background';
+
+  @override
+  String get locPermDialogBody =>
+      'Taskwise reminds you when you arrive at or leave a place, even when the app is closed. For that, iOS needs to allow location access \"Always\".\n\niOS asks twice: first choose \"Allow While Using App\". Later iOS asks again; then choose \"Change to Always Allow\". If it doesn\'t ask, open Settings → Taskwise → Location and choose \"Always\".\n\nYour location stays on your phone.';
+
+  @override
+  String get locPermContinue => 'Continue';
+
+  @override
+  String get locBannerNotAlways =>
+      'Location reminders need location access set to \"Always\".';
+
+  @override
+  String get locBannerDenied =>
+      'Location access is off for Taskwise, so location reminders can\'t remind you.';
+
+  @override
+  String get openSettings => 'Open Settings';
+
+  @override
+  String get locDebugTitle => 'Location debug';
+
+  @override
+  String get locDebugSubtitle => 'What the phone watches and what happened';
+
+  @override
+  String locDebugEntries(int count) {
+    return 'Location reminders on this phone: $count';
+  }
+
+  @override
+  String get locDebugRegions => 'Watched areas';
+
+  @override
+  String get locDebugEvents => 'Recent events';
+
+  @override
+  String get locDebugNoEvents => 'No events yet.';
+
+  @override
+  String get locDebugPrecise => 'Precise tracking is running';
+
+  @override
+  String locDebugLastFix(int accuracy) {
+    return 'Last position: ±$accuracy m';
+  }
+
+  @override
+  String locDebugAway(int distance) {
+    return '$distance m away';
+  }
+
+  @override
+  String get refresh => 'Refresh';
+
+  @override
+  String get syncBackgroundHint =>
+      'The iPhone also syncs in the background now and then (iOS decides when).';
 }

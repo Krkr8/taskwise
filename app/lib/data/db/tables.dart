@@ -65,7 +65,7 @@ class TaskTags extends Table with SyncColumns {
   TextColumn get tagId => text()();
 }
 
-/// Schema only in M1; UI arrives in M4 (time) and M7 (location).
+/// Time reminders (M4) and location reminders (M7).
 @DataClassName('ReminderRow')
 @TableIndex(name: 'reminders_task', columns: {#taskId})
 class Reminders extends Table with SyncColumns {
@@ -79,9 +79,12 @@ class Reminders extends Table with SyncColumns {
   RealColumn get longitude => real().nullable()();
   IntColumn get radiusMeters => integer().nullable()();
   TextColumn get trigger => textEnum<LocationTrigger>().nullable()();
+
+  /// Name of a spot that isn't a saved place (schema v4).
+  TextColumn get label => text().nullable()();
 }
 
-/// Saved places (UI in M7).
+/// Saved places for location reminders (M7).
 @DataClassName('PlaceRow')
 class Places extends Table with SyncColumns {
   TextColumn get name => text()();

@@ -7,6 +7,7 @@ import '../data/app_settings.dart';
 import '../data/db/app_database.dart';
 import '../data/repositories/category_repository.dart';
 import '../data/repositories/device_repository.dart';
+import '../data/repositories/place_repository.dart';
 import '../data/repositories/reminder_repository.dart';
 import '../data/repositories/repository_base.dart';
 import '../data/repositories/settings_repository.dart';
@@ -50,6 +51,14 @@ final categoryRepositoryProvider = Provider(
 
 final reminderRepositoryProvider = Provider(
   (ref) => ReminderRepository(
+    ref.watch(databaseProvider),
+    deviceId: ref.watch(deviceIdProvider),
+    clock: ref.watch(clockProvider),
+  ),
+);
+
+final placeRepositoryProvider = Provider(
+  (ref) => PlaceRepository(
     ref.watch(databaseProvider),
     deviceId: ref.watch(deviceIdProvider),
     clock: ref.watch(clockProvider),
@@ -274,6 +283,32 @@ final taskIdsWithRemindersProvider = Provider<Set<String>>(
         in ref.watch(timeRemindersProvider).value ?? const <Reminder>[])
       r.taskId,
   },
+);
+
+/// All live location reminders.
+final locationRemindersProvider = StreamProvider<List<Reminder>>(
+  (ref) => ref.watch(reminderRepositoryProvider).watchLocationReminders(),
+);
+
+/// A task's location reminders.
+final taskLocationRemindersProvider =
+    StreamProvider.family<List<Reminder>, String>(
+      (ref, taskId) =>
+          ref.watch(reminderRepositoryProvider).watchLocationForTask(taskId),
+    );
+
+/// Ids of tasks that have at least one location reminder (for the 📍 marker).
+final taskIdsWithLocationProvider = Provider<Set<String>>(
+  (ref) => {
+    for (final r
+        in ref.watch(locationRemindersProvider).value ?? const <Reminder>[])
+      r.taskId,
+  },
+);
+
+/// Saved places, alphabetically.
+final placesProvider = StreamProvider<List<Place>>(
+  (ref) => ref.watch(placeRepositoryProvider).watchPlaces(),
 );
 
 /// Active snoozes on this device.

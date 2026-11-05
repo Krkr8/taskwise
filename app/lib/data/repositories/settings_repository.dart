@@ -13,6 +13,7 @@ abstract final class SettingKeys {
   static const timeFormat = 'time_format';
   static const weekStart = 'week_start';
   static const defaultReminder = 'default_reminder';
+  static const defaultLocationRadius = 'default_location_radius';
   static const snoozeMinutes = 'snooze_minutes';
   static const allDayReminderMinutes = 'all_day_reminder_minutes';
   static const keepRunningInBackground = 'keep_running_in_background';
@@ -68,6 +69,12 @@ class SettingsRepository extends RepositoryBase {
 
   Future<void> setDefaultReminder(DefaultReminder value) =>
       _put(SettingKeys.defaultReminder, value.name, synced: true);
+
+  Future<void> setDefaultLocationRadius(int meters) => _put(
+    SettingKeys.defaultLocationRadius,
+    '${meters.clamp(minLocationRadius, maxLocationRadius)}',
+    synced: true,
+  );
 
   /// Stores 1 to 3 snooze lengths (sorted, duplicates dropped).
   Future<void> setSnoozeMinutes(List<int> minutes) {
@@ -215,6 +222,9 @@ class SettingsRepository extends RepositoryBase {
           DefaultReminder.values
               .asNameMap()[values[SettingKeys.defaultReminder]] ??
           DefaultReminder.none,
+      defaultLocationRadius:
+          int.tryParse(values[SettingKeys.defaultLocationRadius] ?? '') ??
+          Place.defaultRadiusMeters,
       snoozeMinutes: _parseSnoozes(values[SettingKeys.snoozeMinutes]),
       allDayReminderMinutes:
           int.tryParse(values[SettingKeys.allDayReminderMinutes] ?? '') ??

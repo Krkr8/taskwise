@@ -1,0 +1,61 @@
+name: iOS
+
+# The iPhone's native Swift code (location reminders) can't be built on the
+# Fedora laptop, so this job compiles the app and runs the Swift unit tests
+# (app/ios/RunnerTests) on a simulator whenever iOS code or plugins change.
+on:
+  push:
+    paths:
+      - 'app/ios/**'
+      - 'app/pubspec.yaml'
+      - '.github/workflows/ios.yml'
+  pull_request:
+    paths:
+      - 'app/ios/**'
+      - 'app/pubspec.yaml'
+      - '.github/workflows/ios.yml'
+  workflow_dispatch:
+
+jobs:
+  swift-tests:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: subosito/flutter-action@v2.23.0
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+
+      - run: flutter pub get
+
+      # Generates the Xcode settings and plugin package Xcode needs.
+      - name: Prepare the Xcode project
+        working-directory: app
+        run: flutter build ios --config-only --debug --simulator
+
+      - name: Run the Swift unit tests
+        working-directory: app/ios
+        run: |
+          # The first available iPhone simulator.
+          udid=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          devices = json.load(sys.stdin)["devices"]
+          for runtime, items in sorted(devices.items(), reverse=True):
+              if "iOS" in runtime:
+                  for d in items:
+                      if d["name"].startswith("iPhone"):
+                          print(d["udid"]); sys.exit()
+          ')
+          echo "Simulator: $udid"
+          status=0
+          xcodebuild test \
+            -workspace Runner.xcworkspace \
+            -scheme Runner \
+            -destination "id=$udid" \
+            -only-testing:RunnerTests \
+            CODE_SIGNING_ALLOWED=NO > xcodebuild.log 2>&1 || status=$?
+          grep -iE "error:|Test case .*(passed|failed)|Executed|\*\* TEST" xcodebuild.log | head -n 200 || true
+          tail -n 30 xcodebuild.log
+          exit "$status"

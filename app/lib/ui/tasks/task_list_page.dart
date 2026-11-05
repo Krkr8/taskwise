@@ -4,6 +4,7 @@ import 'package:taskwise_shared/taskwise_shared.dart';
 
 import '../../state/providers.dart';
 import '../../sync/sync_controller.dart';
+import '../location/location_permission.dart';
 import '../settings/sign_in_page.dart';
 import '../settings/sync_section.dart';
 import '../theme/tokens.dart';
@@ -113,6 +114,7 @@ class _TaskListPane extends ConsumerWidget {
             ),
           ),
           const _SyncBanner(),
+          const LocationPermissionBanner(),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: Spacing.lg),
             child: TaskToolbar(),

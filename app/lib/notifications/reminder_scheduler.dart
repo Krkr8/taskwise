@@ -77,6 +77,13 @@ class ReminderScheduler {
     _pending = Timer(_debounce, () => unawaited(_replan()));
   }
 
+  /// Plans and applies now, without the debounce (background sync).
+  Future<void> replanNow() async {
+    _pending?.cancel();
+    await _ready;
+    await _replan();
+  }
+
   /// Asks for notification permission (iOS) and remembers the answer.
   Future<bool> requestPermission() async {
     await _ready;
@@ -149,22 +156,37 @@ class ReminderScheduler {
     if (_disposed) return;
     final tasks = _ref.read(taskRepositoryProvider);
     switch (action) {
-      case DoneAction(:final taskId, :final occurrence):
+      case DoneAction(:final taskId, :final occurrence, :final fromLocation):
         final task = await tasks.getTask(taskId);
-        // Only the real, current occurrence can be ticked off.
-        if (task != null && !task.done && task.dueDate == occurrence) {
+        // Only the real, current occurrence can be ticked off. A location
+        // reminder is about the task as it is now.
+        if (task != null &&
+            !task.done &&
+            (fromLocation || task.dueDate == occurrence)) {
           await tasks.setDone(taskId, done: true);
         } else {
           _ref.read(openTaskRequestProvider.notifier).request(taskId);
         }
-      case SnoozeAction(:final taskId, :final occurrence, :final minutes):
+      case SnoozeAction(
+        :final taskId,
+        :final occurrence,
+        :final minutes,
+        :final fromLocation,
+      ):
         final now = _ref.read(clockProvider)();
+        var snoozed = occurrence;
+        if (fromLocation) {
+          // Comes back as a time notification for the task's current
+          // occurrence (or today, for a task without a date).
+          final task = await tasks.getTask(taskId);
+          snoozed = task?.dueDate ?? LocalDate.fromDateTime(now);
+        }
         await _ref
             .read(settingsRepositoryProvider)
             .addSnooze(
               Snooze(
                 taskId: taskId,
-                occurrence: occurrence,
+                occurrence: snoozed,
                 until: now.add(Duration(minutes: minutes)),
               ),
             );
@@ -197,6 +219,9 @@ class ReminderScheduler {
           p.occurrence,
           LocalDate.fromDateTime(p.fireAt),
         );
+        if (p.snoozed && task != null && task.dueDate == null) {
+          return l10n.notifSnoozedNoDate;
+        }
         final minutes = task?.dueTimeMinutes;
         final when = minutes == null
             ? day

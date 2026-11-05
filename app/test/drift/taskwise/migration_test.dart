@@ -84,4 +84,19 @@ void main() {
     ]);
     await db.close();
   });
+
+  test('v3 to v4 keeps reminders and adds an empty label', () async {
+    final schema = await verifier.schemaAt(3);
+    schema.rawDatabase.execute(
+      'INSERT INTO reminders (id, task_id, kind, latitude, longitude, '
+      'radius_meters, "trigger", updated_at, deleted) '
+      "VALUES ('r1', 't1', 'location', 33.3, 44.4, 30, 'arrive', 1000, 0)",
+    );
+    final db = AppDatabase(schema.newConnection());
+    await verifier.migrateAndValidate(db, 4);
+    final row = await db.select(db.reminders).getSingle();
+    expect(row.latitude, 33.3);
+    expect(row.label, equals(null));
+    await db.close();
+  });
 }

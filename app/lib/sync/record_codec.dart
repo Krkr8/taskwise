@@ -4,6 +4,7 @@ import 'package:taskwise_shared/taskwise_shared.dart';
 import '../data/db/app_database.dart';
 import '../data/db/tables.dart';
 import '../data/repositories/category_repository.dart';
+import '../data/repositories/place_repository.dart';
 import '../data/repositories/reminder_repository.dart';
 import '../data/repositories/task_repository.dart';
 
@@ -103,31 +104,8 @@ class RecordCodec {
     ),
     'place': _Adapter<$PlacesTable, PlaceRow>(
       db.places,
-      (row) => Place(
-        id: row.id,
-        name: row.name,
-        latitude: row.latitude,
-        longitude: row.longitude,
-        address: row.address,
-        radiusMeters: row.radiusMeters,
-        updatedAt: row.updatedAt,
-        deleted: row.deleted,
-        updatedByDevice: row.updatedByDevice,
-      ).toJson(),
-      (json) {
-        final p = Place.fromJson(json);
-        return PlacesCompanion.insert(
-          id: p.id,
-          name: p.name,
-          latitude: p.latitude,
-          longitude: p.longitude,
-          address: Value(p.address),
-          radiusMeters: Value(p.radiusMeters),
-          updatedAt: p.updatedAt,
-          deleted: Value(p.deleted),
-          updatedByDevice: Value(p.updatedByDevice),
-        );
-      },
+      (row) => PlaceRepository.toPlace(row).toJson(),
+      (json) => PlaceRepository.toCompanion(Place.fromJson(json)),
     ),
     'taskTargetDevice': _Adapter<$TaskTargetDevicesTable, TaskTargetDeviceRow>(
       db.taskTargetDevices,

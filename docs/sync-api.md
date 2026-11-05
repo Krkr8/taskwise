@@ -112,7 +112,7 @@ The server stores records of these types and doesn't look inside them beyond the
 | `category` | `Category` | |
 | `tag` | `Tag` | |
 | `taskTag` | `TaskTag` | has `taskId`, `tagId` |
-| `reminder` | `Reminder` | has `taskId` |
+| `reminder` | `Reminder` | has `taskId`; location reminders (M7) may carry a `label` (older apps ignore it) |
 | `place` | `Place` | |
 | `setting` | (none) | `{id: <setting key>, value: <string>, …}`. Only settings marked synced are pushed. |
 | `taskTargetDevice` | `TaskTargetDevice` | has `taskId`, `deviceId` |

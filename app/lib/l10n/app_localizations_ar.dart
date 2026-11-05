@@ -1026,4 +1026,206 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get deviceWrongPassword => 'كلمة المرور غير صحيحة.';
+
+  @override
+  String get notifSnoozedNoDate => 'مؤجَّل';
+
+  @override
+  String get reminderAtLocation => 'عند مكان…';
+
+  @override
+  String get locArrive => 'الوصول';
+
+  @override
+  String get locLeave => 'المغادرة';
+
+  @override
+  String locChipArrive(String place) {
+    return 'عند الوصول إلى $place';
+  }
+
+  @override
+  String locChipLeave(String place) {
+    return 'عند مغادرة $place';
+  }
+
+  @override
+  String get locDroppedPin => 'دبوس على الخريطة';
+
+  @override
+  String meters(int meters) {
+    return '$meters م';
+  }
+
+  @override
+  String get locOnlyIphone => 'يذكّر على الآيفون فقط';
+
+  @override
+  String get locPickerTitle => 'تذكير بالمكان';
+
+  @override
+  String get locPlacePickerTitle => 'اختر المكان';
+
+  @override
+  String get locSearchHint => 'ابحث عن عنوان أو مكان';
+
+  @override
+  String get locSearch => 'بحث';
+
+  @override
+  String get locSearchNoResults =>
+      'لم يُعثر على شيء. جرّب كلمات أخرى، أو انقر على الخريطة.';
+
+  @override
+  String get locSearchFailed =>
+      'لم ينجح البحث. تحقق من الاتصال، أو انقر على الخريطة.';
+
+  @override
+  String get locTapToDrop => 'انقر على الخريطة لوضع الدبوس حيث يقع المكان.';
+
+  @override
+  String get locRadius => 'نصف القطر';
+
+  @override
+  String get locRemindWhen => 'ذكّرني عند';
+
+  @override
+  String get locSaveAsPlace => 'حفظه كمكان';
+
+  @override
+  String get locPlaceName => 'اسم المكان';
+
+  @override
+  String get locUseMyLocation => 'استخدم موقعي';
+
+  @override
+  String get locNoFix => 'تعذّر الحصول على موقعك.';
+
+  @override
+  String get locNeedPin =>
+      'اختر مكانًا أولًا: ابحث، أو انقر على الخريطة، أو اختر مكانًا محفوظًا.';
+
+  @override
+  String locNotifArrived(String place) {
+    return 'أنت الآن في $place';
+  }
+
+  @override
+  String get locNotifArrivedNoName => 'وصلت إلى مكان هذه المهمة';
+
+  @override
+  String locNotifLeft(String place) {
+    return 'غادرت $place';
+  }
+
+  @override
+  String get locNotifLeftNoName => 'غادرت مكان هذه المهمة';
+
+  @override
+  String get placesTitle => 'الأماكن المحفوظة';
+
+  @override
+  String get placesSubtitle => 'المنزل والعمل وأماكن أخرى للتذكير بالمكان';
+
+  @override
+  String get placesEmpty => 'لا توجد أماكن محفوظة بعد.';
+
+  @override
+  String get addPlace => 'إضافة مكان';
+
+  @override
+  String get editPlace => 'تعديل المكان';
+
+  @override
+  String get deletePlaceTitle => 'حذف المكان؟';
+
+  @override
+  String deletePlaceBody(String name) {
+    return 'حذف \"$name\"؟ تبقى تذكيرات المكان التي تستخدمه تعمل.';
+  }
+
+  @override
+  String get defaultLocationRadius => 'نصف القطر الافتراضي لتذكيرات المكان';
+
+  @override
+  String get settingsLocation => 'تذكيرات المكان';
+
+  @override
+  String get locPermissionStatus => 'الوصول إلى الموقع';
+
+  @override
+  String get locPermAlways => 'دائمًا';
+
+  @override
+  String get locPermWhenInUse => 'أثناء استخدام التطبيق';
+
+  @override
+  String get locPermDenied => 'متوقف';
+
+  @override
+  String get locPermNotDetermined => 'لم يُطلب بعد';
+
+  @override
+  String get locPermRestricted => 'مقيَّد';
+
+  @override
+  String get locPermDialogTitle => 'الموقع في الخلفية';
+
+  @override
+  String get locPermDialogBody =>
+      'يذكّرك Taskwise عند وصولك إلى مكان أو مغادرته، حتى والتطبيق مغلق. لذلك يجب أن يسمح iOS بالوصول إلى الموقع \"دائمًا\".\n\nيسأل iOS مرتين: اختر أولًا \"السماح أثناء استخدام التطبيق\". لاحقًا يسأل iOS مرة أخرى؛ عندها اختر \"التغيير إلى السماح دائمًا\". إن لم يسأل، افتح الإعدادات ← Taskwise ← الموقع واختر \"دائمًا\".\n\nموقعك يبقى على هاتفك.';
+
+  @override
+  String get locPermContinue => 'متابعة';
+
+  @override
+  String get locBannerNotAlways =>
+      'تحتاج تذكيرات المكان إلى ضبط الوصول إلى الموقع على \"دائمًا\".';
+
+  @override
+  String get locBannerDenied =>
+      'الوصول إلى الموقع متوقف لـ Taskwise، لذا لا تستطيع تذكيرات المكان تذكيرك.';
+
+  @override
+  String get openSettings => 'فتح الإعدادات';
+
+  @override
+  String get locDebugTitle => 'تشخيص الموقع';
+
+  @override
+  String get locDebugSubtitle => 'ما يراقبه الهاتف وما حدث';
+
+  @override
+  String locDebugEntries(int count) {
+    return 'تذكيرات المكان على هذا الهاتف: $count';
+  }
+
+  @override
+  String get locDebugRegions => 'المناطق المراقَبة';
+
+  @override
+  String get locDebugEvents => 'آخر الأحداث';
+
+  @override
+  String get locDebugNoEvents => 'لا توجد أحداث بعد.';
+
+  @override
+  String get locDebugPrecise => 'التتبع الدقيق يعمل الآن';
+
+  @override
+  String locDebugLastFix(int accuracy) {
+    return 'آخر موقع: ±$accuracy م';
+  }
+
+  @override
+  String locDebugAway(int distance) {
+    return 'على بعد $distance م';
+  }
+
+  @override
+  String get refresh => 'تحديث';
+
+  @override
+  String get syncBackgroundHint =>
+      'يزامن الآيفون أيضًا في الخلفية من حين لآخر (يقرر iOS متى).';
 }

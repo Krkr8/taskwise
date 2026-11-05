@@ -254,6 +254,7 @@
                 "longitude": null,
                 "radiusMeters": null,
                 "trigger": null,
+                "label": null,
                 "updatedAt": "2026-10-30T09:00:00.000Z",
                 "deleted": false,
                 "updatedByDevice": null
@@ -463,6 +464,7 @@
                 "longitude": null,
                 "radiusMeters": null,
                 "trigger": null,
+                "label": null,
                 "updatedAt": "2026-10-30T09:00:00.000Z",
                 "deleted": false,
                 "updatedByDevice": "0199a3c0-0000-7000-8000-00000000d001"

@@ -34,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -52,6 +52,9 @@ class AppDatabase extends _$AppDatabase {
       },
       from2To3: (m, schema) async {
         await m.addColumn(schema.devices, schema.devices.isMain);
+      },
+      from3To4: (m, schema) async {
+        await m.addColumn(schema.reminders, schema.reminders.label);
       },
     ),
   );
@@ -113,6 +116,10 @@ class AppDatabase extends _$AppDatabase {
       // App-support dir (e.g. ~/.local/share/<app id> on Linux) rather than
       // the default Documents folder.
       databaseDirectory: getApplicationSupportDirectory,
+      // The iPhone's background sync runs in a second Flutter engine of the
+      // same process: it then shares the app's database isolate instead of
+      // opening the file a second time.
+      shareAcrossIsolates: true,
     ),
   );
 }

@@ -7,8 +7,11 @@ import 'package:taskwise_shared/taskwise_shared.dart';
 
 import '../../data/app_settings.dart';
 import '../../l10n/app_localizations.dart';
+import '../../location/location_reminder_sync.dart';
 import '../../notifications/reminder_scheduler.dart';
 import '../../state/providers.dart';
+import '../location/location_permission.dart';
+import '../location/location_picker_page.dart';
 import '../theme/tokens.dart';
 import 'labels.dart';
 
@@ -79,6 +82,52 @@ class ReminderEditor extends ConsumerWidget {
     await _added(ref);
   }
 
+  /// Adds a location reminder, or changes [existing].
+  Future<void> _pickLocation(
+    BuildContext context,
+    WidgetRef ref, {
+    Reminder? existing,
+  }) async {
+    final picked = await pickReminderLocation(context, initial: existing);
+    if (picked == null) return;
+    var placeId = picked.placeId;
+    if (picked.newPlaceName case final name?) {
+      final place = await ref
+          .read(placeRepositoryProvider)
+          .createPlace(
+            name: name,
+            latitude: picked.latitude,
+            longitude: picked.longitude,
+            radiusMeters: picked.radiusMeters,
+          );
+      placeId = place.id;
+    }
+    final repo = ref.read(reminderRepositoryProvider);
+    if (existing == null) {
+      await repo.addLocation(
+        task.id,
+        placeId: placeId,
+        latitude: picked.latitude,
+        longitude: picked.longitude,
+        label: picked.label,
+        radiusMeters: picked.radiusMeters,
+        trigger: picked.trigger,
+      );
+    } else {
+      await repo.updateLocation(
+        existing.id,
+        placeId: placeId,
+        latitude: picked.latitude,
+        longitude: picked.longitude,
+        label: picked.label,
+        radiusMeters: picked.radiusMeters,
+        trigger: picked.trigger,
+      );
+    }
+    if (context.mounted) await ensureLocationPermission(context, ref);
+    await _added(ref);
+  }
+
   /// True when [r] is already in the past for this (one-off, open) task,
   /// so it won't fire: e.g. a time picked as AM instead of PM.
   bool _passed(Reminder r, int allDayMinutes, DateTime now) {
@@ -109,6 +158,11 @@ class ReminderEditor extends ConsumerWidget {
     final hasDue = task.dueDate != null;
     final settings = ref.watch(appSettingsProvider);
     final now = ref.read(clockProvider)();
+    final locations =
+        ref.watch(taskLocationRemindersProvider(task.id)).value ??
+        const <Reminder>[];
+    final places = ref.watch(placesProvider).value ?? const <Place>[];
+    final phone = ref.watch(locationPlatformProvider).supported;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,6 +189,21 @@ class ReminderEditor extends ConsumerWidget {
                 deleteButtonTooltipMessage: l10n.removeReminder,
                 onDeleted: () => repo.delete(r.id),
               ),
+            for (final r in locations)
+              InputChip(
+                avatar: Icon(
+                  r.trigger == LocationTrigger.leave
+                      ? Icons.logout
+                      : Icons.place_outlined,
+                  size: 18,
+                ),
+                label: Text(locationReminderLabel(l10n, r, places)),
+                tooltip: phone ? null : l10n.locOnlyIphone,
+                onPressed: () =>
+                    unawaited(_pickLocation(context, ref, existing: r)),
+                deleteButtonTooltipMessage: l10n.removeReminder,
+                onDeleted: () => repo.delete(r.id),
+              ),
             MenuAnchor(
               menuChildren: [
                 for (final minutes in reminderPresets)
@@ -158,6 +227,12 @@ class ReminderEditor extends ConsumerWidget {
                   onPressed: () => unawaited(_addCustom(context, ref)),
                   child: Text(l10n.reminderCustom),
                 ),
+                const Divider(height: 1),
+                MenuItemButton(
+                  leadingIcon: const Icon(Icons.place_outlined),
+                  onPressed: () => unawaited(_pickLocation(context, ref)),
+                  child: Text(l10n.reminderAtLocation),
+                ),
               ],
               builder: (context, controller, _) => ActionChip(
                 avatar: const Icon(Icons.add_alert_outlined, size: 18),
@@ -168,6 +243,16 @@ class ReminderEditor extends ConsumerWidget {
             ),
           ],
         ),
+        if (locations.isNotEmpty && !phone)
+          Padding(
+            padding: const EdgeInsets.only(top: Spacing.xs),
+            child: Text(
+              l10n.locOnlyIphone,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
         if (!hasDue)
           Padding(
             padding: const EdgeInsets.only(top: Spacing.xs),

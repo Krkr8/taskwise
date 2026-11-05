@@ -5,11 +5,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
 
 import '../../data/app_settings.dart';
+import '../../location/location_reminder_sync.dart';
 import '../../notifications/reminder_scheduler.dart';
 import '../../state/providers.dart';
+import '../location/location_permission.dart';
 import '../tasks/labels.dart';
 import '../theme/tokens.dart';
 import 'categories_page.dart';
+import 'location_debug_page.dart';
+import 'places_page.dart';
 import 'sync_section.dart';
 
 /// Settings destination: appearance, date & time, notifications,
@@ -215,6 +219,61 @@ class SettingsPage extends ConsumerWidget {
                   },
                 ),
               ),
+              _Section(l10n.settingsLocation),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.place_outlined),
+                title: Text(l10n.placesTitle),
+                subtitle: Text(l10n.placesSubtitle),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => const PlacesPage()),
+                ),
+              ),
+              _Setting(
+                label: l10n.defaultLocationRadius,
+                child: Wrap(
+                  spacing: Spacing.sm,
+                  children: [
+                    for (final m in const [30, 50, 100, 200])
+                      ChoiceChip(
+                        showCheckmark: false,
+                        label: Text(l10n.meters(m)),
+                        selected: settings.defaultLocationRadius == m,
+                        onSelected: (_) => repo.setDefaultLocationRadius(m),
+                      ),
+                  ],
+                ),
+              ),
+              if (ref.watch(locationPlatformProvider).supported) ...[
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.my_location),
+                  title: Text(l10n.locPermissionStatus),
+                  subtitle: Text(
+                    locationPermissionLabel(
+                      context,
+                      ref.watch(locationPermissionProvider),
+                    ),
+                  ),
+                  trailing: TextButton(
+                    onPressed: ref.read(locationPlatformProvider).openSettings,
+                    child: Text(l10n.openSettings),
+                  ),
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.bug_report_outlined),
+                  title: Text(l10n.locDebugTitle),
+                  subtitle: Text(l10n.locDebugSubtitle),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const LocationDebugPage(),
+                    ),
+                  ),
+                ),
+              ],
               if (isDesktop) ...[
                 _Section(l10n.settingsBackground),
                 SwitchListTile(

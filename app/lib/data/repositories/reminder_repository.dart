@@ -4,8 +4,8 @@ import 'package:taskwise_shared/taskwise_shared.dart';
 import '../db/app_database.dart';
 import 'repository_base.dart';
 
-/// Reads and writes reminders. Time reminders only for now; location
-/// reminders arrive in M7 and use the same table.
+/// Reads and writes reminders: time reminders (M4) and location reminders
+/// (M7) share the table.
 class ReminderRepository extends RepositoryBase {
   ReminderRepository(super.db, {required super.deviceId, super.clock});
 
@@ -28,6 +28,111 @@ class ReminderRepository extends RepositoryBase {
           ))
           .watch()
           .map((rows) => rows.map(toReminder).toList()..sort(_compare));
+
+  /// All non-deleted location reminders (input for the iPhone's geofences).
+  Stream<List<Reminder>> watchLocationReminders() =>
+      (db.select(db.reminders)..where(
+            (r) => r.deleted.not() & r.kind.equalsValue(ReminderKind.location),
+          ))
+          .watch()
+          .map((rows) => rows.map(toReminder).toList());
+
+  /// A task's non-deleted location reminders, oldest first.
+  Stream<List<Reminder>> watchLocationForTask(String taskId) =>
+      (db.select(db.reminders)
+            ..where(
+              (r) =>
+                  r.taskId.equals(taskId) &
+                  r.deleted.not() &
+                  r.kind.equalsValue(ReminderKind.location),
+            )
+            ..orderBy([(r) => OrderingTerm.asc(r.id)]))
+          .watch()
+          .map((rows) => rows.map(toReminder).toList());
+
+  /// Adds a location reminder at a saved place ([placeId]) or at a spot
+  /// ([latitude], [longitude], named by [label]).
+  Future<Reminder> addLocation(
+    String taskId, {
+    String? placeId,
+    double? latitude,
+    double? longitude,
+    String? label,
+    required int radiusMeters,
+    required LocationTrigger trigger,
+  }) async {
+    final reminder = _location(
+      id: newId(),
+      taskId: taskId,
+      placeId: placeId,
+      latitude: latitude,
+      longitude: longitude,
+      label: label,
+      radiusMeters: radiusMeters,
+      trigger: trigger,
+    );
+    await _insert(reminder);
+    return reminder;
+  }
+
+  /// Replaces a location reminder's place, radius and trigger.
+  Future<void> updateLocation(
+    String id, {
+    String? placeId,
+    double? latitude,
+    double? longitude,
+    String? label,
+    required int radiusMeters,
+    required LocationTrigger trigger,
+  }) async {
+    final row = await (db.select(
+      db.reminders,
+    )..where((r) => r.id.equals(id))).getSingle();
+    await db
+        .into(db.reminders)
+        .insertOnConflictUpdate(
+          toCompanion(
+            _location(
+              id: id,
+              taskId: row.taskId,
+              placeId: placeId,
+              latitude: latitude,
+              longitude: longitude,
+              label: label,
+              radiusMeters: radiusMeters,
+              trigger: trigger,
+            ),
+          ),
+        );
+  }
+
+  Reminder _location({
+    required String id,
+    required String taskId,
+    String? placeId,
+    double? latitude,
+    double? longitude,
+    String? label,
+    required int radiusMeters,
+    required LocationTrigger trigger,
+  }) {
+    if (placeId == null && (latitude == null || longitude == null)) {
+      throw ArgumentError('A place or a position is needed');
+    }
+    return Reminder(
+      id: id,
+      taskId: taskId,
+      kind: ReminderKind.location,
+      placeId: placeId,
+      latitude: placeId == null ? latitude : null,
+      longitude: placeId == null ? longitude : null,
+      label: placeId == null ? label : null,
+      radiusMeters: radiusMeters.clamp(minLocationRadius, maxLocationRadius),
+      trigger: trigger,
+      updatedAt: now(),
+      updatedByDevice: deviceId,
+    );
+  }
 
   /// Adds "[minutes] before the due time" (0 = at the due time), unless the
   /// task already has that exact reminder.
@@ -107,6 +212,7 @@ class ReminderRepository extends RepositoryBase {
     longitude: row.longitude,
     radiusMeters: row.radiusMeters,
     trigger: row.trigger,
+    label: row.label,
     updatedAt: row.updatedAt,
     deleted: row.deleted,
     updatedByDevice: row.updatedByDevice,
@@ -124,6 +230,7 @@ class ReminderRepository extends RepositoryBase {
         longitude: Value(r.longitude),
         radiusMeters: Value(r.radiusMeters),
         trigger: Value(r.trigger),
+        label: Value(r.label),
         updatedAt: r.updatedAt,
         deleted: Value(r.deleted),
         updatedByDevice: Value(r.updatedByDevice),

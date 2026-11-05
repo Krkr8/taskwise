@@ -1,0 +1,4 @@
+/* Arabic texts for the iOS permission prompts (English is in Info.plist). */
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "يستخدم Taskwise موقعك في الخلفية ليذكّرك بالمهام عند وصولك إلى مكان أو مغادرته، حتى والتطبيق مغلق. موقعك لا يغادر هاتفك.";
+"NSLocationWhenInUseUsageDescription" = "يستخدم Taskwise موقعك ليذكّرك بالمهام عند وصولك إلى مكان أو مغادرته. موقعك لا يغادر هاتفك.";
+"CFBundleDisplayName" = "Taskwise";
