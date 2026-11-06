@@ -115,7 +115,7 @@ class _TaskListPane extends ConsumerWidget {
                 // Desktop shows it in the side bar instead.
                 if (MediaQuery.sizeOf(context).width < Breakpoints.compact)
                   SyncStatusIcon(
-                    onTap: () => ref
+                    onOpenSettings: () => ref
                         .read(shellTabProvider.notifier)
                         .select(ShellTabNotifier.settings),
                   ),

@@ -226,7 +226,7 @@ class AppSidebar extends ConsumerWidget {
               const Spacer(),
               _SidebarSync(
                 expanded: expanded,
-                onTap: () => onSelect(ShellTabNotifier.settings),
+                onOpenSettings: () => onSelect(ShellTabNotifier.settings),
               ),
               if (expanded) ...[
                 const SizedBox(height: Spacing.md),
@@ -386,23 +386,23 @@ class _SidebarItemState extends State<_SidebarItem> {
   }
 }
 
-/// The sync state at the foot of the side bar; opens Settings.
+/// The sync state at the foot of the side bar; a tap syncs now.
 class _SidebarSync extends ConsumerWidget {
-  const _SidebarSync({required this.expanded, required this.onTap});
+  const _SidebarSync({required this.expanded, required this.onOpenSettings});
 
   final bool expanded;
-  final VoidCallback onTap;
+  final VoidCallback onOpenSettings;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final sync = ref.watch(syncControllerProvider);
     if (!sync.connected) return const SizedBox.shrink();
-    if (!expanded) return SyncStatusIcon(onTap: onTap);
+    if (!expanded) return SyncStatusIcon(onOpenSettings: onOpenSettings);
     final theme = Theme.of(context);
     final text = syncStatusText(context.l10n, sync, ref.read(clockProvider)());
     return InkWell(
       borderRadius: BorderRadius.circular(Radii.md),
-      onTap: onTap,
+      onTap: SyncStatusIcon.tapAction(ref, sync, onOpenSettings),
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: Spacing.md,

@@ -217,9 +217,8 @@ void main() {
       'deleted': false,
       'updatedByDevice': null,
     };
+    // The cloud button syncs straight away.
     await tester.tap(find.byIcon(Icons.cloud_done_outlined));
-    await _settle(tester);
-    await tester.tap(find.text('Sync now'));
     await _settle(tester);
     await tester.tap(find.text('Tasks').first);
     await _settle(tester);

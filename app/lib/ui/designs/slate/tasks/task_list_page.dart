@@ -136,7 +136,7 @@ class _TaskListPane extends ConsumerWidget {
                 // Compact phone layout shows sync status in the header
                 if (MediaQuery.sizeOf(context).width < Breakpoints.compact)
                   SyncStatusIcon(
-                    onTap: () => ref
+                    onOpenSettings: () => ref
                         .read(shellTabProvider.notifier)
                         .select(ShellTabNotifier.settings),
                   ),

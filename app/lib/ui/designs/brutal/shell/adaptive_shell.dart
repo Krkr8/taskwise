@@ -78,7 +78,7 @@ class _AdaptiveShellState extends ConsumerState<AdaptiveShell> {
             onSelected: _select,
             destinations: destinations,
             trailing: SyncStatusIcon(
-              onTap: () => _select(ShellTabNotifier.settings),
+              onOpenSettings: () => _select(ShellTabNotifier.settings),
             ),
           ),
           Container(width: BrutalTheme.line, color: b.ink),

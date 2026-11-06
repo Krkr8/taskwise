@@ -185,7 +185,7 @@ class _TaskListPane extends ConsumerWidget {
                 // Desktop shows it in the side rail instead.
                 if (phone)
                   SyncStatusIcon(
-                    onTap: () => ref
+                    onOpenSettings: () => ref
                         .read(shellTabProvider.notifier)
                         .select(ShellTabNotifier.settings),
                   ),

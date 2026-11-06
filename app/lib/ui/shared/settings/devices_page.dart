@@ -58,116 +58,115 @@ class DevicesPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(l10n.devicesTitle)),
       body: SafeArea(
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 720),
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Spacing.lg,
-                    vertical: Spacing.sm,
-                  ),
-                  child: Text(
-                    l10n.devicesMainHint,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+        child: LayoutBuilder(
+          builder: (context, box) => ListView(
+            padding: centeredPadding(
+              box.maxWidth,
+              const EdgeInsets.symmetric(vertical: Spacing.sm),
+            ),
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Spacing.lg,
+                  vertical: Spacing.sm,
+                ),
+                child: Text(
+                  l10n.devicesMainHint,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                for (final device in devices)
-                  ListTile(
-                    leading: Icon(deviceTypeIcon(device.type)),
-                    title: Text(device.name),
-                    subtitle: Text(subtitle(device)),
-                    trailing: device.id == thisId || iAmMain
-                        ? PopupMenuButton<String>(
-                            onSelected: (choice) async {
-                              switch (choice) {
-                                case 'rename':
-                                  final name = await showTextInputDialog(
-                                    context,
-                                    title: l10n.deviceRename,
-                                    label: l10n.deviceName,
-                                    initialValue: device.name,
+              ),
+              for (final device in devices)
+                ListTile(
+                  leading: Icon(deviceTypeIcon(device.type)),
+                  title: Text(device.name),
+                  subtitle: Text(subtitle(device)),
+                  trailing: device.id == thisId || iAmMain
+                      ? PopupMenuButton<String>(
+                          onSelected: (choice) async {
+                            switch (choice) {
+                              case 'rename':
+                                final name = await showTextInputDialog(
+                                  context,
+                                  title: l10n.deviceRename,
+                                  label: l10n.deviceName,
+                                  initialValue: device.name,
+                                );
+                                if (name != null) {
+                                  await run(
+                                    () => controller.renameDevice(
+                                      device.id,
+                                      name,
+                                    ),
                                   );
-                                  if (name != null) {
-                                    await run(
-                                      () => controller.renameDevice(
-                                        device.id,
-                                        name,
-                                      ),
-                                    );
-                                  }
-                                case 'main':
-                                  if (await _confirm(
-                                    context,
-                                    l10n.deviceMakeMainConfirm(device.name),
-                                    l10n.deviceMakeMain,
-                                  )) {
-                                    await run(
-                                      () => controller.makeMain(device.id),
-                                    );
-                                  }
-                                case 'remove':
-                                  if (await _confirm(
-                                    context,
-                                    l10n.deviceRemoveConfirm(device.name),
-                                    l10n.deviceRemove,
-                                  )) {
-                                    await run(
-                                      () => controller.removeDevice(device.id),
-                                    );
-                                  }
-                              }
-                            },
-                            itemBuilder: (_) => [
-                              PopupMenuItem(
-                                value: 'rename',
-                                child: Text(l10n.deviceRename),
-                              ),
-                              if (iAmMain && device.id != thisId) ...[
-                                PopupMenuItem(
-                                  value: 'main',
-                                  child: Text(l10n.deviceMakeMain),
-                                ),
-                                PopupMenuItem(
-                                  value: 'remove',
-                                  child: Text(l10n.deviceRemove),
-                                ),
-                              ],
-                            ],
-                          )
-                        : null,
-                  ),
-                if (!iAmMain && devices.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.all(Spacing.lg),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.deviceClaimMainHelp,
-                          style: theme.textTheme.bodySmall,
-                        ),
-                        const SizedBox(height: Spacing.sm),
-                        OutlinedButton.icon(
-                          icon: const Icon(Icons.admin_panel_settings_outlined),
-                          label: Text(l10n.deviceClaimMain),
-                          onPressed: () async {
-                            final password = await _askPassword(context);
-                            if (password != null) {
-                              await run(() => controller.claimMain(password));
+                                }
+                              case 'main':
+                                if (await _confirm(
+                                  context,
+                                  l10n.deviceMakeMainConfirm(device.name),
+                                  l10n.deviceMakeMain,
+                                )) {
+                                  await run(
+                                    () => controller.makeMain(device.id),
+                                  );
+                                }
+                              case 'remove':
+                                if (await _confirm(
+                                  context,
+                                  l10n.deviceRemoveConfirm(device.name),
+                                  l10n.deviceRemove,
+                                )) {
+                                  await run(
+                                    () => controller.removeDevice(device.id),
+                                  );
+                                }
                             }
                           },
-                        ),
-                      ],
-                    ),
+                          itemBuilder: (_) => [
+                            PopupMenuItem(
+                              value: 'rename',
+                              child: Text(l10n.deviceRename),
+                            ),
+                            if (iAmMain && device.id != thisId) ...[
+                              PopupMenuItem(
+                                value: 'main',
+                                child: Text(l10n.deviceMakeMain),
+                              ),
+                              PopupMenuItem(
+                                value: 'remove',
+                                child: Text(l10n.deviceRemove),
+                              ),
+                            ],
+                          ],
+                        )
+                      : null,
+                ),
+              if (!iAmMain && devices.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(Spacing.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.deviceClaimMainHelp,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: Spacing.sm),
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.admin_panel_settings_outlined),
+                        label: Text(l10n.deviceClaimMain),
+                        onPressed: () async {
+                          final password = await _askPassword(context);
+                          if (password != null) {
+                            await run(() => controller.claimMain(password));
+                          }
+                        },
+                      ),
+                    ],
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
         ),
       ),

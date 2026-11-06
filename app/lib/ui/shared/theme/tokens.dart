@@ -41,6 +41,17 @@ abstract final class Breakpoints {
 
   /// Width of the side detail panel.
   static const double detailPanelWidth = 420;
+
+  /// Widest a column of settings or text gets before it is centred.
+  static const double readable = 720;
+}
+
+/// [padding] plus the side space that centres a column no wider than
+/// [Breakpoints.readable] in [width]. Used on full-width scroll views so the
+/// content sits in the middle and the scroll bar stays at the edge.
+EdgeInsets centeredPadding(double width, EdgeInsets padding) {
+  final side = (width - Breakpoints.readable) / 2;
+  return side <= 0 ? padding : padding + EdgeInsets.symmetric(horizontal: side);
 }
 
 /// Colour for a priority marker, or null for [Priority.none].

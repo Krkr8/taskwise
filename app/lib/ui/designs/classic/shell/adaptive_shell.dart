@@ -88,7 +88,7 @@ class _AdaptiveShellState extends ConsumerState<AdaptiveShell> {
                 child: Padding(
                   padding: const EdgeInsets.only(bottom: Spacing.md),
                   child: SyncStatusIcon(
-                    onTap: () => _select(ShellTabNotifier.settings),
+                    onOpenSettings: () => _select(ShellTabNotifier.settings),
                   ),
                 ),
               ),

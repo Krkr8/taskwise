@@ -133,11 +133,12 @@ String syncStatusText(AppLocalizations l10n, SyncState sync, DateTime now) =>
       },
     };
 
-/// The small cloud icon for a sync state. In the shell it opens Settings.
+/// The small cloud icon for a sync state. Tapping it syncs now; when the
+/// device must sign in again it calls [onOpenSettings] instead.
 class SyncStatusIcon extends ConsumerWidget {
-  const SyncStatusIcon({super.key, this.onTap});
+  const SyncStatusIcon({super.key, this.onOpenSettings});
 
-  final VoidCallback? onTap;
+  final VoidCallback? onOpenSettings;
 
   static Widget forState(SyncState sync, ColorScheme scheme) =>
       switch (sync.phase) {
@@ -156,6 +157,18 @@ class SyncStatusIcon extends ConsumerWidget {
         ),
       };
 
+  /// What a tap on the sync status does: sync now, or open Settings when
+  /// the device is signed out. Nothing while a sync is running.
+  static VoidCallback? tapAction(
+    WidgetRef ref,
+    SyncState sync,
+    VoidCallback? onOpenSettings,
+  ) => switch (sync.phase) {
+    SyncPhase.syncing => null,
+    SyncPhase.signedOut => onOpenSettings,
+    _ => ref.read(syncControllerProvider.notifier).syncNow,
+  };
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final sync = ref.watch(syncControllerProvider);
@@ -164,7 +177,7 @@ class SyncStatusIcon extends ConsumerWidget {
     return IconButton(
       tooltip: text,
       icon: forState(sync, Theme.of(context).colorScheme),
-      onPressed: onTap,
+      onPressed: tapAction(ref, sync, onOpenSettings),
     );
   }
 }
