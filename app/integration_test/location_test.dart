@@ -52,6 +52,8 @@ void main() {
     );
     expect(chip.selected, isTrue, reason: 'the chip shows it');
     await shot(tester, '01-settings-location');
+    await tester.ensureVisible(find.text('Saved places'));
+    await settle(tester);
     await tester.tap(find.text('Saved places'));
     await settle(tester);
     await tester.tap(find.text('Add place'));

@@ -57,7 +57,10 @@ void main() {
     addTearDown(() => FlutterError.onError = savedFlutter);
     installErrorLogging(log);
     FlutterError.reportError(
-      FlutterErrorDetails(exception: StateError('boom'), stack: StackTrace.current),
+      FlutterErrorDetails(
+        exception: StateError('boom'),
+        stack: StackTrace.current,
+      ),
     );
     expect(log.entries.single.level, LogLevel.error);
     expect(log.entries.single.message, contains('StateError'));
@@ -65,9 +68,10 @@ void main() {
 
   test('appVersion matches pubspec.yaml', () {
     final pubspec = File('pubspec.yaml').readAsStringSync();
-    final version = RegExp(r'^version: ([\d.]+)\+', multiLine: true)
-        .firstMatch(pubspec)!
-        .group(1);
+    final version = RegExp(
+      r'^version: ([\d.]+)\+',
+      multiLine: true,
+    ).firstMatch(pubspec)!.group(1);
     expect(appVersion, version);
   });
 }

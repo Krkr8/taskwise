@@ -6,17 +6,24 @@ When a version is released, its section becomes the text of the draft GitHub rel
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-07
+
 ### Added
 
-- Export all your data to a JSON file and import it again, as a backup (Settings).
-- A logs viewer, and clearer error messages when something goes wrong.
-- A README with screenshots, [CONTRIBUTING.md](https://github.com/Krkr8/taskwise/blob/main/CONTRIBUTING.md), a [self-hosting guide](https://github.com/Krkr8/taskwise/blob/main/docs/self-hosting.md) for running the sync server with Docker or Node.js, and this changelog.
+- **Settings → Backup:** export all your data to a JSON file, and import one again. An import merges: newer changes on the device are kept, tasks deleted since the backup come back, and everything syncs to your other devices. On the iPhone the file is in the Files app → On My iPhone → Taskwise.
+- **Settings → About:** the version, and a logs viewer (all lines or problems only, copy, save, clear). Logs never contain task titles, notes, places or passwords.
+- Errors nobody expected are written to the log, and the app shows a short message instead of the raw error.
+- A README with screenshots, [CONTRIBUTING.md](https://github.com/Krkr8/taskwise/blob/main/CONTRIBUTING.md), a [self-hosting guide](https://github.com/Krkr8/taskwise/blob/main/docs/self-hosting.md) for running the sync server with Docker or Node.js, and this changelog. Draft releases now take their notes from it.
 
 ### Changed
 
-- Settings is centred on wide windows instead of stretching across the whole window.
-- The cloud button in the side bar now syncs when you press it.
-- Taskwise stays fast with 2,000 tasks.
+- Settings is centred on wide windows (it used to sit on the left half).
+- The cloud button in the side bar syncs when you press it (it used to open Settings).
+- Taskwise stays fast with 2,000 tasks: the task list builds only the rows on screen, and tabs are built when first opened ([numbers](https://github.com/Krkr8/taskwise/blob/main/docs/performance.md)).
+
+### Fixed
+
+- Long words in the phone's week view no longer break in the middle ("electric / ity"); the title shrinks a little instead.
 
 ## [0.5.0] - 2026-11-06
 
@@ -105,7 +112,8 @@ The first release.
 - English and Arabic (right to left), light and dark themes, week start, and time format settings.
 - Builds for Linux, Windows and iPhone (unsigned, installed with SideStore or iloader) made by GitHub Actions, with install guides.
 
-[Unreleased]: https://github.com/Krkr8/taskwise/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/Krkr8/taskwise/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/Krkr8/taskwise/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/Krkr8/taskwise/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/Krkr8/taskwise/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/Krkr8/taskwise/compare/v0.3.2...v0.4.0

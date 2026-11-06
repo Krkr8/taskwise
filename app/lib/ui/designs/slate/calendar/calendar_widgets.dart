@@ -4,6 +4,7 @@ import 'package:taskwise_shared/taskwise_shared.dart';
 
 import '../../../../data/app_settings.dart';
 import '../../../../state/providers.dart';
+import '../../../shared/common/whole_words_text.dart';
 import '../../../shared/common/dialogs.dart';
 import '../../../shared/tasks/labels.dart';
 import '../theme/tokens.dart';
@@ -187,12 +188,7 @@ class CalendarChip extends ConsumerWidget {
               ),
             ),
           const SizedBox(height: 1),
-          Text(
-            item.task.title,
-            style: style,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-          ),
+          WholeWordsText(item.task.title, style: style, maxLines: 3),
         ],
       ),
     );
