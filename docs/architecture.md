@@ -16,13 +16,15 @@ Taskwise is three projects in one repository:
 | Folder | What lives there |
 |---|---|
 | `main.dart`, `bootstrap.dart`, `app.dart` | Start-up (database, device id, settings) and the app root. `app.dart` picks the theme and the first screen from the chosen design. |
-| `data/` | The drift database (`db/`), repositories that read and write it (`repositories/`), and `app_settings.dart` (all user settings, including the design). |
+| `data/` | The drift database (`db/`), repositories that read and write it (`repositories/`), `app_settings.dart` (all user settings, including the design) and `backup.dart` (JSON export/import, merged like a sync). |
+| `logging/` | `appLog`: the app's log (memory + a rotating file in the app support folder), and the hooks that log uncaught errors. Never log task titles, notes, places or tokens. |
 | `state/` | Riverpod providers shared by everything: the database, repositories, today's date, the open task, the selected tab. |
 | `sync/` | Talking to the sync server: the API client, the sync engine and controller, the token store. |
 | `notifications/` | Time reminders: scheduling and the desktop/iPhone notifiers. |
 | `location/` | Location reminders: the address search, the bridge to the iPhone's native code, keeping the iPhone's list up to date. |
 | `background/` | The iPhone's background sync job. |
 | `desktop/` | Tray icon, single window, start on login. |
+| `version.dart` | The app version (a test keeps it equal to `pubspec.yaml`). |
 | `l10n/` | English and Arabic texts (`app_en.arb`, `app_ar.arb`); the Dart files next to them are generated. |
 | `ui/` | Everything on screen, split by design (below). |
 
@@ -49,8 +51,9 @@ ui/
   shared/            screens and widgets every design uses as they are: sign-in,
                      sync section, devices, categories, location permission and
                      debug, the map's providers, dialogs, the repeat editor,
-                     subtasks, labels, base tokens (spacing, breakpoints) and
-                     the design picker
+                     subtasks, labels, base tokens (spacing, breakpoints), the
+                     design picker, Backup, About and the logs page, and
+                     messages (`common/messages.dart`: showMessage, guardAction)
 ```
 
 **How a design finds a file.** A design folder holds only the files that design changed. For any other file it uses Classic's copy, and otherwise the one in `shared/`. For example, Lapis has no reminder editor of its own, so its task details import `designs/classic/tasks/reminder_editor.dart`. Shared files never import from a design folder.
