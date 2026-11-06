@@ -182,7 +182,7 @@ You have several safety nets. Use more than one.
   On Fedora (and other systems with SELinux), write `-v "$PWD":/backup:Z` instead, or the copy is refused with "Permission denied".
 
   For plain Node, stop the service and copy `taskwise.db` (and any `taskwise.db-wal` and `taskwise.db-shm` next to it). Store the copy somewhere else, such as another machine.
-- **JSON export.** The app will be able to export all your data as a JSON file (coming in v0.6.0).
+- **JSON export.** Settings → Backup in the app exports all your data to a JSON file, and imports it again.
 
 ### Update the server
 

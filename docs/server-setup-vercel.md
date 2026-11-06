@@ -108,7 +108,7 @@ The reply `{"username":"me"}` means it worked. Running it again gives `"The acco
 
 - Turso keeps 1 day of point-in-time restore on the free plan.
 - Every night the server also saves a full copy of your data in the database's `backups` table, keeping the last 7. To look at them, open the database in the Turso dashboard and use its SQL shell to run `SELECT id, created_at FROM backups`.
-- Every device holds a full copy of your data too (the app is local-first), and the app will be able to export your data as JSON (coming in v0.6.0).
+- Every device holds a full copy of your data too (the app is local-first), and Settings → Backup exports all of it to a JSON file.
 
 ## Self-hosting with Docker (instead of Vercel)
 

@@ -36,7 +36,7 @@ More screenshots (every screen, light, dark, phone and Arabic) are in [design/](
 - **English and Arabic**, with full right-to-left layout.
 - **Light and dark** themes, and **four designs** to choose from.
 - **Sync across devices** through your own free server. Each device keeps its own full copy, so the app works offline.
-- **JSON backup:** export and import all your data (coming in v0.6.0).
+- **JSON backup:** export all your data to a file and import it again (Settings → Backup).
 - **Keyboard shortcuts** on desktop (in Lapis and Brutal): `Ctrl+N` new task, `Ctrl+F` search, `Esc` closes the open task. Lapis also has `Ctrl+1`, `Ctrl+2` and `Ctrl+3` for the main tabs.
 
 ## Install
