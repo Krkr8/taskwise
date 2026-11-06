@@ -2,7 +2,8 @@ name: Release builds
 
 # Builds the app for Linux, Windows and iOS (unsigned, for SideStore).
 # - Manual run (Actions tab → "Release builds" → Run workflow): artifacts only.
-# - Pushing a tag like v0.1.0: also publishes a GitHub Release.
+# - Pushing a tag like v0.1.0: also creates a draft GitHub Release, with the
+#   matching CHANGELOG.md section as its text.
 # Not run on every push: macOS minutes are the most expensive.
 on:
   push:
@@ -133,12 +134,21 @@ jobs:
           path: dist
           merge-multiple: true
       # Draft only: drafts stay private until the owner publishes them by hand.
+      # The release text is this version's section of CHANGELOG.md. Without
+      # one, GitHub writes notes from the commits instead.
       - name: Create draft GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
         run: |
           ls -la dist
+          if tool/changelog_section.sh "$VERSION" > release-notes.md; then
+            notes=(--notes-file release-notes.md)
+          else
+            echo "::warning::No CHANGELOG.md entry for $VERSION; using generated release notes"
+            notes=(--generate-notes)
+          fi
           gh release create "$GITHUB_REF_NAME" dist/* \
             --title "Taskwise $GITHUB_REF_NAME" \
-            --generate-notes \
+            "${notes[@]}" \
             --draft
