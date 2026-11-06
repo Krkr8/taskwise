@@ -1,0 +1,116 @@
+# Changelog
+
+All notable changes to Taskwise are written here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the versions follow [Semantic Versioning](https://semver.org/).
+
+When a version is released, its section becomes the text of the draft GitHub release (see [CONTRIBUTING.md](CONTRIBUTING.md#releases)).
+
+## [Unreleased]
+
+### Added
+
+- Export all your data to a JSON file and import it again, as a backup (Settings).
+- A logs viewer, and clearer error messages when something goes wrong.
+- A README with screenshots, [CONTRIBUTING.md](https://github.com/Krkr8/taskwise/blob/main/CONTRIBUTING.md), a [self-hosting guide](https://github.com/Krkr8/taskwise/blob/main/docs/self-hosting.md) for running the sync server with Docker or Node.js, and this changelog.
+
+### Changed
+
+- Settings is centred on wide windows instead of stretching across the whole window.
+- The cloud button in the side bar now syncs when you press it.
+- Taskwise stays fast with 2,000 tasks.
+
+## [0.5.0] - 2026-11-06
+
+### Added
+
+- Four designs, chosen separately on each device in Settings → Appearance → Design: **Classic** (the original), **Lapis**, **Slate & Indigo** and **Brutal**. Every design has a light and a dark look and works in English and Arabic.
+- Desktop keyboard shortcuts in Lapis and Brutal: `Ctrl+N` new task, `Ctrl+F` search, `Esc` closes the open task.
+- A new app icon.
+- Screenshots of every screen of every design in `design/`, and [docs/architecture.md](https://github.com/Krkr8/taskwise/blob/main/docs/architecture.md), which explains how the code is organised.
+
+### Changed
+
+- **Brutal** is now the default design (cream paper, black outlines, hard shadows). Its dark mode is a warm charcoal.
+- The screens moved into `app/lib/ui/shared/` and `app/lib/ui/designs/<name>/`. Your tasks and sign-in are kept.
+
+## [0.4.1] - 2026-11-06
+
+### Fixed
+
+- iPhone location reminders: no more false "arrived" while sitting at home after one noisy indoor position.
+- iPhone location reminders: "arrive" is no longer missed after lingering near the place for more than five minutes.
+- iPhone location reminders: a wrong "you left" report from iOS is checked with precise positions before a reminder fires.
+- Long place names in the reminder chip end with "…" instead of overflowing.
+
+### Changed
+
+- The iPhone's location decisions moved into one piece of code that is tested on Linux with a walk simulator (`tools/geofence_sim`) and Swift unit tests.
+
+## [0.4.0] - 2026-11-05
+
+### Added
+
+- **Location reminders** (they fire on the iPhone only): pick a place on a map (OpenStreetMap, with address search) or a saved place, choose **Arrive** or **Leave**, and set a radius from 30 to 500 m. A reminder fires every time, at most once per 30 minutes.
+- Saved places (Home, Work, …) in Settings. Moving a place moves its reminders.
+- A default radius for location reminders (synced), a location permission explanation and banner in English and Arabic, and a location debug screen on the iPhone.
+- iPhone background sync: iOS can now run a sync in the background and refresh your reminders.
+
+## [0.3.2] - 2026-11-05
+
+### Changed
+
+- The Undo bar fades away after 5 seconds.
+
+## [0.3.1] - 2026-11-03
+
+### Added
+
+- A **main device**: the first device to sign in manages the account's other devices (rename, remove, pass the role on). A lost main device can be replaced with the account password.
+- Settings → Notifications → "Send a test notification".
+- Reminders whose time has passed are marked in the task.
+
+### Fixed
+
+- Desktop lists can be dragged with the mouse and show scrollbars (Settings did not scroll on Windows).
+- The tray menu's **Quit** always exits.
+- iPhone: new reminders were not scheduled after a change.
+
+## [0.3.0] - 2026-11-02
+
+This version adds everything since 0.1.1 (there was no 0.2.0).
+
+### Added
+
+- **Sync across devices.** Sign in from Settings → Sync to a server that you host yourself ([guide](https://github.com/Krkr8/taskwise/blob/main/docs/server-setup-vercel.md)). Changes sync within a minute, work offline, and settings like the week start are shared. Settings → Sync → Devices lists your devices.
+- **The sync server** (`server/`, TypeScript + Hono): one account, per-device tokens you can revoke, a daily clean-up and backup. It runs on Vercel with Turso, or as a Docker or Node.js server. The [API](https://github.com/Krkr8/taskwise/blob/main/docs/sync-api.md) is documented.
+- **Calendar** with a week view and a month view on all platforms.
+- **Repeating tasks:** daily, weekly on chosen days, monthly, yearly, every N days/weeks/months, with an end date or count. Completing one creates the next.
+- **Time reminders:** at a set time or before the due time, several per task, with **Done** and **Snooze** on the notification. Choose which devices a task reminds on ("Notify on").
+- On desktop, Taskwise stays in the tray so reminders keep firing, runs as a single window, and can start when you log in.
+
+## [0.1.1] - 2026-10-30
+
+### Fixed
+
+- iPhone: the keyboard closes when you tap outside a text field or scroll the list.
+- Selected options in Settings use the accent colour.
+
+## [0.1.0] - 2026-10-21
+
+The first release.
+
+### Added
+
+- Tasks with notes, due date and time, priority, categories and tags, and subtasks.
+- Search, filters and sorting, quick add, and Undo for deletes.
+- English and Arabic (right to left), light and dark themes, week start, and time format settings.
+- Builds for Linux, Windows and iPhone (unsigned, installed with SideStore or iloader) made by GitHub Actions, with install guides.
+
+[Unreleased]: https://github.com/Krkr8/taskwise/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/Krkr8/taskwise/compare/v0.4.1...v0.5.0
+[0.4.1]: https://github.com/Krkr8/taskwise/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/Krkr8/taskwise/compare/v0.3.2...v0.4.0
+[0.3.2]: https://github.com/Krkr8/taskwise/compare/v0.3.1...v0.3.2
+[0.3.1]: https://github.com/Krkr8/taskwise/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/Krkr8/taskwise/compare/v0.1.1...v0.3.0
+[0.1.1]: https://github.com/Krkr8/taskwise/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/Krkr8/taskwise/releases/tag/v0.1.0

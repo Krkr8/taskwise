@@ -108,11 +108,11 @@ The reply `{"username":"me"}` means it worked. Running it again gives `"The acco
 
 - Turso keeps 1 day of point-in-time restore on the free plan.
 - Every night the server also saves a full copy of your data in the database's `backups` table, keeping the last 7. To look at them, open the database in the Turso dashboard and use its SQL shell to run `SELECT id, created_at FROM backups`.
-- Every device holds a full copy of your data too (the app is local-first), and JSON export comes in M8.
+- Every device holds a full copy of your data too (the app is local-first), and the app will be able to export your data as JSON (coming in v0.6.0).
 
 ## Self-hosting with Docker (instead of Vercel)
 
-The same server runs as a normal Node.js server, for anyone who prefers their own machine. With Docker or Podman, run these from the repository root:
+The same server runs as a normal Node.js server, for anyone who prefers their own machine. The full guide, with HTTPS, backups and updates, is [self-hosting.md](self-hosting.md). The short version, with Docker or Podman, from the repository root:
 
 ```bash
 docker build -t taskwise-server server
