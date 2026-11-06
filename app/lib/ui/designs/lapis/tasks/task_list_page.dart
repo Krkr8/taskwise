@@ -15,6 +15,7 @@ import '../../../shared/settings/sign_in_page.dart';
 import '../../../shared/settings/sync_section.dart';
 import '../theme/tokens.dart';
 import '../../../shared/tasks/labels.dart';
+import '../../../shared/tasks/task_rows.dart';
 import 'task_detail.dart';
 import 'task_filters.dart';
 import 'task_tile.dart';
@@ -422,16 +423,16 @@ class _Sections extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final sections = ref.watch(taskSectionsProvider);
+    final rows = ref.watch(taskListRowsProvider);
     final collapsed = ref.watch(collapsedGroupsProvider);
     final filter = ref.watch(taskFilterProvider);
 
-    return sections.when(
+    return rows.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) =>
           _Message(icon: Icons.error_outline, text: l10n.loadError),
-      data: (sections) {
-        if (sections.isEmpty) {
+      data: (rows) {
+        if (rows.isEmpty) {
           return filter.isEmpty
               ? const _EmptyDay()
               : _Message(
@@ -447,36 +448,7 @@ class _Sections extends ConsumerWidget {
                         ),
                 );
         }
-        final items = <Widget>[];
-        for (final section in sections) {
-          final isCollapsed = collapsed.contains(section.group);
-          items.add(
-            _SectionHeader(
-              key: ValueKey(section.group),
-              section: section,
-              collapsed: isCollapsed,
-            ),
-          );
-          if (!isCollapsed) {
-            final entries = section.entries;
-            for (final (i, entry) in entries.indexed) {
-              items.add(
-                SheetPiece(
-                  key: ValueKey(entry.task.id),
-                  first: i == 0,
-                  last: i == entries.length - 1,
-                  dividerIndent: 52,
-                  child: TaskTile(
-                    entry: entry,
-                    selected: entry.task.id == selectedId,
-                    onOpen: () => onOpen(entry.task.id),
-                  ),
-                ),
-              );
-            }
-          }
-        }
-        return ListView(
+        return ListView.builder(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: const EdgeInsets.fromLTRB(
             Spacing.lg,
@@ -484,7 +456,30 @@ class _Sections extends ConsumerWidget {
             Spacing.lg,
             Spacing.xxl,
           ),
-          children: items,
+          itemCount: rows.length,
+          findChildIndexCallback: rows.indexOf,
+          itemBuilder: (context, i) {
+            final row = rows[i];
+            if (row.isHeader) {
+              return _SectionHeader(
+                key: row.key,
+                section: row.section,
+                collapsed: collapsed.contains(row.section.group),
+              );
+            }
+            final entry = row.entry;
+            return SheetPiece(
+              key: row.key,
+              first: row.first,
+              last: row.last,
+              dividerIndent: 52,
+              child: TaskTile(
+                entry: entry,
+                selected: entry.task.id == selectedId,
+                onOpen: () => onOpen(entry.task.id),
+              ),
+            );
+          },
         );
       },
     );

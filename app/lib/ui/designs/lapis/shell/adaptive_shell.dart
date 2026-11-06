@@ -11,6 +11,7 @@ import '../calendar/calendar_page.dart';
 import '../common/brand_mark.dart';
 import '../common/shortcut_focus.dart';
 import '../settings/settings_page.dart';
+import '../../../shared/common/lazy_indexed_stack.dart';
 import '../../../shared/settings/sync_section.dart';
 import '../../../shared/tasks/labels.dart';
 import '../tasks/task_detail.dart';
@@ -88,7 +89,7 @@ class _AdaptiveShellState extends ConsumerState<AdaptiveShell> {
     final width = MediaQuery.sizeOf(context).width;
     final compact = width < Breakpoints.compact;
     final index = ref.watch(shellTabProvider);
-    final page = IndexedStack(index: index, children: _pages);
+    final page = LazyIndexedStack(index: index, children: _pages);
     final destinations = [
       (Icons.check_circle_outline, Icons.check_circle, l10n.navTasks),
       (Icons.calendar_month_outlined, Icons.calendar_month, l10n.navCalendar),

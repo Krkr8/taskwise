@@ -22,15 +22,16 @@ import 'package:taskwise/state/providers.dart';
 /// Folder for screenshots, from `--dart-define=SHOTS=<dir>` (empty: none).
 const shotsDir = String.fromEnvironment('SHOTS');
 
-/// Starts the app on a fresh in-memory database, in English.
+/// Starts the app in English, on [database] or a fresh in-memory one.
 Future<AppDatabase> startApp(
   WidgetTester tester, {
   List<Override> overrides = const [],
   String deviceId = 'laptop',
+  AppDatabase? database,
 }) async {
   configureIntl();
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
-  final db = AppDatabase(NativeDatabase.memory());
+  final db = database ?? AppDatabase(NativeDatabase.memory());
   await SettingsRepository(db, deviceId: deviceId).setLanguage(AppLanguage.en);
   await tester.pumpWidget(
     ProviderScope(

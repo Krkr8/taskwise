@@ -86,6 +86,7 @@ Keep new screens in `shared/` unless a design really needs its own version, so a
 | Switching designs | `flutter test test/widget/design_switch_test.dart` |
 | The real app in a window: places, location reminders, the map | `flutter test integration_test/location_test.dart -d linux` |
 | Screenshots of every screen, design and look | `flutter test integration_test/design_tour_test.dart -d linux --dart-define=SHOTS=$PWD/../design` |
+| Speed with 2,000 tasks, every design | `flutter drive --profile -d linux --driver=test_driver/integration_test.dart --target=integration_test/performance_test.dart` (see `docs/performance.md`) |
 | Shared logic | `cd shared && dart test` |
 | Server | `cd server && npm test` |
 | iPhone location logic | `tools/geofence_sim/run.sh test` and `tools/geofence_sim/run.sh` |

@@ -10,6 +10,7 @@ import '../../../shared/settings/sign_in_page.dart';
 import '../../../shared/settings/sync_section.dart';
 import '../theme/tokens.dart';
 import '../../../shared/tasks/labels.dart';
+import '../../../shared/tasks/task_rows.dart';
 import 'task_detail.dart';
 import 'task_filters.dart';
 import 'task_tile.dart';
@@ -373,16 +374,16 @@ class _Sections extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final sections = ref.watch(taskSectionsProvider);
+    final rows = ref.watch(taskListRowsProvider);
     final collapsed = ref.watch(collapsedGroupsProvider);
     final filter = ref.watch(taskFilterProvider);
 
-    return sections.when(
+    return rows.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) =>
           _Message(icon: Icons.error_outline, text: l10n.loadError),
-      data: (sections) {
-        if (sections.isEmpty) {
+      data: (rows) {
+        if (rows.isEmpty) {
           return filter.isEmpty
               ? _Message(
                   icon: Icons.task_alt_rounded,
@@ -403,30 +404,7 @@ class _Sections extends ConsumerWidget {
                         ),
                 );
         }
-        final items = <Widget>[];
-        for (final section in sections) {
-          final isCollapsed = collapsed.contains(section.group);
-          items.add(
-            _SectionHeader(
-              key: ValueKey(section.group),
-              section: section,
-              collapsed: isCollapsed,
-            ),
-          );
-          if (!isCollapsed) {
-            for (final entry in section.entries) {
-              items.add(
-                TaskTile(
-                  key: ValueKey(entry.task.id),
-                  entry: entry,
-                  selected: entry.task.id == selectedId,
-                  onOpen: () => onOpen(entry.task.id),
-                ),
-              );
-            }
-          }
-        }
-        return ListView(
+        return ListView.builder(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: const EdgeInsets.fromLTRB(
             Spacing.md,
@@ -434,7 +412,25 @@ class _Sections extends ConsumerWidget {
             Spacing.md,
             Spacing.xxl,
           ),
-          children: items,
+          itemCount: rows.length,
+          findChildIndexCallback: rows.indexOf,
+          itemBuilder: (context, i) {
+            final row = rows[i];
+            if (row.isHeader) {
+              return _SectionHeader(
+                key: row.key,
+                section: row.section,
+                collapsed: collapsed.contains(row.section.group),
+              );
+            }
+            final entry = row.entry;
+            return TaskTile(
+              key: row.key,
+              entry: entry,
+              selected: entry.task.id == selectedId,
+              onOpen: () => onOpen(entry.task.id),
+            );
+          },
         );
       },
     );

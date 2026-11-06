@@ -7,6 +7,7 @@ import '../../../../desktop/desktop_shell.dart';
 import '../../../../state/providers.dart';
 import '../calendar/calendar_page.dart';
 import '../settings/settings_page.dart';
+import '../../../shared/common/lazy_indexed_stack.dart';
 import '../../../shared/settings/sync_section.dart';
 import '../../../shared/tasks/labels.dart';
 import '../tasks/task_detail.dart';
@@ -51,7 +52,7 @@ class _AdaptiveShellState extends ConsumerState<AdaptiveShell> {
     final l10n = context.l10n;
     final compact = MediaQuery.sizeOf(context).width < Breakpoints.compact;
     final index = ref.watch(shellTabProvider);
-    final page = IndexedStack(index: index, children: _pages);
+    final page = LazyIndexedStack(index: index, children: _pages);
 
     final destinations = [
       (Icons.task_alt_outlined, Icons.task_alt, l10n.navTasks),
