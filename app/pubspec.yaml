@@ -1,7 +1,7 @@
 name: taskwise
 description: "Personal self-hosted to-do and reminders app."
 publish_to: none
-version: 0.4.1+7
+version: 0.5.0+8
 resolution: workspace
 
 environment:
@@ -44,10 +44,12 @@ flutter:
   uses-material-design: true
   generate: true
   assets:
-    # Tray icon placeholder (a teal check); the real app icon comes in M8.
+    # Tray icon (Brutal design).
     - assets/tray/tray.png
   fonts:
-    # Noto Sans + Noto Sans Arabic, SIL Open Font License (assets/fonts/OFL.txt).
+    # One font set per design (lib/ui/designs/), all under the SIL Open Font
+    # License (assets/fonts/OFL-*.txt).
+    # Classic and Slate & Indigo: Noto Sans + Noto Sans Arabic.
     - family: NotoSans
       fonts:
         - asset: assets/fonts/NotoSans-Regular.ttf
@@ -61,4 +63,29 @@ flutter:
         - asset: assets/fonts/NotoSansArabic-Medium.ttf
           weight: 500
         - asset: assets/fonts/NotoSansArabic-Bold.ttf
+          weight: 700
+    # Lapis: IBM Plex Sans Arabic (Arabic and Latin in one family).
+    - family: IBMPlexSansArabic
+      fonts:
+        - asset: assets/fonts/IBMPlexSansArabic-Regular.ttf
+        - asset: assets/fonts/IBMPlexSansArabic-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/IBMPlexSansArabic-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/IBMPlexSansArabic-Bold.ttf
+          weight: 700
+    # Brutal: Space Grotesk (Latin) + Alexandria (Arabic).
+    - family: SpaceGrotesk
+      fonts:
+        - asset: assets/fonts/SpaceGrotesk-Regular.ttf
+        - asset: assets/fonts/SpaceGrotesk-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/SpaceGrotesk-Bold.ttf
+          weight: 700
+    - family: Alexandria
+      fonts:
+        - asset: assets/fonts/Alexandria-Regular.ttf
+        - asset: assets/fonts/Alexandria-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Alexandria-Bold.ttf
           weight: 700

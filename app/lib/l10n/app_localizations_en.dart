@@ -1196,4 +1196,94 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get syncBackgroundHint =>
       'The iPhone also syncs in the background now and then (iOS decides when).';
+
+  @override
+  String get lapisEmptyTasks => 'Type one in the box above and press Enter.';
+
+  @override
+  String get lapisEmptyTasksTitle => 'No tasks yet';
+
+  @override
+  String get shortcutNewTask => 'New task';
+
+  @override
+  String get shortcutSearch => 'Search';
+
+  @override
+  String todayLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count left today',
+      one: '1 left today',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String todayDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count done',
+      zero: 'None done yet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get todayAllDone => 'All done for today';
+
+  @override
+  String todayProgressSemantics(int done, int total) {
+    return '$done of $total tasks for today done';
+  }
+
+  @override
+  String progressSummary(int done, int total) {
+    return '$done of $total completed';
+  }
+
+  @override
+  String get progressAllDone => 'All tasks completed for today!';
+
+  @override
+  String get quickAddSubmitTooltip => 'Add task (Enter)';
+
+  @override
+  String get todayOverview => 'Today\'s Focus';
+
+  @override
+  String statOpen(int count) {
+    return '$count open';
+  }
+
+  @override
+  String statOverdue(int count) {
+    return '$count overdue';
+  }
+
+  @override
+  String get brutalEmptyTasksTitle => 'Your list is empty';
+
+  @override
+  String get shortcutsTitle => 'Keyboard shortcuts';
+
+  @override
+  String get shortcutCloseTask => 'Close the task';
+
+  @override
+  String get settingsDesign => 'Design';
+
+  @override
+  String get designClassic => 'Classic';
+
+  @override
+  String get designLapis => 'Lapis';
+
+  @override
+  String get designSlate => 'Slate & Indigo';
+
+  @override
+  String get designBrutal => 'Brutal';
 }

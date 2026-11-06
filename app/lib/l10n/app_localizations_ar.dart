@@ -1228,4 +1228,98 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get syncBackgroundHint =>
       'يزامن الآيفون أيضًا في الخلفية من حين لآخر (يقرر iOS متى).';
+
+  @override
+  String get lapisEmptyTasks => 'اكتب مهمة في الحقل أعلاه ثم اضغط Enter';
+
+  @override
+  String get lapisEmptyTasksTitle => 'لا توجد مهام بعد';
+
+  @override
+  String get shortcutNewTask => 'مهمة جديدة';
+
+  @override
+  String get shortcutSearch => 'بحث';
+
+  @override
+  String todayLeft(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'بقيت $count مهمة اليوم',
+      few: 'بقيت $count مهام اليوم',
+      two: 'بقيت مهمتان اليوم',
+      one: 'بقيت مهمة واحدة اليوم',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String todayDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'أنجزت $count ',
+      two: 'أنجزت اثنتين',
+      one: 'أنجزت واحدة',
+      zero: 'لم تُنجز أي مهمة بعد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get todayAllDone => 'أنجزت كل مهام اليوم';
+
+  @override
+  String todayProgressSemantics(int done, int total) {
+    return 'أنجزت $done من $total من مهام اليوم';
+  }
+
+  @override
+  String progressSummary(int done, int total) {
+    return '$done من $total مكتملة';
+  }
+
+  @override
+  String get progressAllDone => 'أنجزت جميع مهام اليوم!';
+
+  @override
+  String get quickAddSubmitTooltip => 'إضافة المهمة (Enter)';
+
+  @override
+  String get todayOverview => 'تركيز اليوم';
+
+  @override
+  String statOpen(int count) {
+    return 'متبقية: $count';
+  }
+
+  @override
+  String statOverdue(int count) {
+    return 'متأخرة: $count';
+  }
+
+  @override
+  String get brutalEmptyTasksTitle => 'قائمتك فارغة';
+
+  @override
+  String get shortcutsTitle => 'اختصارات لوحة المفاتيح';
+
+  @override
+  String get shortcutCloseTask => 'إغلاق المهمة';
+
+  @override
+  String get settingsDesign => 'التصميم';
+
+  @override
+  String get designClassic => 'كلاسيكي';
+
+  @override
+  String get designLapis => 'لازورد';
+
+  @override
+  String get designSlate => 'أردواز ونيلي';
+
+  @override
+  String get designBrutal => 'جريء';
 }

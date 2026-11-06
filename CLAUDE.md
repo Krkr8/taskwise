@@ -6,14 +6,15 @@
 3. Finish a milestone with `flutter analyze` and all tests, then a commit `M<n>: <title>` and a push. Update the Progress Log and give the owner beginner-friendly test steps.
 
 ## Quick facts
-- Layout: `app/` (Flutter: Windows, Linux, iOS), `shared/` (Dart models and logic), `server/` (TypeScript + Hono sync server on Vercel with Turso). API: `docs/sync-api.md`.
+- Layout: `app/` (Flutter: Windows, Linux, iOS), `shared/` (Dart models and logic), `server/` (TypeScript + Hono sync server on Vercel with Turso). API: `docs/sync-api.md`. Where everything lives, and how to change a screen in every design: `docs/architecture.md`.
+- Designs: the app has four (Classic, Lapis, Slate & Indigo, Brutal), picked per device in Settings. Each has its own screens in `app/lib/ui/designs/<name>/`, with shared screens in `app/lib/ui/shared/`. A screen change usually has to be made in each design's copy.
 - Tests:
   - `cd app && flutter test`. Take ccache off `PATH` first (`docs/dev-setup-fedora.md`). On "Unable to connect to flutter_tester process", re-run or add `--concurrency=1`.
   - `cd shared && dart test`
   - `cd server && npm test`
   - The live two-device sync test needs a local server: see the top of `app/test/sync/live_server_test.dart`.
   - Location reminders without the iPhone: `tools/geofence_sim/run.sh` (walk simulator over the real Swift `GeofenceEngine`, in podman), `run.sh test` (Swift unit tests on Linux), and `cd app && flutter test integration_test/location_test.dart -d linux` (real app in a window; add `--dart-define=SHOTS=<dir>` for screenshots).
-- Design screenshots: `cd app && flutter test integration_test/design_tour_test.dart -d linux --dart-define=SHOTS=$PWD/../design/<name>` (every main screen in 4 looks; see `design/README.md`).
+- Design screenshots: `cd app && flutter test integration_test/design_tour_test.dart -d linux --dart-define=SHOTS=$PWD/../design` (every main screen of every design in 4 looks; `--dart-define=DESIGNS=brutal` for one; see `design/README.md`).
 - Releases:
   - Push a tag `v<version>` (bump `app/pubspec.yaml` first). The release workflow builds draft releases for Linux, Windows and unsigned iOS.
   - Download the files for the owner with `gh release download v<version> --dir ~/Downloads/taskwise-<version>`.

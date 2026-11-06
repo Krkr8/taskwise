@@ -9,6 +9,7 @@ import 'repository_base.dart';
 /// devices (see [AppSettings]).
 abstract final class SettingKeys {
   static const theme = 'theme';
+  static const design = 'design';
   static const language = 'language';
   static const timeFormat = 'time_format';
   static const weekStart = 'week_start';
@@ -57,6 +58,9 @@ class SettingsRepository extends RepositoryBase {
 
   Future<void> setTheme(ThemePreference value) =>
       _put(SettingKeys.theme, value.name, synced: false);
+
+  Future<void> setDesign(AppDesign value) =>
+      _put(SettingKeys.design, value.name, synced: false);
 
   Future<void> setLanguage(AppLanguage value) =>
       _put(SettingKeys.language, value.name, synced: false);
@@ -213,6 +217,9 @@ class SettingsRepository extends RepositoryBase {
       theme:
           ThemePreference.values.asNameMap()[values[SettingKeys.theme]] ??
           ThemePreference.system,
+      design:
+          AppDesign.values.asNameMap()[values[SettingKeys.design]] ??
+          AppDesign.fallback,
       language: AppLanguage.values.asNameMap()[values[SettingKeys.language]],
       timeFormat:
           TimeFormat.values.asNameMap()[values[SettingKeys.timeFormat]] ??

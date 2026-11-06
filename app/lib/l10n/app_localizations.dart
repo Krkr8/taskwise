@@ -1957,6 +1957,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The iPhone also syncs in the background now and then (iOS decides when).'**
   String get syncBackgroundHint;
+
+  /// No description provided for @lapisEmptyTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Type one in the box above and press Enter.'**
+  String get lapisEmptyTasks;
+
+  /// No description provided for @lapisEmptyTasksTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No tasks yet'**
+  String get lapisEmptyTasksTitle;
+
+  /// No description provided for @shortcutNewTask.
+  ///
+  /// In en, this message translates to:
+  /// **'New task'**
+  String get shortcutNewTask;
+
+  /// No description provided for @shortcutSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get shortcutSearch;
+
+  /// No description provided for @todayLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 left today} other{{count} left today} }'**
+  String todayLeft(int count);
+
+  /// No description provided for @todayDone.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{None done yet} other{{count} done} }'**
+  String todayDone(int count);
+
+  /// No description provided for @todayAllDone.
+  ///
+  /// In en, this message translates to:
+  /// **'All done for today'**
+  String get todayAllDone;
+
+  /// No description provided for @todayProgressSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} tasks for today done'**
+  String todayProgressSemantics(int done, int total);
+
+  /// No description provided for @progressSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} completed'**
+  String progressSummary(int done, int total);
+
+  /// No description provided for @progressAllDone.
+  ///
+  /// In en, this message translates to:
+  /// **'All tasks completed for today!'**
+  String get progressAllDone;
+
+  /// No description provided for @quickAddSubmitTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add task (Enter)'**
+  String get quickAddSubmitTooltip;
+
+  /// No description provided for @todayOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Focus'**
+  String get todayOverview;
+
+  /// No description provided for @statOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} open'**
+  String statOpen(int count);
+
+  /// No description provided for @statOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} overdue'**
+  String statOverdue(int count);
+
+  /// No description provided for @brutalEmptyTasksTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your list is empty'**
+  String get brutalEmptyTasksTitle;
+
+  /// No description provided for @shortcutsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keyboard shortcuts'**
+  String get shortcutsTitle;
+
+  /// No description provided for @shortcutCloseTask.
+  ///
+  /// In en, this message translates to:
+  /// **'Close the task'**
+  String get shortcutCloseTask;
+
+  /// No description provided for @settingsDesign.
+  ///
+  /// In en, this message translates to:
+  /// **'Design'**
+  String get settingsDesign;
+
+  /// No description provided for @designClassic.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic'**
+  String get designClassic;
+
+  /// No description provided for @designLapis.
+  ///
+  /// In en, this message translates to:
+  /// **'Lapis'**
+  String get designLapis;
+
+  /// No description provided for @designSlate.
+  ///
+  /// In en, this message translates to:
+  /// **'Slate & Indigo'**
+  String get designSlate;
+
+  /// No description provided for @designBrutal.
+  ///
+  /// In en, this message translates to:
+  /// **'Brutal'**
+  String get designBrutal;
 }
 
 class _AppLocalizationsDelegate

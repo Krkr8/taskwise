@@ -18,9 +18,11 @@ import 'package:taskwise/main.dart' show configureIntl;
 import 'package:taskwise/notifications/notifier.dart';
 import 'package:taskwise/notifications/reminder_scheduler.dart';
 import 'package:taskwise/state/providers.dart';
-import 'package:taskwise/ui/location/location_picker_page.dart';
-import 'package:taskwise/ui/tasks/task_detail.dart';
-import 'package:taskwise/ui/theme/app_theme.dart';
+import 'package:taskwise/ui/shared/location/map_providers.dart';
+import 'package:taskwise/ui/designs/design.dart';
+import 'package:taskwise/ui/designs/classic/location/location_picker_page.dart';
+import 'package:taskwise/ui/designs/classic/tasks/task_detail.dart';
+import 'package:taskwise/ui/designs/classic/theme/app_theme.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
 
 /// Tuesday 2026-10-20, 09:00 local.
@@ -71,6 +73,7 @@ void appTest(
           // No network in tests: a fake address search and no map tiles.
           geocoderProvider.overrideWithValue(_FakeGeocoder()),
           mapTilesEnabledProvider.overrideWithValue(false),
+          appDesignProvider.overrideWithValue(AppDesign.classic),
           ...overrides,
         ],
         child: const TaskwiseApp(),

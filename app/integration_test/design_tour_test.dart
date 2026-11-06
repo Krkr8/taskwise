@@ -1,9 +1,12 @@
 // The design tour: fills the app with realistic sample tasks and takes a
-// screenshot of every main screen, in four looks (desktop light, desktop
-// dark, phone light, phone Arabic). Used to compare designs side by side.
+// screenshot of every main screen, in every design (lib/ui/designs/) and
+// four looks (desktop light, desktop dark, phone light, phone Arabic).
+// Screenshots go to <SHOTS>/<design>/<look>/<screen>.png.
 //
 //   cd app && flutter test integration_test/design_tour_test.dart -d linux \
-//     --dart-define=SHOTS=../design/<name>
+//     --dart-define=SHOTS=$PWD/../design
+//
+// Add --dart-define=DESIGNS=brutal,lapis to shoot only some designs.
 //
 // Navigation goes through the app's providers where it can (tabs, opening a
 // task), so a new layout keeps working. Buttons inside screens are found by
@@ -16,7 +19,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:taskwise/data/app_settings.dart';
 import 'package:taskwise/l10n/app_localizations.dart';
 import 'package:taskwise/state/providers.dart';
-import 'package:taskwise/ui/theme/tokens.dart';
+import 'package:taskwise/ui/shared/theme/tokens.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
 
 import 'helpers.dart';
@@ -60,6 +63,16 @@ const looks = <Look>[
   ),
 ];
 
+const _onlyDesigns = String.fromEnvironment('DESIGNS');
+
+/// The designs to shoot: all, or the DESIGNS dart-define's list.
+List<AppDesign> get designs => _onlyDesigns.isEmpty
+    ? AppDesign.values
+    : [
+        for (final name in _onlyDesigns.split(','))
+          AppDesign.values.byName(name),
+      ];
+
 const richTask = 'Plan the weekend trip to Erbil';
 
 void main() {
@@ -75,79 +88,89 @@ void main() {
       db.tasks,
     )..where((t) => t.title.equals(richTask))).getSingle()).id;
 
-    for (final look in looks) {
-      await apply(tester, container, look);
-      final l10n = AppLocalizations.of(
-        tester.element(find.byType(Scaffold).first),
-      );
-      final wide = look.size.width >= Breakpoints.listDetail;
-      String n(String screen) => '${look.name}/$screen';
+    for (final design in designs) {
+      await container.read(settingsRepositoryProvider).setDesign(design);
+      for (final look in looks) {
+        await apply(tester, container, look);
+        final l10n = AppLocalizations.of(
+          tester.element(find.byType(Scaffold).first),
+        );
+        final wide = look.size.width >= Breakpoints.listDetail;
+        String n(String screen) => '${design.name}/${look.name}/$screen';
 
-      // 1. The task list.
-      container.read(shellTabProvider.notifier).select(ShellTabNotifier.tasks);
-      await settle(tester);
-      await shot(tester, n('01-tasks'));
+        // 1. The task list.
+        container
+            .read(shellTabProvider.notifier)
+            .select(ShellTabNotifier.tasks);
+        await settle(tester);
+        await shot(tester, n('01-tasks'));
 
-      // 2. A task with everything: notes, subtasks, tags, reminders, repeat.
-      container.read(openTaskRequestProvider.notifier).request(richId);
-      await settle(tester);
-      await shot(tester, n('02-task-detail'));
+        // 2. A task with everything: notes, subtasks, tags, reminders, repeat.
+        container.read(openTaskRequestProvider.notifier).request(richId);
+        await settle(tester);
+        await shot(tester, n('02-task-detail'));
 
-      // 3. The repeat choices.
-      await tester.ensureVisible(labelled(l10n.repeat));
-      await settle(tester);
-      await tester.tap(labelled(l10n.repeat));
-      await settle(tester);
-      await shot(tester, n('03-repeat'));
-      await popTop(tester);
-
-      // 4. The reminder menu, then 5. the map picker.
-      await tester.ensureVisible(labelled(l10n.addReminder));
-      await settle(tester);
-      await tester.tap(labelled(l10n.addReminder));
-      await settle(tester);
-      await shot(tester, n('04-reminder-menu'));
-      await tester.tap(labelled(l10n.reminderAtLocation));
-      await waitForTiles(tester);
-      await shot(tester, n('05-location-picker'));
-      await popTop(tester);
-
-      // Close the task again.
-      if (wide) {
-        container.read(selectedTaskIdProvider.notifier).select(null);
-      } else {
+        // 3. The repeat choices.
+        await tester.ensureVisible(labelled(l10n.repeat));
+        await settle(tester);
+        await tester.tap(labelled(l10n.repeat));
+        await settle(tester);
+        await shot(tester, n('03-repeat'));
         await popTop(tester);
+
+        // 4. The reminder menu, then 5. the map picker.
+        await tester.ensureVisible(labelled(l10n.addReminder));
+        await settle(tester);
+        await tester.tap(labelled(l10n.addReminder));
+        await settle(tester);
+        await shot(tester, n('04-reminder-menu'));
+        await tester.tap(labelled(l10n.reminderAtLocation));
+        await waitForTiles(tester);
+        await shot(tester, n('05-location-picker'));
+        await popTop(tester);
+
+        // Close the task again.
+        if (wide) {
+          container.read(selectedTaskIdProvider.notifier).select(null);
+        } else {
+          await popTop(tester);
+        }
+        await settle(tester);
+
+        // 6. Calendar week, 7. month.
+        container.read(shellTabProvider.notifier).select(1);
+        await settle(tester);
+        await shot(tester, n('06-calendar-week'));
+        await tester.tap(labelled(l10n.calendarMonth));
+        await settle(tester);
+        await shot(tester, n('07-calendar-month'));
+        await tester.tap(labelled(l10n.calendarWeek));
+        await settle(tester);
+
+        // 8. Settings.
+        container
+            .read(shellTabProvider.notifier)
+            .select(ShellTabNotifier.settings);
+        await settle(tester);
+        await shot(tester, n('08-settings'));
       }
-      await settle(tester);
-
-      // 6. Calendar week, 7. month.
-      container.read(shellTabProvider.notifier).select(1);
-      await settle(tester);
-      await shot(tester, n('06-calendar-week'));
-      await tester.tap(labelled(l10n.calendarMonth));
-      await settle(tester);
-      await shot(tester, n('07-calendar-month'));
-      await tester.tap(labelled(l10n.calendarWeek));
-      await settle(tester);
-
-      // 8. Settings.
-      container
-          .read(shellTabProvider.notifier)
-          .select(ShellTabNotifier.settings);
-      await settle(tester);
-      await shot(tester, n('08-settings'));
     }
 
-    // 9. An empty task list, in every look.
+    // 9. An empty task list, in every design and look.
     final tasks = container.read(taskRepositoryProvider);
     for (final t in await db.select(db.tasks).get()) {
       await tasks.deleteTask(t.id);
     }
-    for (final look in looks) {
-      await apply(tester, container, look);
-      container.read(shellTabProvider.notifier).select(ShellTabNotifier.tasks);
-      await settle(tester);
-      await shot(tester, '${look.name}/09-empty');
+    for (final design in designs) {
+      await container.read(settingsRepositoryProvider).setDesign(design);
+      for (final look in looks) {
+        await apply(tester, container, look);
+        container
+            .read(shellTabProvider.notifier)
+            .select(ShellTabNotifier.tasks);
+        await settle(tester);
+        await shot(tester, '${design.name}/${look.name}/09-empty');
+      }
     }
 
     tester.view.reset();

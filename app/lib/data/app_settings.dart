@@ -5,6 +5,17 @@ import 'package:taskwise_shared/taskwise_shared.dart';
 /// Light/dark preference.
 enum ThemePreference { system, light, dark }
 
+/// The app's designs, picked per device in Settings (M8). Each has its own
+/// screens under `lib/ui/designs/<name>/`.
+enum AppDesign {
+  classic,
+  lapis,
+  slate,
+  brutal;
+
+  static const fallback = AppDesign.brutal;
+}
+
 /// UI languages (SPEC.md section 3.5).
 enum AppLanguage { en, ar }
 
@@ -25,13 +36,14 @@ enum DefaultReminder {
 
 /// User settings the app reads at runtime.
 ///
-/// Device-only: theme, language, time format, snooze options, all-day
+/// Device-only: theme, design, language, time format, snooze options, all-day
 /// reminder time and the desktop background options. Synced (shared across
 /// the owner's devices once sync lands in M6): week start and the default
 /// reminder.
 final class AppSettings {
   const AppSettings({
     this.theme = ThemePreference.system,
+    this.design = AppDesign.fallback,
     this.language,
     this.weekStart = WeekStart.sunday,
     this.timeFormat = TimeFormat.h12,
@@ -49,6 +61,9 @@ final class AppSettings {
   static const snoozeChoices = [5, 10, 15, 30, 60, 120];
 
   final ThemePreference theme;
+
+  /// Which design the app uses (device-only).
+  final AppDesign design;
 
   /// Null until the user picks one; the app then follows the system locale.
   final AppLanguage? language;
@@ -74,6 +89,7 @@ final class AppSettings {
 
   AppSettings copyWith({
     ThemePreference? theme,
+    AppDesign? design,
     AppLanguage? language,
     WeekStart? weekStart,
     TimeFormat? timeFormat,
@@ -85,6 +101,7 @@ final class AppSettings {
     bool? startOnLogin,
   }) => AppSettings(
     theme: theme ?? this.theme,
+    design: design ?? this.design,
     language: language ?? this.language,
     weekStart: weekStart ?? this.weekStart,
     timeFormat: timeFormat ?? this.timeFormat,
@@ -101,6 +118,7 @@ final class AppSettings {
   bool operator ==(Object other) =>
       other is AppSettings &&
       other.theme == theme &&
+      other.design == design &&
       other.language == language &&
       other.weekStart == weekStart &&
       other.timeFormat == timeFormat &&
@@ -114,6 +132,7 @@ final class AppSettings {
   @override
   int get hashCode => Object.hash(
     theme,
+    design,
     language,
     weekStart,
     timeFormat,

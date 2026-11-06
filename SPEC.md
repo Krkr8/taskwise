@@ -172,6 +172,11 @@ Two types, a task can mix both:
 ### 3.6 Design
 - Simple and clean. Light and dark mode with a single accent color (user can pick from ~6 accents — nice to have).
 - Material 3 base, rounded corners, generous spacing, good typography. Use a font that supports Arabic well (e.g., Noto Sans + Noto Sans Arabic, or IBM Plex Sans Arabic).
+- **Designs (M8):** four complete designs, picked per device in Settings → Appearance → Design. Each has its own screens (`app/lib/ui/designs/<name>/`, see `docs/architecture.md`); screenshots in `design/<name>/`.
+  - **Classic:** the original (teal, Noto Sans + Noto Sans Arabic).
+  - **Lapis** (Opus 5.5): ink blue on cool grey, saffron for "today", a wide desktop side bar with keyboard shortcuts; IBM Plex Sans Arabic.
+  - **Slate & Indigo** (Gemini 3.8 Flash): indigo, cards, a daily progress bar; Noto fonts.
+  - **Brutal** (Opus 5.5, neo-brutalism, **the default**): cream paper, 2 px ink outlines, hard shadows, flat yellow/tomato/lilac/mint/cobalt blocks; dark mode is "warm charcoal"; Space Grotesk + Alexandria. The app icon is Brutal's.
 - **Simple hover animations** on desktop: subtle background/elevation change on task rows and buttons (~150 ms), smooth check animation when completing a task, gentle slide/fade for panels. Respect "reduce motion" settings.
 - Responsive: phone layout (bottom nav: Tasks / Calendar / Settings), desktop layout (side nav + optional detail panel).
 - Accessible: proper contrast in both themes, readable sizes, screen-reader labels.
@@ -281,7 +286,7 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 - Week starts Sunday by default, changeable in settings.
 - English + Arabic, switchable in settings.
 - Notifications on all devices by default, selectable per task.
-- Simple design, light/dark mode, subtle hover animations.
+- Simple design, light/dark mode, subtle hover animations. Several complete designs to choose from in Settings (Brutal by default); the owner accepted that screen changes may have to be made in each design.
 - Owner is comfortable with the terminal but not a mobile developer — explain device-side steps clearly.
 
 ---
@@ -289,7 +294,7 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 ## 7. Progress Log
 
 ### Where we left off (2026-11-05)
-- **Status for a new chat:** **M7 is closed** (2026-11-06) with **v0.4.1** (draft release; files in `~/Downloads/taskwise-0.4.1/`). v0.4.1 moved the iPhone's location decisions into the platform-free `GeofenceEngine`, tested with the walk simulator (`tools/geofence_sim/run.sh`, see §3.3) and the Linux integration test; three bugs it found are fixed. All automated tests pass, including the Swift tests on Linux and on a simulator (**iOS** workflow, `.github/workflows/ios.yml`). **The real-world walk test on the iPhone was skipped by the owner** (they can't do it now); if location reminders misbehave later, start from Settings → Location reminders → Location debug and fix as v0.4.x. **Next: M8.** The owner's idea: two AI designers (Claude Opus 5.5 at medium effort with the unslop skill, and Gemini 3.8) each redesign the app; the owner picks the best one.
+- **Status for a new chat:** **M8 is in progress.** Step 1 (designs) is built and released as **v0.5.0** (draft release; files in `~/Downloads/taskwise-0.5.0/`): four designs in Settings → Appearance → Design (Classic, Lapis, Slate & Indigo, Brutal; Brutal is the default), the code reorganised into `app/lib/ui/shared/` and `app/lib/ui/designs/<name>/` (`docs/architecture.md`). How they were made: a design tour test screenshots every screen (`design/`); Opus 5.5 and Gemini 3.8 Flash each redesigned the app from the same brief; the owner then asked Opus for a neo-brutalist one, picked "warm charcoal" for its dark mode out of three, and chose to keep all designs. **First ask the owner how v0.5.0 looks on their devices** (list under "How to test"), fix as v0.5.x, then plan the rest of M8 (export/import, logs viewer, error handling, performance with 1,000+ tasks, README/CONTRIBUTING/self-hosting docs). M7 was closed on 2026-11-06 with v0.4.1 (iPhone walk test skipped by the owner; if location reminders misbehave, start from Settings → Location reminders → Location debug).
 - v0.3.1 was confirmed on all devices (2026-11-05); v0.3.2 made the Undo bar fade after 5 seconds.
 - **Things to watch in the M7 device test** (all untestable without the phone):
   - Region events with the app swiped away (iOS relaunches it in the background; `LocationReminderManager` starts in `AppDelegate`).
@@ -299,7 +304,6 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 - **Server:** the Vercel project `taskwise` (Root Directory `server`, function region `fra1`, Node 24) with the Turso database `taskwise` (`aws-eu-central-1`). Pushes to `main` deploy automatically. The server address and secrets are in the owner's `~/.config/taskwise/server-secrets.env` (never in the repo). The account exists (created from Fedora on 2026-11-02). The owner was asked to delete the Vercel token (pasted in chat) at vercel.com/account/tokens and from that file.
 - **Release files:** the release workflow builds drafts; Claude Code downloads them for the owner with `gh release download v<version> --dir ~/Downloads/taskwise-<version>`. The owner copies the Windows zip to the PC (or downloads it from the draft release while signed in to GitHub), and installs the .ipa with iloader → Import IPA.
 - **iPhone install:** with iloader from the laptop (SideStore sign-in is broken by Apple since 2026-10-12, error -80045). Refresh every 7 days with iloader → Import IPA. See `docs/install-ios-sidestore.md`.
-- **M8 starts by asking the owner for their design idea** (they asked for a design milestone; merged into M8).
 - Running app tests on the Fedora laptop: take ccache off `PATH` (see `docs/dev-setup-fedora.md`), and re-run if a file fails with "Unable to connect to flutter_tester process" (or use `--concurrency=1`). The live sync test needs a local server: see the comment at the top of `app/test/sync/live_server_test.dart`.
 
 | Milestone | Status | Date | Notes |
@@ -312,9 +316,18 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 | M5 Sync server | ✅ Done | 2026-11-02 | TypeScript + Hono server in `server/` (Node 24): account setup with a setup secret, login (argon2id) with database-backed rate limiting, per-device tokens (SHA-256 stored, revocable), devices API, push/pull sync with last-write-wins and a change sequence, daily Vercel Cron (90-day tombstone purge with task children, 7 nightly backups in the database). Generic record store: the server doesn't interpret records. API in `docs/sync-api.md`; contract fixtures in `shared/test/fixtures/sync/` tested by both Dart and TypeScript. Runs on Vercel or Docker (built and run with Podman locally). Dart `server/` placeholder removed; CI has a Node job. Free limits checked 2026-10-31 (Vercel Hobby: 1 M invocations/month, cron daily; Turso Free: 5 GB, 500 M reads, 10 M writes). 228 automated tests (app 53, shared 106, server 69). Deployed on Vercel (`fra1`) with Turso (`aws-eu-central-1`); health checked over HTTPS from the laptop and from the iPhone on mobile data. |
 | M6 Client sync + devices | ✅ Done | 2026-11-03 | Optional sign-in from Settings (with account setup), one-time banner, sync engine (trigger-filled outbox, push/pull with last-write-wins, full resync on 410, device list), sync triggers (start, resume, 2 s after changes, every minute, Sync now), status icon, Settings → Sync and → Devices, sign out, "Notify on" per task with each device scheduling only its own reminders. Owner-tested v0.3.0: sync connects on Fedora, Windows and iPhone. Closed with the v0.3.1 fixes (Windows scrolling and tray Quit, iOS rescheduling bug, test-notification button, "time passed" reminders) and the **main device** (manages the other devices). Database schema v3. Live test: two app devices through the real TypeScript server (also in CI). 276 automated tests (app 85 incl. 1 live, shared 112, server 79). v0.3.1 confirmed by the owner on all devices (2026-11-05); v0.3.2 makes the Undo snackbar fade after 5 s. |
 | M7 Location reminders | ✅ Done | 2026-11-06 | Map picker (flutter_map + OSM, Nominatim search behind a swappable `Geocoder`), saved places, location reminders on every device (Arrive / Leave, 30-500 m, fire every time, 30 min debounce), schema v4 (`reminders.label`). iPhone: native Swift geofencing (outer region + precise check, 20-region limit, debug screen), permission explanation and banner (EN/AR, Arabic `InfoPlist.strings`). iOS background refresh sync with `workmanager` 0.10.10; token readable after first unlock. New iOS CI workflow runs the Swift tests. 300 automated tests (app 102 + 1 live, shared 119, server 79) + 9 Swift tests. v0.4.1: `GeofenceEngine` + walk simulator, 3 geofencing bugs fixed, Linux integration test; 16 Swift tests. Closed by the owner without the iPhone walk test (skipped). |
-| M8 Design + polish | ⬜ | | |
+| M8 Design + polish | 🔶 Designs done (v0.5.0), polish next | 2026-11-06 | Design tour screenshots; Opus/Gemini design contest; four designs selectable per device (Classic, Lapis, Slate & Indigo, Brutal default with warm charcoal dark mode); UI split into `ui/shared` + `ui/designs/<name>`; `docs/architecture.md`. 391 automated tests (app 192 + 1 live, shared 119, server 79) + 16 Swift tests; 2 Linux integration tests. |
 
 ### How to test the latest milestone
+**M8 step 1 (designs), with v0.5.0.** Files in `~/Downloads/taskwise-0.5.0/` on the laptop. Fedora: `git pull`, then `cd app && flutter run -d linux`. Windows: quit Taskwise (tray → Quit), unzip the new zip over the old folder. iPhone: iloader → Import IPA → `taskwise-0.5.0-ios-unsigned.ipa`. Your tasks and sign-in are kept.
+
+1. Taskwise opens in the **Brutal** design (cream paper, black outlines). The app icon is new too (on Windows and the iPhone it may take a restart or a minute to refresh).
+2. **Settings → Appearance → Design:** tap **Classic**, **Lapis**, **Slate & Indigo** and **Brutal** in turn. The whole app changes at once and stays on Settings.
+3. In each design, look at Tasks, open a task, the Calendar (week and month) and Settings. Try **Theme → Dark** and **Language → العربية** too.
+4. Close and reopen Taskwise: it keeps the design you chose. Each device keeps its own (try a different one on the iPhone).
+5. Desktop shortcuts in Lapis and Brutal: **Ctrl+N** new task, **Ctrl+F** search, **Esc** closes the open task.
+6. Tell me which design you keep using, and anything that looks wrong (a screenshot in `tempscreenshot/` helps).
+
 **M7 (location reminders), with v0.4.1.** Files in `~/Downloads/taskwise-0.4.1/` on the laptop. Fedora: `git pull`, then `cd app && flutter run -d linux`. Windows: unzip the new zip over the old folder. iPhone: iloader → Import IPA → `taskwise-0.4.1-ios-unsigned.ipa`. Quit Taskwise first everywhere (tray → Quit). Your tasks and sign-in are kept.
 
 *At home, on Fedora (or Windows):*
@@ -420,5 +433,5 @@ Automated checks (optional): from the repo root, run `flutter analyze`, then `cd
 - **M7 (later):** time windows / days for location reminders and a one-shot option are not built (SPEC 3.3 "nice to have"). A repeating task's next copy is open at once, so its location reminder is active before its due date. No sync on geofence wake-ups (location events don't need it). Location notifications from the native side only exist on iOS; desktop never fires them. The Linux/Windows map needs internet for tiles and search.
 - **M7, Riverpod 3:** providers nobody listens to are paused, so code outside the widget tree (background sync, tests) must `container.listen` a provider before awaiting it.
 - **M7, iOS:** the background engine registers all plugins plus `LocationRemindersPlugin` (`AppDelegate.swift`). With UIScene, workmanager's launch handlers must be registered in `didFinishLaunching` (done). The database uses drift's `shareAcrossIsolates`, so the background engine talks to the app's database isolate when the app is alive.
-- **M8:** JSON export/import can reuse the shared models' `toJson`/`fromJson`. An accent colour picker can hook into `AppTheme.seed`.
+- **M8:** JSON export/import can reuse the shared models' `toJson`/`fromJson`. New screens (export/import, logs) go in `app/lib/ui/shared/` so they're built once for all designs. Long titles in the phone week view still break mid-word (all designs).
 - **Testing tip:** in widget tests, drift query streams wait on the fake test clock. Read the database with plain queries inside `tester.runAsync`, and unmount the app at the end of each test (see `appTest` in `app/test/widget/app_test.dart`).

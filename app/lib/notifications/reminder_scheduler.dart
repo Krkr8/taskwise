@@ -7,7 +7,7 @@ import 'package:taskwise_shared/taskwise_shared.dart';
 import '../data/app_settings.dart';
 import '../l10n/app_localizations.dart';
 import '../state/providers.dart';
-import '../ui/tasks/labels.dart';
+import '../ui/shared/tasks/labels.dart';
 import 'notifier.dart';
 
 /// The platform notifier. Overridden in `main()`; tests keep the no-op.

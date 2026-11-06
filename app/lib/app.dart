@@ -9,8 +9,7 @@ import 'location/location_reminder_sync.dart';
 import 'notifications/reminder_scheduler.dart';
 import 'state/providers.dart';
 import 'sync/sync_controller.dart';
-import 'ui/shell/adaptive_shell.dart';
-import 'ui/theme/app_theme.dart';
+import 'ui/designs/design.dart';
 
 /// Root widget: theme, language/RTL and time format come from settings.
 class TaskwiseApp extends ConsumerWidget {
@@ -19,6 +18,8 @@ class TaskwiseApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(appSettingsProvider);
+    final design = ref.watch(appDesignProvider);
+    final spec = designSpec(design);
     // Starts the reminder scheduler, location reminders and sync (kept alive by these watches).
     ref
       ..watch(reminderSchedulerProvider)
@@ -29,11 +30,14 @@ class TaskwiseApp extends ConsumerWidget {
       (_, next) => DesktopShell.instance?.apply(next),
     );
     return MaterialApp(
+      // A new design starts a fresh app (its own shell and pages). Flutter
+      // can't animate between two designs' themes.
+      key: ValueKey(design),
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
       scrollBehavior: const AppScrollBehavior(),
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
+      theme: spec.light(),
+      darkTheme: spec.dark(),
       themeMode: switch (settings.theme) {
         ThemePreference.system => ThemeMode.system,
         ThemePreference.light => ThemeMode.light,
@@ -69,7 +73,7 @@ class TaskwiseApp extends ConsumerWidget {
           child: child!,
         ),
       ),
-      home: const AdaptiveShell(),
+      home: spec.shell(),
     );
   }
 }
