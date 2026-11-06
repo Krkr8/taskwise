@@ -1286,4 +1286,85 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get designBrutal => 'Brutal';
+
+  @override
+  String get settingsBackup => 'Backup';
+
+  @override
+  String get backupExport => 'Export to a file';
+
+  @override
+  String get backupExportSubtitle => 'Save all your tasks in a JSON file';
+
+  @override
+  String get backupImport => 'Import from a file';
+
+  @override
+  String get backupImportSubtitle =>
+      'Adds the tasks from a backup. Newer changes on this device are kept.';
+
+  @override
+  String backupSaved(String path) {
+    return 'Backup saved: $path';
+  }
+
+  @override
+  String backupSavedIos(String name) {
+    return 'Backup saved. Open the Files app → On My iPhone → Taskwise → $name';
+  }
+
+  @override
+  String backupImported(int changed, int kept, int skipped) {
+    return 'Import done: $changed added or updated, $kept already newer here, $skipped skipped';
+  }
+
+  @override
+  String get backupNotABackup => 'This file isn\'t a Taskwise backup.';
+
+  @override
+  String get backupTooNew =>
+      'This backup is from a newer Taskwise. Update Taskwise first.';
+
+  @override
+  String get actionFailed =>
+      'Something went wrong. Details are in Settings → About → View logs.';
+
+  @override
+  String get settingsAbout => 'About';
+
+  @override
+  String aboutVersion(String version) {
+    return 'Taskwise $version';
+  }
+
+  @override
+  String get aboutViewLogs => 'View logs';
+
+  @override
+  String get aboutViewLogsSubtitle =>
+      'For finding problems. Logs never contain your tasks.';
+
+  @override
+  String get logsTitle => 'Logs';
+
+  @override
+  String get logsEmpty => 'Nothing logged yet.';
+
+  @override
+  String get logsCopy => 'Copy all';
+
+  @override
+  String get logsCopied => 'Logs copied';
+
+  @override
+  String get logsSave => 'Save to file';
+
+  @override
+  String get logsClear => 'Clear';
+
+  @override
+  String get logsFilterAll => 'All';
+
+  @override
+  String get logsFilterProblems => 'Problems only';
 }

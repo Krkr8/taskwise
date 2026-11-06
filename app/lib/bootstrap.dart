@@ -2,12 +2,14 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
 
 import 'data/app_settings.dart';
 import 'data/db/app_database.dart';
 import 'data/repositories/settings_repository.dart';
 import 'location/location_platform.dart';
+import 'logging/app_log.dart';
 import 'location/location_reminder_sync.dart';
 import 'notifications/desktop_notifier.dart';
 import 'notifications/ios_notifier.dart';
@@ -40,6 +42,9 @@ final class AppBootstrap {
 
   static Future<AppBootstrap> start() async {
     configureIntl();
+    await appLog.open(
+      Directory('${(await getApplicationSupportDirectory()).path}/logs'),
+    );
     final db = AppDatabase();
     final type = _detectDeviceType();
     final deviceId = await ensureThisDevice(

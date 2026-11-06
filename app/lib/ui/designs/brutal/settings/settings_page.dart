@@ -1,3 +1,5 @@
+import '../../../shared/settings/about_section.dart';
+import '../../../shared/settings/backup_section.dart';
 import '../../../shared/settings/design_picker.dart';
 
 import 'dart:io';
@@ -376,6 +378,16 @@ class SettingsPage extends ConsumerWidget {
                   ),
                 ),
               ],
+            ),
+            ..._section(
+              l10n.settingsBackup,
+              color: b.mint,
+              children: [const BackupSection()],
+            ),
+            ..._section(
+              l10n.settingsAbout,
+              color: b.yellow,
+              children: [const AboutSection()],
             ),
           ],
         ),

@@ -11,6 +11,7 @@ import '../state/providers.dart';
 import 'sync_api.dart';
 import 'sync_engine.dart';
 import 'token_store.dart';
+import '../logging/app_log.dart';
 
 /// Where the device token is kept. Tests override it with a
 /// [MemoryTokenStore].
@@ -280,7 +281,8 @@ class SyncController extends Notifier<SyncState> {
     if (engine == null || _disposed) return;
     state = state.copyWith(phase: SyncPhase.syncing);
     try {
-      await engine.sync();
+      final report = await engine.sync();
+      appLog.info('sync', 'Synced: $report');
       if (_disposed || _engine != engine) return;
       final now = ref.read(clockProvider)().toUtc();
       await ref.read(settingsRepositoryProvider).setLastSyncedAt(now);
@@ -301,9 +303,11 @@ class SyncController extends Notifier<SyncState> {
       } else {
         _fail(engine, SyncPhase.error, '${e.code}: ${e.message}');
       }
-    } on Object catch (e) {
+    } on Object catch (e, stack) {
       // A bug or an unexpected reply: show it, retry on the next tick.
-      _fail(engine, SyncPhase.error, '$e');
+      appLog.error('sync', e, stack);
+      // The details are in the log; the user sees a plain message.
+      _fail(engine, SyncPhase.error, '');
     }
   }
 
@@ -314,6 +318,8 @@ class SyncController extends Notifier<SyncState> {
     bool stopped = false,
   }) {
     if (_disposed || (!stopped && _engine != engine)) return;
+    // Unexpected errors (empty message) were logged with their stack.
+    if (message.isNotEmpty) appLog.warning('sync', '${phase.name}: $message');
     state = state.copyWith(phase: phase, message: () => message);
   }
 

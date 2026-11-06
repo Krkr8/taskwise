@@ -2089,6 +2089,144 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Brutal'**
   String get designBrutal;
+
+  /// No description provided for @settingsBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup'**
+  String get settingsBackup;
+
+  /// No description provided for @backupExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export to a file'**
+  String get backupExport;
+
+  /// No description provided for @backupExportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save all your tasks in a JSON file'**
+  String get backupExportSubtitle;
+
+  /// No description provided for @backupImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import from a file'**
+  String get backupImport;
+
+  /// No description provided for @backupImportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Adds the tasks from a backup. Newer changes on this device are kept.'**
+  String get backupImportSubtitle;
+
+  /// No description provided for @backupSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup saved: {path}'**
+  String backupSaved(String path);
+
+  /// No description provided for @backupSavedIos.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup saved. Open the Files app → On My iPhone → Taskwise → {name}'**
+  String backupSavedIos(String name);
+
+  /// No description provided for @backupImported.
+  ///
+  /// In en, this message translates to:
+  /// **'Import done: {changed} added or updated, {kept} already newer here, {skipped} skipped'**
+  String backupImported(int changed, int kept, int skipped);
+
+  /// No description provided for @backupNotABackup.
+  ///
+  /// In en, this message translates to:
+  /// **'This file isn\'t a Taskwise backup.'**
+  String get backupNotABackup;
+
+  /// No description provided for @backupTooNew.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup is from a newer Taskwise. Update Taskwise first.'**
+  String get backupTooNew;
+
+  /// No description provided for @actionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Details are in Settings → About → View logs.'**
+  String get actionFailed;
+
+  /// No description provided for @settingsAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get settingsAbout;
+
+  /// No description provided for @aboutVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Taskwise {version}'**
+  String aboutVersion(String version);
+
+  /// No description provided for @aboutViewLogs.
+  ///
+  /// In en, this message translates to:
+  /// **'View logs'**
+  String get aboutViewLogs;
+
+  /// No description provided for @aboutViewLogsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'For finding problems. Logs never contain your tasks.'**
+  String get aboutViewLogsSubtitle;
+
+  /// No description provided for @logsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs'**
+  String get logsTitle;
+
+  /// No description provided for @logsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing logged yet.'**
+  String get logsEmpty;
+
+  /// No description provided for @logsCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy all'**
+  String get logsCopy;
+
+  /// No description provided for @logsCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs copied'**
+  String get logsCopied;
+
+  /// No description provided for @logsSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to file'**
+  String get logsSave;
+
+  /// No description provided for @logsClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get logsClear;
+
+  /// No description provided for @logsFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get logsFilterAll;
+
+  /// No description provided for @logsFilterProblems.
+  ///
+  /// In en, this message translates to:
+  /// **'Problems only'**
+  String get logsFilterProblems;
 }
 
 class _AppLocalizationsDelegate

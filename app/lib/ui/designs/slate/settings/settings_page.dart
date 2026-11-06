@@ -1,3 +1,5 @@
+import '../../../shared/settings/about_section.dart';
+import '../../../shared/settings/backup_section.dart';
 import '../../../shared/settings/design_picker.dart';
 
 import 'dart:io';
@@ -314,6 +316,10 @@ class SettingsPage extends ConsumerWidget {
                 MaterialPageRoute<void>(builder: (_) => const CategoriesPage()),
               ),
             ),
+            _Section(l10n.settingsBackup),
+            const BackupSection(),
+            _Section(l10n.settingsAbout),
+            const AboutSection(),
           ],
         ),
       ),

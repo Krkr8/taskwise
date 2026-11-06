@@ -126,7 +126,10 @@ String syncStatusText(AppLocalizations l10n, SyncState sync, DateTime now) =>
       SyncPhase.syncing => l10n.syncStatusSyncing,
       SyncPhase.offline => l10n.syncStatusOffline,
       SyncPhase.signedOut => l10n.syncStatusSignedOut,
-      SyncPhase.error => l10n.syncStatusError(sync.message ?? ''),
+      SyncPhase.error => switch (sync.message) {
+        final message? when message.isNotEmpty => l10n.syncStatusError(message),
+        _ => l10n.actionFailed,
+      },
       SyncPhase.idle => switch (sync.lastSyncedAt) {
         final at? => l10n.syncStatusSynced(l10n.timeAgo(at, now)),
         null => l10n.syncStatusNever,

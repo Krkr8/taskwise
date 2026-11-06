@@ -83,6 +83,27 @@ void main() {
           reason: '${design.name} shows as chosen',
         );
 
+        // Backup and About sit at the end of every Settings page.
+        final settingsList = find
+            .descendant(
+              of: find.byType(ListView).first,
+              matching: find.byType(Scrollable),
+            )
+            .first;
+        await tester.scrollUntilVisible(
+          find.text('View logs'),
+          300,
+          scrollable: settingsList,
+        );
+        expect(find.text('Import from a file'), findsOneWidget);
+        expect(find.textContaining('Taskwise 0.'), findsOneWidget);
+        // Back to the top, where the design picker is.
+        await tester.scrollUntilVisible(
+          find.byKey(const ValueKey('design-classic')),
+          -300,
+          scrollable: settingsList,
+        );
+
         // Tasks, a task, the calendar.
         container
             .read(shellTabProvider.notifier)

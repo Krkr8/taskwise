@@ -11,6 +11,7 @@ import '../state/providers.dart';
 import '../sync/sync_api.dart';
 import '../sync/sync_controller.dart';
 import '../sync/sync_engine.dart';
+import '../logging/app_log.dart';
 
 /// The iPhone's background sync task. The same id is listed under
 /// `BGTaskSchedulerPermittedIdentifiers` in `ios/Runner/Info.plist` and
@@ -32,7 +33,7 @@ Future<void> registerBackgroundSync() async {
       initialDelay: const Duration(minutes: 15),
     );
   } on Object catch (e) {
-    debugPrint('Background sync not available: $e');
+    appLog.warning('background', 'Background sync not available: $e');
   }
 }
 
@@ -44,7 +45,7 @@ void backgroundDispatcher() {
       await runBackgroundSync();
       return true;
     } on Object catch (e) {
-      debugPrint('Background sync failed: $e');
+      appLog.error('background', e, null, 'Background sync failed');
       return false;
     }
   });
@@ -84,10 +85,11 @@ Future<void> syncOnceInBackground(ProviderContainer container) async {
     deviceId: container.read(deviceIdProvider),
   );
   try {
-    await engine.sync();
+    final report = await engine.sync();
     await settings.setLastSyncedAt(container.read(clockProvider)().toUtc());
+    appLog.info('background', 'Synced: $report');
   } on SyncApiException catch (e) {
-    debugPrint('Background sync: $e');
+    appLog.warning('background', 'Sync failed: ${e.runtimeType}: $e');
   }
 }
 

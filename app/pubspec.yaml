@@ -1,7 +1,7 @@
 name: taskwise
 description: "Personal self-hosted to-do and reminders app."
 publish_to: none
-version: 0.5.0+8
+version: 0.6.0+9
 resolution: workspace
 
 environment:
@@ -30,6 +30,7 @@ dependencies:
   flutter_map: 8.3.2
   latlong2: 0.10.1
   workmanager: 0.10.10
+  file_selector: 1.1.0
 
 dev_dependencies:
   flutter_test:

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:tray_manager/tray_manager.dart' as tray;
@@ -10,6 +9,7 @@ import 'package:window_manager/window_manager.dart';
 
 import '../data/app_settings.dart';
 import '../l10n/app_localizations.dart';
+import '../logging/app_log.dart';
 
 /// Windows and Linux: keeps Taskwise running in the background so
 /// reminders fire with the window closed.
@@ -150,7 +150,7 @@ class DesktopShell with WindowListener {
       _trayIcon = icon;
     } on Object catch (e) {
       // No tray host (e.g. GNOME without AppIndicator): run without it.
-      debugPrint('Tray icon unavailable: $e');
+      appLog.warning('desktop', 'Tray icon unavailable: $e');
     }
   }
 
@@ -170,7 +170,7 @@ class DesktopShell with WindowListener {
           await LaunchAtStartup.instance.disable();
         }
       } on Object catch (e) {
-        debugPrint('Start on login failed: $e');
+        appLog.warning('desktop', 'Start on login failed: $e');
       }
     }
   }
@@ -188,7 +188,7 @@ class DesktopShell with WindowListener {
       try {
         await Future.sync(action).timeout(const Duration(seconds: 2));
       } on Object catch (e) {
-        debugPrint('Quit step failed: $e');
+        appLog.warning('desktop', 'Quit step failed: $e');
       }
     }
 

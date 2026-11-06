@@ -1322,4 +1322,85 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get designBrutal => 'جريء';
+
+  @override
+  String get settingsBackup => 'النسخ الاحتياطي';
+
+  @override
+  String get backupExport => 'تصدير إلى ملف';
+
+  @override
+  String get backupExportSubtitle => 'احفظ كل مهامك في ملف JSON';
+
+  @override
+  String get backupImport => 'استيراد من ملف';
+
+  @override
+  String get backupImportSubtitle =>
+      'يضيف مهام النسخة الاحتياطية، وتبقى التعديلات الأحدث على هذا الجهاز.';
+
+  @override
+  String backupSaved(String path) {
+    return 'حُفظت النسخة الاحتياطية: $path';
+  }
+
+  @override
+  String backupSavedIos(String name) {
+    return 'حُفظت النسخة الاحتياطية. افتح تطبيق الملفات ← على iPhone ← Taskwise ← $name';
+  }
+
+  @override
+  String backupImported(int changed, int kept, int skipped) {
+    return 'اكتمل الاستيراد: $changed أُضيفت أو حُدّثت، $kept أحدث هنا، $skipped تُخطّيت';
+  }
+
+  @override
+  String get backupNotABackup => 'هذا الملف ليس نسخة احتياطية من Taskwise.';
+
+  @override
+  String get backupTooNew =>
+      'هذه النسخة من إصدار أحدث من Taskwise. حدّث Taskwise أولًا.';
+
+  @override
+  String get actionFailed =>
+      'حدث خطأ. التفاصيل في الإعدادات ← حول ← عرض السجلات.';
+
+  @override
+  String get settingsAbout => 'حول';
+
+  @override
+  String aboutVersion(String version) {
+    return 'Taskwise $version';
+  }
+
+  @override
+  String get aboutViewLogs => 'عرض السجلات';
+
+  @override
+  String get aboutViewLogsSubtitle =>
+      'للبحث عن المشكلات. لا تحتوي السجلات على مهامك أبدًا.';
+
+  @override
+  String get logsTitle => 'السجلات';
+
+  @override
+  String get logsEmpty => 'لا شيء في السجل بعد.';
+
+  @override
+  String get logsCopy => 'نسخ الكل';
+
+  @override
+  String get logsCopied => 'نُسخت السجلات';
+
+  @override
+  String get logsSave => 'حفظ في ملف';
+
+  @override
+  String get logsClear => 'مسح';
+
+  @override
+  String get logsFilterAll => 'الكل';
+
+  @override
+  String get logsFilterProblems => 'المشكلات فقط';
 }
