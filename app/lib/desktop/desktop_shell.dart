@@ -148,6 +148,10 @@ class DesktopShell with WindowListener {
         ..addItem(_showItem)
         ..addSeparator()
         ..addItem(_quitItem);
+      // Right-click opens the menu. tray_manager 0.7+ defaults to "none"
+      // (menu never shown: on Linux it isn't even offered to the panel), so
+      // set the trigger before attaching the menu.
+      icon.setContextMenuTrigger(tray.ContextMenuTrigger.rightClicked);
       icon.setContextMenu(menu);
       // Windows reports clicks on the icon (Linux panels keep them).
       icon.addListener((event) {

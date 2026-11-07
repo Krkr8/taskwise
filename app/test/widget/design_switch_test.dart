@@ -10,6 +10,7 @@ import 'package:taskwise/data/app_settings.dart';
 import 'package:taskwise/data/db/app_database.dart';
 import 'package:taskwise/data/repositories/settings_repository.dart';
 import 'package:taskwise/location/geocoder.dart';
+import 'package:taskwise/version.dart';
 import 'package:taskwise/main.dart' show configureIntl;
 import 'package:taskwise/state/providers.dart';
 import 'package:taskwise/ui/shared/location/map_providers.dart';
@@ -96,7 +97,7 @@ void main() {
           scrollable: settingsList,
         );
         expect(find.text('Import from a file'), findsOneWidget);
-        expect(find.textContaining('Taskwise 0.'), findsOneWidget);
+        expect(find.textContaining('Taskwise $appVersion'), findsOneWidget);
         // Back to the top, where the design picker is.
         await tester.scrollUntilVisible(
           find.byKey(const ValueKey('design-classic')),

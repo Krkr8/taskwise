@@ -6,6 +6,14 @@ When a version is released, its section becomes the text of the draft GitHub rel
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-07
+
+The first stable version, for every platform: Windows, Linux (AppImage and tar.gz), Android and iPhone. It includes everything from 0.6.1 and 0.7.0 (the Linux AppImage and the Android app), which were never published on their own.
+
+### Fixed
+
+- **The tray menu (Show Taskwise / Quit Taskwise) is back on Windows and Linux.** Right-click the tray icon to open it. The menu didn't open: the tray library shows it only when told which click opens it, and on Linux it didn't even offer the menu to the panel.
+
 ## [0.7.0] - 2026-11-07
 
 ### Added
