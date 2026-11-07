@@ -1,15 +1,13 @@
-import 'dart:io';
-
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../../../data/backup.dart';
 import '../../../logging/app_log.dart';
 import '../../../state/providers.dart';
 import '../../../sync/sync_controller.dart';
 import '../common/messages.dart';
+import '../common/save_text_file.dart';
 import '../tasks/labels.dart';
 
 const _json = XTypeGroup(
@@ -55,34 +53,24 @@ Backup _backup(WidgetRef ref) => Backup(
   clock: ref.read(clockProvider),
 );
 
-/// Writes a backup. Desktop: where the user picks. iPhone: the app's
-/// Documents folder, which the Files app shows under "On My iPhone".
+/// Writes a backup where the platform saves files (see [saveTextFile]).
 Future<void> exportBackup(BuildContext context, WidgetRef ref) async {
   final l10n = context.l10n;
   final now = ref.read(clockProvider)();
   final name =
       'taskwise-backup-${now.year}-${_two(now.month)}-${_two(now.day)}.json';
   await guardAction(context, 'backup', () async {
-    final String path;
-    if (Platform.isIOS) {
-      path = '${(await getApplicationDocumentsDirectory()).path}/$name';
-    } else {
-      final location = await getSaveLocation(
-        suggestedName: name,
-        acceptedTypeGroups: const [_json],
-      );
-      if (location == null) return;
-      path = location.path;
-    }
     final json = await _backup(ref).export();
-    await File(path).writeAsString(json, flush: true);
+    final message = await saveTextFile(
+      l10n,
+      name: name,
+      text: json,
+      mimeType: 'application/json',
+      typeGroups: const [_json],
+    );
+    if (message == null) return;
     appLog.info('backup', 'Exported ${json.length} bytes');
-    if (context.mounted) {
-      showMessage(
-        context,
-        Platform.isIOS ? l10n.backupSavedIos(name) : l10n.backupSaved(path),
-      );
-    }
+    if (context.mounted) showMessage(context, message);
   });
 }
 

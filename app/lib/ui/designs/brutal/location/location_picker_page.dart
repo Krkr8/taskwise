@@ -387,7 +387,7 @@ class _LocationPickerPageState extends ConsumerState<LocationPickerPage> {
               const SizedBox(width: Spacing.xs),
               Flexible(
                 child: Text(
-                  l10n.locOnlyIphone,
+                  l10n.locOnlyPhones,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: scheme.onSurfaceVariant,
                   ),

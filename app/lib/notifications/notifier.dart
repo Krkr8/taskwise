@@ -49,6 +49,7 @@ final class NotificationTexts {
     required this.snoozeMinutes,
     required this.body,
     required this.open,
+    this.channelName = 'Reminders',
   });
 
   /// "Done" button.
@@ -65,6 +66,9 @@ final class NotificationTexts {
 
   /// Name of the default (click) action on Linux.
   final String open;
+
+  /// Android: the notification channel's name in the system settings.
+  final String channelName;
 }
 
 /// Action ids carried by notification buttons.

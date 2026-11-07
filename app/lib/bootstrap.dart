@@ -12,7 +12,7 @@ import 'location/location_platform.dart';
 import 'logging/app_log.dart';
 import 'location/location_reminder_sync.dart';
 import 'notifications/desktop_notifier.dart';
-import 'notifications/ios_notifier.dart';
+import 'notifications/mobile_notifier.dart';
 import 'notifications/notifier.dart';
 import 'notifications/reminder_scheduler.dart';
 import 'state/providers.dart';
@@ -20,7 +20,7 @@ import 'sync/sync_controller.dart';
 
 /// What every start of Taskwise needs before the providers run: the open
 /// database, this device's id and settings, and the platform services.
-/// Shared by the app (`main`) and the iPhone's background sync.
+/// Shared by the app (`main`) and the phones' background sync.
 final class AppBootstrap {
   AppBootstrap._({
     required this.db,
@@ -39,6 +39,9 @@ final class AppBootstrap {
   final LocationPlatform location;
 
   static bool get isDesktop => Platform.isWindows || Platform.isLinux;
+
+  /// Phones: the system schedules reminders, and location reminders fire.
+  static bool get isMobile => Platform.isIOS || Platform.isAndroid;
 
   static Future<AppBootstrap> start() async {
     configureIntl();
@@ -63,10 +66,10 @@ final class AppBootstrap {
       settings: settings,
       notifier: isDesktop
           ? DesktopNotifier()
-          : Platform.isIOS
-          ? IosNotifier()
+          : isMobile
+          ? MobileNotifier()
           : NoopNotifier(),
-      location: Platform.isIOS ? IosLocationPlatform() : NoLocationPlatform(),
+      location: isMobile ? NativeLocationPlatform() : NoLocationPlatform(),
     );
   }
 
@@ -90,6 +93,7 @@ DeviceType _detectDeviceType() {
   if (Platform.isWindows) return DeviceType.windows;
   if (Platform.isLinux) return DeviceType.linux;
   if (Platform.isIOS) return DeviceType.ios;
+  if (Platform.isAndroid) return DeviceType.android;
   return DeviceType.other;
 }
 
@@ -98,6 +102,7 @@ DeviceType _detectDeviceType() {
 String _defaultDeviceName(DeviceType type) => switch (type) {
   DeviceType.windows => 'Windows PC',
   DeviceType.ios => 'iPhone',
+  DeviceType.android => 'Android phone',
   DeviceType.linux => _isFedora() ? 'Fedora Laptop' : 'Linux PC',
   DeviceType.other => 'Device',
 };

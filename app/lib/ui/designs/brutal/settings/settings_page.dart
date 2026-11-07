@@ -297,7 +297,7 @@ class SettingsPage extends ConsumerWidget {
                   ],
                 ),
                 if (ref.watch(locationPlatformProvider).supported) ...[
-                  // A gap before the rows about this iPhone.
+                  // A gap before the rows about this phone.
                   const SizedBox(height: Spacing.xl),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
@@ -316,6 +316,7 @@ class SettingsPage extends ConsumerWidget {
                       child: Text(l10n.openSettings),
                     ),
                   ),
+                  const AndroidBatteryHint(),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.bug_report_outlined),

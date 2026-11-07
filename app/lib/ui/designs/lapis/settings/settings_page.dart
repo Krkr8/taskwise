@@ -283,6 +283,7 @@ class SettingsPage extends ConsumerWidget {
                   child: Text(l10n.openSettings),
                 ),
               ),
+              const AndroidBatteryHint(),
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.bug_report_outlined),

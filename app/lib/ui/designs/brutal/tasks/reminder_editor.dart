@@ -202,7 +202,7 @@ class ReminderEditor extends ConsumerWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                tooltip: phone ? null : l10n.locOnlyIphone,
+                tooltip: phone ? null : l10n.locOnlyPhones,
                 onPressed: () =>
                     unawaited(_pickLocation(context, ref, existing: r)),
                 deleteButtonTooltipMessage: l10n.removeReminder,
@@ -251,7 +251,7 @@ class ReminderEditor extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.only(top: Spacing.xs),
             child: Text(
-              l10n.locOnlyIphone,
+              l10n.locOnlyPhones,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

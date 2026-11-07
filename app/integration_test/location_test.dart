@@ -98,7 +98,10 @@ void main() {
     await settle(tester);
     await tester.tap(find.text('At a location…'));
     await settle(tester);
-    expect(find.text('Only reminds on the iPhone'), findsOneWidget);
+    expect(
+      find.text('Only reminds on phones (iPhone and Android)'),
+      findsOneWidget,
+    );
     await tester.tap(find.widgetWithText(ChoiceChip, 'Home'));
     await tester.tap(find.text('Leave'));
     await waitForTiles(tester);

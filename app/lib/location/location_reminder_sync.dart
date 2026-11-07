@@ -7,6 +7,7 @@ import 'package:taskwise_shared/taskwise_shared.dart';
 import '../data/app_settings.dart';
 import '../l10n/app_localizations.dart';
 import '../notifications/notifier.dart';
+import '../notifications/reminder_scheduler.dart' show snoozeLabel;
 import '../state/providers.dart';
 import 'location_platform.dart';
 
@@ -111,8 +112,14 @@ class LocationReminderSync {
     final l10n = lookupAppLocalizations(
       resolvedLocale(_ref.read(appSettingsProvider)),
     );
+    final settings = _ref.read(appSettingsProvider);
+    final actions = [
+      (id: ActionIds.done, title: l10n.notifDone),
+      for (final m in settings.snoozeMinutes)
+        (id: ActionIds.snooze(m), title: snoozeLabel(l10n, m)),
+    ];
     final native = [
-      for (final e in plan) _native(e, tasks[e.taskId]!.dueDate, l10n),
+      for (final e in plan) _native(e, tasks[e.taskId]!.dueDate, l10n, actions),
     ];
     if (_sameAsSent(native)) return true;
     await _platform.setEntries(native);
@@ -124,6 +131,7 @@ class LocationReminderSync {
     LocationReminderEntry e,
     LocalDate? dueDate,
     AppLocalizations l10n,
+    List<({String id, String title})> actions,
   ) {
     final arrive = e.trigger == LocationTrigger.arrive;
     final place = e.placeName;
@@ -146,6 +154,7 @@ class LocationReminderSync {
         title: e.taskTitle,
       ).encode(),
       notificationId: _stableId('loc:${e.reminderId}'),
+      actions: actions,
     );
   }
 

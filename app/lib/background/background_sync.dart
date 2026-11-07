@@ -13,16 +13,17 @@ import '../sync/sync_controller.dart';
 import '../sync/sync_engine.dart';
 import '../logging/app_log.dart';
 
-/// The iPhone's background sync task. The same id is listed under
+/// The phones' background sync task. On iOS the same id is listed under
 /// `BGTaskSchedulerPermittedIdentifiers` in `ios/Runner/Info.plist` and
 /// registered in `AppDelegate.swift`.
 const backgroundSyncTask = 'io.github.krkr8.taskwise.sync';
 
-/// Asks iOS to run [backgroundSyncTask] now and then. iOS decides when
-/// (often a few times a day, depending on how much Taskwise is used), and
-/// never while Taskwise is open. Does nothing on desktop.
+/// Asks the phone to run [backgroundSyncTask] now and then. iOS decides
+/// when (often a few times a day, depending on how much Taskwise is used,
+/// never while Taskwise is open); Android runs it about every 30 minutes
+/// (WorkManager). Does nothing on desktop.
 Future<void> registerBackgroundSync() async {
-  if (!Platform.isIOS) return;
+  if (!Platform.isIOS && !Platform.isAndroid) return;
   try {
     await Workmanager().initialize(backgroundDispatcher);
     await Workmanager().registerPeriodicTask(
@@ -31,13 +32,18 @@ Future<void> registerBackgroundSync() async {
       // On iOS this is the earliest start; later runs are scheduled by
       // AppDelegate.swift's registration.
       initialDelay: const Duration(minutes: 15),
+      // Android: about every 30 minutes with a network (Android may wait
+      // longer in battery saving or Doze). Ignored on iOS.
+      frequency: const Duration(minutes: 30),
+      constraints: Constraints(networkType: NetworkType.connected),
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.update,
     );
   } on Object catch (e) {
     appLog.warning('background', 'Background sync not available: $e');
   }
 }
 
-/// Entry point of the background engine iOS starts for the task.
+/// Entry point of the background engine the phone starts for the task.
 @pragma('vm:entry-point')
 void backgroundDispatcher() {
   Workmanager().executeTask((task, _) async {

@@ -60,7 +60,7 @@ class _LocationDebugPageState extends ConsumerState<LocationDebugPage> {
       body: _loading && state == null
           ? const Center(child: CircularProgressIndicator())
           : state == null
-          ? Center(child: Text(l10n.locOnlyIphone))
+          ? Center(child: Text(l10n.locOnlyPhones))
           : ListView(
               padding: const EdgeInsets.all(Spacing.lg),
               children: [

@@ -202,6 +202,9 @@ void main() {
       expect(Priority.fromName('bogus'), Priority.none);
       expect(WeekStart.fromName(null), WeekStart.sunday);
       expect(DeviceType.fromName('linux'), DeviceType.linux);
+      expect(DeviceType.fromName('android'), DeviceType.android);
+      // A type from a newer app version.
+      expect(DeviceType.fromName('tv'), DeviceType.other);
     });
   });
 }

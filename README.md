@@ -1,6 +1,6 @@
 # Taskwise
 
-Taskwise is a personal to-do and reminders app for Windows, Linux and iPhone. It works offline, and it can keep your devices in step through a small sync server that you run yourself, for free. It speaks English and Arabic, and it can remind you by time or, on the iPhone, by place.
+Taskwise is a personal to-do and reminders app for Windows, Linux, iPhone and Android. It works offline, and it can keep your devices in step through a small sync server that you run yourself, for free. It speaks English and Arabic, and it can remind you by time or, on phones, by place.
 
 <p align="center">
   <img src="design/brutal/desktop-light/01-tasks.png" alt="Taskwise on a desktop: the task list in the Brutal design" width="720">
@@ -30,7 +30,7 @@ More screenshots (every screen, light, dark, phone and Arabic) are in [design/](
 - **Subtasks:** a checklist inside each task.
 - **Repeats:** daily, weekly on chosen days, monthly (a day or "2nd Tuesday"), yearly, every N days/weeks/months, ending never, on a date or after N times.
 - **Time reminders:** at a set time or before the due time, as many as you like, with **Done** and **Snooze** buttons on the notification.
-- **Location reminders (iPhone only):** pick a place on a map and get a reminder when you arrive or leave. The default radius is 30 m.
+- **Location reminders (iPhone and Android):** pick a place on a map and get a reminder when you arrive or leave. The default radius is 30 m. You can make them on any device; phones remind you.
 - **Calendar:** a week view and a month view.
 - **Search, filters and sorting** by category, priority and tag, plus quick add.
 - **English and Arabic**, with full right-to-left layout.
@@ -49,9 +49,11 @@ Download the newest build from **[Releases](https://github.com/Krkr8/taskwise/re
 | Linux (x64), installed for your user | `taskwise-<version>-linux-x64.tar.gz` | [Install on Linux](docs/install-linux.md#install-or-update-targz) |
 | Windows 11 (x64) | `taskwise-<version>-windows-x64.zip` | [Install on Windows](docs/install-windows.md) |
 | iPhone (iOS 15+) | `taskwise-<version>-ios-unsigned.ipa` | [Install on iPhone](docs/install-ios-sidestore.md) |
+| Android (8.0+) | `taskwise-<version>-android.apk` | [Install on Android](docs/install-android.md) |
 
 - **Linux:** the AppImage is one file that runs on Debian 12+, Ubuntu 22.04+, Arch, Fedora and most other distributions: make it executable and open it. Or extract the tar.gz and run `./install.sh`, which installs for your user only, with no `sudo`.
 - **Windows:** a portable folder. Extract the zip and run `taskwise.exe`; no installer and no admin rights. Windows warns about it once because the app isn't code-signed.
+- **Android:** Taskwise isn't on Google Play. Download the APK on the phone and install it (Android asks you to allow installing from your browser once). Updates install over the old version.
 - **iPhone:** Taskwise isn't on the App Store. You install the `.ipa` yourself with a free Apple ID, using [iloader](https://iloader.app) or [SideStore](https://sidestore.io) from a Linux, Windows or Mac computer. A free Apple ID has to refresh the app every 7 days. [What works with a free Apple ID](docs/ios-free-apple-id.md).
 
 There is no account to make and no server needed: Taskwise works on its own. Add a sync server later if you want your devices to share their tasks.
@@ -86,7 +88,7 @@ The app keeps its SQLite database in the per-user app-support folder, e.g. `~/.l
 
 | Path | What it is |
 |---|---|
-| `app/` | The Flutter app (Linux, Windows, iOS) |
+| `app/` | The Flutter app (Linux, Windows, iOS, Android) |
 | `shared/` | Dart models and logic used by the app (repeats, reminder schedule, grouping), plus the sync API fixtures both sides test against |
 | `server/` | The sync server: TypeScript + Hono, for Vercel or Docker. See the [sync API](docs/sync-api.md) |
 | `design/` | Screenshots of every design |

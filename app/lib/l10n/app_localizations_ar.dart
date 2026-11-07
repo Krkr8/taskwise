@@ -685,7 +685,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get notificationsDenied =>
-      'الإشعارات متوقفة لتطبيق Taskwise. فعّلها من إعدادات الآيفون لتصلك التذكيرات.';
+      'الإشعارات متوقفة لتطبيق Taskwise. فعّلها من إعدادات الهاتف لتصلك التذكيرات.';
 
   @override
   String get notifDone => 'تمت';
@@ -697,6 +697,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get notifOpen => 'فتح';
+
+  @override
+  String get notifChannel => 'التذكيرات';
 
   @override
   String notifDue(String when) {
@@ -1058,7 +1061,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get locOnlyIphone => 'يذكّر على الآيفون فقط';
+  String get locOnlyPhones => 'يذكّر على الهواتف فقط (آيفون وأندرويد)';
 
   @override
   String get locPickerTitle => 'تذكير بالمكان';
@@ -1176,6 +1179,21 @@ class AppLocalizationsAr extends AppLocalizations {
       'يذكّرك Taskwise عند وصولك إلى مكان أو مغادرته، حتى والتطبيق مغلق. لذلك يجب أن يسمح iOS بالوصول إلى الموقع \"دائمًا\".\n\nيسأل iOS مرتين: اختر أولًا \"السماح أثناء استخدام التطبيق\". لاحقًا يسأل iOS مرة أخرى؛ عندها اختر \"التغيير إلى السماح دائمًا\". إن لم يسأل، افتح الإعدادات ← Taskwise ← الموقع واختر \"دائمًا\".\n\nموقعك يبقى على هاتفك.';
 
   @override
+  String get locPermDialogBodyAndroid =>
+      'يذكّرك Taskwise عند وصولك إلى مكان أو مغادرته، حتى والتطبيق مغلق. لذلك يجب أن يسمح أندرويد بالوصول إلى الموقع \"طوال الوقت\".\n\nاختر أولًا \"أثناء استخدام التطبيق\" وأبقِ \"الموقع الدقيق\" مفعّلًا. بعدها يفتح أندرويد إعدادات الموقع لتطبيق Taskwise: اختر \"السماح طوال الوقت\" ثم ارجع.\n\nموقعك يبقى على هاتفك.';
+
+  @override
+  String get locPermAlwaysAndroid => 'طوال الوقت';
+
+  @override
+  String get locBannerNotAlwaysAndroid =>
+      'تحتاج تذكيرات المواقع إلى ضبط الوصول إلى الموقع على \"السماح طوال الوقت\".';
+
+  @override
+  String get locBatteryHint =>
+      'إذا تأخرت التذكيرات أو لم تصل، اضبط استهلاك البطارية لتطبيق Taskwise على \"غير مقيّد\": الإعدادات ← التطبيقات ← Taskwise ← البطارية.';
+
+  @override
   String get locPermContinue => 'متابعة';
 
   @override
@@ -1227,7 +1245,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get syncBackgroundHint =>
-      'يزامن الآيفون أيضًا في الخلفية من حين لآخر (يقرر iOS متى).';
+      'تزامن الهواتف أيضًا في الخلفية من حين لآخر (يقرر الهاتف متى).';
 
   @override
   String get lapisEmptyTasks => 'اكتب مهمة في الحقل أعلاه ثم اضغط Enter';
@@ -1347,6 +1365,11 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String backupSavedIos(String name) {
     return 'حُفظت النسخة الاحتياطية. افتح تطبيق الملفات ← على iPhone ← Taskwise ← $name';
+  }
+
+  @override
+  String fileSaved(String name) {
+    return 'تم حفظ $name';
   }
 
   @override

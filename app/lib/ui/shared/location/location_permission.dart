@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -7,8 +9,9 @@ import '../../../state/providers.dart';
 import '../tasks/labels.dart';
 import '../theme/tokens.dart';
 
-/// Before the first location reminder on the iPhone: explains why Taskwise
-/// needs location "Always", then lets iOS ask. Does nothing on desktop or
+/// Before the first location reminder on a phone: explains why Taskwise
+/// needs location "Always" ("All the time" on Android), then lets the
+/// phone ask. Does nothing on desktop or
 /// when permission is already settled (the banner covers "denied").
 Future<void> ensureLocationPermission(
   BuildContext context,
@@ -28,7 +31,13 @@ Future<void> ensureLocationPermission(
     builder: (context) => AlertDialog(
       icon: const Icon(Icons.location_on_outlined),
       title: Text(l10n.locPermDialogTitle),
-      content: SingleChildScrollView(child: Text(l10n.locPermDialogBody)),
+      content: SingleChildScrollView(
+        child: Text(
+          Platform.isAndroid
+              ? l10n.locPermDialogBodyAndroid
+              : l10n.locPermDialogBody,
+        ),
+      ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(false),
@@ -48,7 +57,8 @@ Future<void> ensureLocationPermission(
 String locationPermissionLabel(BuildContext context, LocationPermission p) {
   final l10n = context.l10n;
   return switch (p) {
-    LocationPermission.always => l10n.locPermAlways,
+    LocationPermission.always =>
+      Platform.isAndroid ? l10n.locPermAlwaysAndroid : l10n.locPermAlways,
     LocationPermission.whenInUse => l10n.locPermWhenInUse,
     LocationPermission.denied => l10n.locPermDenied,
     LocationPermission.restricted => l10n.locPermRestricted,
@@ -57,7 +67,7 @@ String locationPermissionLabel(BuildContext context, LocationPermission p) {
   };
 }
 
-/// On the iPhone, when there are location reminders but location access
+/// On a phone, when there are location reminders but location access
 /// isn't "Always": explains that they won't fire and offers a fix.
 class LocationPermissionBanner extends ConsumerWidget {
   const LocationPermissionBanner({super.key});
@@ -104,7 +114,11 @@ class LocationPermissionBanner extends ConsumerWidget {
                   const SizedBox(width: Spacing.sm),
                   Flexible(
                     child: Text(
-                      off ? l10n.locBannerDenied : l10n.locBannerNotAlways,
+                      off
+                          ? l10n.locBannerDenied
+                          : Platform.isAndroid
+                          ? l10n.locBannerNotAlwaysAndroid
+                          : l10n.locBannerNotAlways,
                     ),
                   ),
                 ],
@@ -123,6 +137,23 @@ class LocationPermissionBanner extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Android, in Settings → Location reminders: battery savers can stop
+/// background location and delay reminders, so explain how to exempt
+/// Taskwise. Nothing on other platforms.
+class AndroidBatteryHint extends StatelessWidget {
+  const AndroidBatteryHint({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!Platform.isAndroid) return const SizedBox.shrink();
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: const Icon(Icons.battery_alert_outlined),
+      subtitle: Text(context.l10n.locBatteryHint),
     );
   }
 }

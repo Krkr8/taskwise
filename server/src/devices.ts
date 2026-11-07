@@ -1,7 +1,7 @@
 import type { Client, Row } from '@libsql/client';
 
 /** Device types; matches `DeviceType` in shared/lib/src/models/enums.dart. */
-export const deviceTypes = ['windows', 'linux', 'ios', 'other'] as const;
+export const deviceTypes = ['windows', 'linux', 'ios', 'android', 'other'] as const;
 export type DeviceType = (typeof deviceTypes)[number];
 
 /** A registered app install, as stored on the server. */

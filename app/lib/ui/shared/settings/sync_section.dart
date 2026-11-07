@@ -190,5 +190,6 @@ IconData deviceTypeIcon(DeviceType type) => switch (type) {
   DeviceType.windows => Icons.desktop_windows_outlined,
   DeviceType.linux => Icons.laptop_outlined,
   DeviceType.ios => Icons.phone_iphone,
+  DeviceType.android => Icons.phone_android,
   DeviceType.other => Icons.devices_other_outlined,
 };

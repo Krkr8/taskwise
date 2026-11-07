@@ -158,11 +158,16 @@ class ReminderScheduler {
     switch (action) {
       case DoneAction(:final taskId, :final occurrence, :final fromLocation):
         final task = await tasks.getTask(taskId);
-        // Only the real, current occurrence can be ticked off. A location
-        // reminder is about the task as it is now.
+        // A repeating task: only the real, current occurrence can be ticked
+        // off. A one-off task has just one occurrence (a reminder at a set
+        // date and time may be on another day than the due date, or the
+        // task may have none), and a location reminder is about the task
+        // as it is now.
         if (task != null &&
             !task.done &&
-            (fromLocation || task.dueDate == occurrence)) {
+            (fromLocation ||
+                task.recurrenceRule == null ||
+                task.dueDate == occurrence)) {
           await tasks.setDone(taskId, done: true);
         } else {
           _ref.read(openTaskRequestProvider.notifier).request(taskId);
@@ -198,16 +203,12 @@ class ReminderScheduler {
   /// Notification texts in the app's language.
   NotificationTexts _texts(AppSettings settings) {
     final l10n = lookupAppLocalizations(resolvedLocale(settings));
-    String duration(int minutes) => minutes % (24 * 60) == 0
-        ? l10n.durationDays(minutes ~/ (24 * 60))
-        : minutes % 60 == 0
-        ? l10n.durationHours(minutes ~/ 60)
-        : l10n.durationMinutes(minutes);
     return NotificationTexts(
       done: l10n.notifDone,
       open: l10n.notifOpen,
+      channelName: l10n.notifChannel,
       snoozeMinutes: settings.snoozeMinutes,
-      snoozeLabel: (m) => l10n.notifSnooze(duration(m)),
+      snoozeLabel: (m) => snoozeLabel(l10n, m),
       body: (p) {
         final entries = _ref.read(taskEntriesProvider).value ?? const [];
         final task = entries
@@ -239,3 +240,12 @@ class ReminderScheduler {
     _notifier.dispose();
   }
 }
+
+/// "Snooze 15 min" (a notification button) in [l10n]'s language.
+String snoozeLabel(AppLocalizations l10n, int minutes) => l10n.notifSnooze(
+  minutes % (24 * 60) == 0
+      ? l10n.durationDays(minutes ~/ (24 * 60))
+      : minutes % 60 == 0
+      ? l10n.durationHours(minutes ~/ 60)
+      : l10n.durationMinutes(minutes),
+);

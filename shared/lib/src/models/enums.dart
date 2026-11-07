@@ -37,6 +37,7 @@ enum DeviceType {
   windows,
   linux,
   ios,
+  android,
   other;
 
   /// Parses [DeviceType.name], falling back to [DeviceType.other].

@@ -70,7 +70,7 @@ Each app install is a **device**. Logging in registers the device and returns it
 }
 ```
 - `device.id` is a UUID that the app makes once and keeps.
-- `type` is one of `windows`, `linux`, `ios`, `other`.
+- `type` is one of `windows`, `linux`, `ios`, `android`, `other` (`android` since v0.7.0; apps map a type they don't know to `other`).
 
 The reply:
 ```json

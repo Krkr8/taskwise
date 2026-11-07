@@ -7,4 +7,5 @@ environment:
 
 workspace:
   - app
+  - app/packages/taskwise_android
   - shared

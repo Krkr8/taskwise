@@ -601,7 +601,10 @@ void main() {
     await tester.tap(find.text('At a location…'));
     await tester.pumpAndSettle();
     expect(find.byType(LocationPickerPage), findsOneWidget);
-    expect(find.text('Only reminds on the iPhone'), findsOneWidget);
+    expect(
+      find.text('Only reminds on phones (iPhone and Android)'),
+      findsOneWidget,
+    );
 
     // Saving without a place explains what to do.
     await tester.tap(find.text('Save'));
@@ -623,7 +626,10 @@ void main() {
 
     expect(find.byType(LocationPickerPage), findsNothing);
     expect(find.text('Leave Corner Bakery · 30 m'), findsOneWidget);
-    expect(find.text('Only reminds on the iPhone'), findsOneWidget);
+    expect(
+      find.text('Only reminds on phones (iPhone and Android)'),
+      findsOneWidget,
+    );
     expect(find.byTooltip('Location reminders'), findsOneWidget); // the row
     final container = ProviderScope.containerOf(
       tester.element(find.byType(MaterialApp)),
@@ -703,7 +709,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('At a location…'));
     await tester.pumpAndSettle();
-    expect(find.text('Only reminds on the iPhone'), findsNothing);
+    expect(
+      find.text('Only reminds on phones (iPhone and Android)'),
+      findsNothing,
+    );
     await tester.enterText(
       find.widgetWithText(TextField, 'Search for an address or place'),
       'bakery',
@@ -745,6 +754,31 @@ void main() {
     final payload = NotificationPayload.location(
       taskId: task.id,
       dueDate: null,
+      title: 'Buy bread',
+    ).encode();
+    final action = ActionIds.parse(ActionIds.done, payload)!;
+    await tester.runAsync(
+      () => container.read(reminderSchedulerProvider).handleAction(action),
+    );
+    final done = await tester.runAsync(() => repo.getTask(task.id));
+    expect(done!.done, isTrue);
+  });
+
+  appTest('Done on a set-time reminder completes a task without a date', (
+    tester,
+    repo,
+  ) async {
+    final task = await repo.createTask(title: 'Buy bread');
+    await tester.pumpAndSettle();
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(MaterialApp)),
+    );
+    // A "Custom date & time" reminder: its occurrence is the day it fires.
+    final payload = NotificationPayload(
+      taskId: task.id,
+      occurrence: LocalDate(2026, 11, 7),
+      projected: false,
+      fireAt: DateTime(2026, 11, 7, 8, 18),
       title: 'Buy bread',
     ).encode();
     final action = ActionIds.parse(ActionIds.done, payload)!;

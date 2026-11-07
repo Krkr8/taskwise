@@ -1067,7 +1067,7 @@ abstract class AppLocalizations {
   /// No description provided for @notificationsDenied.
   ///
   /// In en, this message translates to:
-  /// **'Notifications are off for Taskwise. Turn them on in the iPhone\'s Settings to get reminders.'**
+  /// **'Notifications are off for Taskwise. Turn them on in the phone\'s Settings to get reminders.'**
   String get notificationsDenied;
 
   /// No description provided for @notifDone.
@@ -1087,6 +1087,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open'**
   String get notifOpen;
+
+  /// No description provided for @notifChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get notifChannel;
 
   /// No description provided for @notifDue.
   ///
@@ -1652,11 +1658,11 @@ abstract class AppLocalizations {
   /// **'{meters} m'**
   String meters(int meters);
 
-  /// No description provided for @locOnlyIphone.
+  /// No description provided for @locOnlyPhones.
   ///
   /// In en, this message translates to:
-  /// **'Only reminds on the iPhone'**
-  String get locOnlyIphone;
+  /// **'Only reminds on phones (iPhone and Android)'**
+  String get locOnlyPhones;
 
   /// No description provided for @locPickerTitle.
   ///
@@ -1868,6 +1874,30 @@ abstract class AppLocalizations {
   /// **'Taskwise reminds you when you arrive at or leave a place, even when the app is closed. For that, iOS needs to allow location access \"Always\".\n\niOS asks twice: first choose \"Allow While Using App\". Later iOS asks again; then choose \"Change to Always Allow\". If it doesn\'t ask, open Settings → Taskwise → Location and choose \"Always\".\n\nYour location stays on your phone.'**
   String get locPermDialogBody;
 
+  /// No description provided for @locPermDialogBodyAndroid.
+  ///
+  /// In en, this message translates to:
+  /// **'Taskwise reminds you when you arrive at or leave a place, even when the app is closed. For that, Android needs to allow location access \"all the time\".\n\nFirst choose \"While using the app\" and keep \"Precise\" on. Then Android opens Taskwise\'s location settings: choose \"Allow all the time\" and go back.\n\nYour location stays on your phone.'**
+  String get locPermDialogBodyAndroid;
+
+  /// No description provided for @locPermAlwaysAndroid.
+  ///
+  /// In en, this message translates to:
+  /// **'All the time'**
+  String get locPermAlwaysAndroid;
+
+  /// No description provided for @locBannerNotAlwaysAndroid.
+  ///
+  /// In en, this message translates to:
+  /// **'Location reminders need location access set to \"Allow all the time\".'**
+  String get locBannerNotAlwaysAndroid;
+
+  /// No description provided for @locBatteryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'If reminders come late or not at all, set Taskwise\'s battery use to \"Unrestricted\": Settings → Apps → Taskwise → Battery.'**
+  String get locBatteryHint;
+
   /// No description provided for @locPermContinue.
   ///
   /// In en, this message translates to:
@@ -1955,7 +1985,7 @@ abstract class AppLocalizations {
   /// No description provided for @syncBackgroundHint.
   ///
   /// In en, this message translates to:
-  /// **'The iPhone also syncs in the background now and then (iOS decides when).'**
+  /// **'Phones also sync in the background now and then (the phone decides when).'**
   String get syncBackgroundHint;
 
   /// No description provided for @lapisEmptyTasks.
@@ -2131,6 +2161,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Backup saved. Open the Files app → On My iPhone → Taskwise → {name}'**
   String backupSavedIos(String name);
+
+  /// No description provided for @fileSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved {name}'**
+  String fileSaved(String name);
 
   /// No description provided for @backupImported.
   ///

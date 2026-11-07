@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/services.dart';
 
-/// Location permission as iOS reports it.
+/// Location permission as the phone reports it. On Android, "Allow only
+/// while using the app" is [whenInUse] and "Allow all the time" is [always].
 enum LocationPermission {
   /// Not asked yet.
   notDetermined,
@@ -37,6 +39,7 @@ final class NativeLocationEntry {
     required this.body,
     required this.payload,
     required this.notificationId,
+    this.actions = const [],
   });
 
   final String id;
@@ -54,6 +57,11 @@ final class NativeLocationEntry {
   final String payload;
   final int notificationId;
 
+  /// The notification's buttons (Done, Snooze …) as action id and label.
+  /// Android draws them from this; the iPhone uses the "task" category
+  /// that Dart registers, and ignores it.
+  final List<({String id, String title})> actions;
+
   Map<String, Object?> toMap() => {
     'id': id,
     'latitude': latitude,
@@ -64,6 +72,9 @@ final class NativeLocationEntry {
     'body': body,
     'payload': payload,
     'notificationId': notificationId,
+    'actions': [
+      for (final a in actions) {'id': a.id, 'title': a.title},
+    ],
   };
 
   @override
@@ -77,7 +88,8 @@ final class NativeLocationEntry {
       other.title == title &&
       other.body == body &&
       other.payload == payload &&
-      other.notificationId == notificationId;
+      other.notificationId == notificationId &&
+      listEquals(other.actions, actions);
 
   @override
   int get hashCode => Object.hash(
@@ -90,6 +102,7 @@ final class NativeLocationEntry {
     body,
     payload,
     notificationId,
+    Object.hashAll(actions),
   );
 }
 
@@ -162,8 +175,8 @@ final class LocationDebugState {
   final bool preciseActive;
 }
 
-/// The phone side of location reminders. Only iOS watches places; other
-/// platforms use [NoLocationPlatform].
+/// The phone side of location reminders. iPhone and Android watch places;
+/// desktops use [NoLocationPlatform].
 abstract class LocationPlatform {
   /// Whether this device fires location reminders.
   bool get supported;
@@ -176,7 +189,7 @@ abstract class LocationPlatform {
   /// Asks for "While Using", then "Always". Returns the result.
   Future<LocationPermission> requestPermission();
 
-  /// Opens Taskwise's page in the iOS Settings app.
+  /// Opens Taskwise's page in the phone's Settings app.
   Future<void> openSettings();
 
   /// The current position, or null if unavailable.
@@ -211,8 +224,9 @@ class NoLocationPlatform implements LocationPlatform {
   Future<LocationDebugState?> debugState() async => null;
 }
 
-/// iPhone: talks to `LocationRemindersPlugin.swift`.
-class IosLocationPlatform implements LocationPlatform {
+/// Phones: talks to `LocationRemindersPlugin.swift` on the iPhone and
+/// `LocationRemindersPlugin.kt` on Android (the same channel and methods).
+class NativeLocationPlatform implements LocationPlatform {
   static const _channel = MethodChannel('taskwise/location');
 
   @override

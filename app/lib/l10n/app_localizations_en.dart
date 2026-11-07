@@ -657,7 +657,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationsDenied =>
-      'Notifications are off for Taskwise. Turn them on in the iPhone\'s Settings to get reminders.';
+      'Notifications are off for Taskwise. Turn them on in the phone\'s Settings to get reminders.';
 
   @override
   String get notifDone => 'Done';
@@ -669,6 +669,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notifOpen => 'Open';
+
+  @override
+  String get notifChannel => 'Reminders';
 
   @override
   String notifDue(String when) {
@@ -1025,7 +1028,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get locOnlyIphone => 'Only reminds on the iPhone';
+  String get locOnlyPhones => 'Only reminds on phones (iPhone and Android)';
 
   @override
   String get locPickerTitle => 'Location reminder';
@@ -1144,6 +1147,21 @@ class AppLocalizationsEn extends AppLocalizations {
       'Taskwise reminds you when you arrive at or leave a place, even when the app is closed. For that, iOS needs to allow location access \"Always\".\n\niOS asks twice: first choose \"Allow While Using App\". Later iOS asks again; then choose \"Change to Always Allow\". If it doesn\'t ask, open Settings → Taskwise → Location and choose \"Always\".\n\nYour location stays on your phone.';
 
   @override
+  String get locPermDialogBodyAndroid =>
+      'Taskwise reminds you when you arrive at or leave a place, even when the app is closed. For that, Android needs to allow location access \"all the time\".\n\nFirst choose \"While using the app\" and keep \"Precise\" on. Then Android opens Taskwise\'s location settings: choose \"Allow all the time\" and go back.\n\nYour location stays on your phone.';
+
+  @override
+  String get locPermAlwaysAndroid => 'All the time';
+
+  @override
+  String get locBannerNotAlwaysAndroid =>
+      'Location reminders need location access set to \"Allow all the time\".';
+
+  @override
+  String get locBatteryHint =>
+      'If reminders come late or not at all, set Taskwise\'s battery use to \"Unrestricted\": Settings → Apps → Taskwise → Battery.';
+
+  @override
   String get locPermContinue => 'Continue';
 
   @override
@@ -1195,7 +1213,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncBackgroundHint =>
-      'The iPhone also syncs in the background now and then (iOS decides when).';
+      'Phones also sync in the background now and then (the phone decides when).';
 
   @override
   String get lapisEmptyTasks => 'Type one in the box above and press Enter.';
@@ -1311,6 +1329,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String backupSavedIos(String name) {
     return 'Backup saved. Open the Files app → On My iPhone → Taskwise → $name';
+  }
+
+  @override
+  String fileSaved(String name) {
+    return 'Saved $name';
   }
 
   @override

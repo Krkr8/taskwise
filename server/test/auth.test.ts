@@ -70,6 +70,16 @@ describe('login', () => {
     expect(response.status).toBe(400);
   });
 
+  it('accepts an Android device', async () => {
+    const { request, setup } = await testApp();
+    await setup();
+    const response = await request('POST', '/auth/login', {
+      body: { ...loginBody(password), device: { id: 'd', name: 'Android phone', type: 'android' } },
+    });
+    expect(response.status).toBe(200);
+    expect(response.body.device.type).toBe('android');
+  });
+
   it('is rate limited after 5 failures per username, until the window ends', async () => {
     const { request, setup, clock } = await testApp();
     await setup();

@@ -6,6 +6,26 @@ When a version is released, its section becomes the text of the draft GitHub rel
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-07
+
+### Added
+
+- **Android app** (Android 8.0 or newer): `taskwise-<version>-android.apk` on the release page ([how to install](https://github.com/Krkr8/taskwise/blob/main/docs/install-android.md)). Everything the iPhone app does:
+  - Time reminders that come on the minute with the app closed and after a restart, with Done and Snooze buttons.
+  - **Location reminders** (Arrive / Leave), watched by Android even when Taskwise is closed. The same rules as on the iPhone (an outer area, then a precise check for up to 5 minutes), ported to Kotlin and checked with the same walk simulator. They need "Allow all the time" location access and Google Play services.
+  - Sync in the background about every 30 minutes.
+  - Backup and logs are saved with Android's "Save to" screen.
+- Settings → Location reminders on Android: location access, the debug screen, and a hint about battery savers.
+
+### Changed
+
+- Location reminders made on a computer now say "Only reminds on phones (iPhone and Android)".
+- The sync server accepts Android devices. **Deploy the server (push to `main`) before signing in on an Android phone.** Older apps show an Android device as "other".
+
+### Fixed
+
+- **Done** on a reminder at a set date and time now ticks the task off when that day isn't the task's due date (or the task has none). Before, it only opened the task. Repeating tasks still need the reminder of the current occurrence.
+
 ## [0.6.1] - 2026-11-07
 
 ### Added

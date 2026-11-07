@@ -1,0 +1,31 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Location reminders: geofences need "Allow all the time"; the
+         precise check runs in a short foreground service. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <application>
+        <!-- Geofence events, and re-adding the geofences after a reboot or
+             an app update (Android drops them). -->
+        <receiver
+            android:name="io.github.krkr8.taskwise_android.GeofenceReceiver"
+            android:exported="false" />
+        <receiver
+            android:name="io.github.krkr8.taskwise_android.BootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+        <service
+            android:name="io.github.krkr8.taskwise_android.PreciseLocationService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+    </application>
+</manifest>

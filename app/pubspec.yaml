@@ -1,7 +1,7 @@
 name: taskwise
 description: "Personal self-hosted to-do and reminders app."
 publish_to: none
-version: 0.6.1+10
+version: 0.7.0+11
 resolution: workspace
 
 environment:
@@ -31,6 +31,9 @@ dependencies:
   latlong2: 0.10.1
   workmanager: 0.10.10
   file_selector: 1.1.0
+  # Taskwise's own Android code (location reminders, saving files).
+  taskwise_android:
+    path: packages/taskwise_android
 
 dev_dependencies:
   flutter_test:

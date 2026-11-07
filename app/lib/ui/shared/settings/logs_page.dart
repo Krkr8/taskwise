@@ -1,12 +1,9 @@
-import 'dart:io';
-
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../../../logging/app_log.dart';
 import '../common/messages.dart';
+import '../common/save_text_file.dart';
 import '../tasks/labels.dart';
 import '../theme/tokens.dart';
 
@@ -107,21 +104,13 @@ class _LogsPageState extends State<LogsPage> {
     final now = DateTime.now();
     final name = 'taskwise-log-${now.toIso8601String().substring(0, 10)}.txt';
     await guardAction(context, 'logs', () async {
-      final String path;
-      if (Platform.isIOS) {
-        path = '${(await getApplicationDocumentsDirectory()).path}/$name';
-      } else {
-        final location = await getSaveLocation(suggestedName: name);
-        if (location == null) return;
-        path = location.path;
-      }
-      await File(path).writeAsString(await _log.readAll(), flush: true);
-      if (mounted) {
-        showMessage(
-          context,
-          Platform.isIOS ? l10n.backupSavedIos(name) : l10n.backupSaved(path),
-        );
-      }
+      final message = await saveTextFile(
+        l10n,
+        name: name,
+        text: await _log.readAll(),
+        mimeType: 'text/plain',
+      );
+      if (message != null && mounted) showMessage(context, message);
     });
   }
 }

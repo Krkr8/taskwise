@@ -4,10 +4,11 @@ Taskwise is three projects in one repository:
 
 | Folder | What it is |
 |---|---|
-| `app/` | The Flutter app for Linux, Windows and iPhone. |
+| `app/` | The Flutter app for Linux, Windows, iPhone and Android. |
+| `app/packages/taskwise_android/` | Taskwise's own Android code as a local plugin: location reminders (`GeofenceEngine.kt`, a port of the Swift engine, and `LocationReminderManager.kt`) and the "Save to" dialog. A plugin, so it is also registered in the background-sync engine. |
 | `shared/` | Pure Dart models and logic used by the app (and mirrored by the server's tests): tasks, reminders, places, repeat rules, the reminder schedule, task grouping, the location plan. No Flutter in here. |
 | `server/` | The TypeScript + Hono sync server (Vercel + Turso). API: `docs/sync-api.md`. |
-| `tools/geofence_sim/` | The walk simulator and Linux runner for the iPhone's Swift location code. |
+| `tools/geofence_sim/` | The walk simulator and Linux runner for the iPhone's Swift location code (the Android twin is `GeofenceWalkTest.kt`). |
 | `design/` | Screenshots of every design (made by the design tour, see below). |
 | `docs/` | Setup and install guides, the sync API, this file. |
 
@@ -20,9 +21,9 @@ Taskwise is three projects in one repository:
 | `logging/` | `appLog`: the app's log (memory + a rotating file in the app support folder), and the hooks that log uncaught errors. Never log task titles, notes, places or tokens. |
 | `state/` | Riverpod providers shared by everything: the database, repositories, today's date, the open task, the selected tab. |
 | `sync/` | Talking to the sync server: the API client, the sync engine and controller, the token store. |
-| `notifications/` | Time reminders: scheduling and the desktop/iPhone notifiers. |
-| `location/` | Location reminders: the address search, the bridge to the iPhone's native code, keeping the iPhone's list up to date. |
-| `background/` | The iPhone's background sync job. |
+| `notifications/` | Time reminders: scheduling, the desktop notifier and the phones' notifier (`mobile_notifier.dart`, iPhone and Android). |
+| `location/` | Location reminders: the address search, the bridge to the phones' native code (`taskwise/location` channel: Swift on the iPhone, Kotlin on Android, same methods), keeping the phone's list up to date. |
+| `background/` | The phones' background sync job (iOS background refresh, Android WorkManager). |
 | `desktop/` | Tray icon, single window, start on login. |
 | `version.dart` | The app version (a test keeps it equal to `pubspec.yaml`). |
 | `l10n/` | English and Arabic texts (`app_en.arb`, `app_ar.arb`); the Dart files next to them are generated. |
@@ -90,3 +91,5 @@ Keep new screens in `shared/` unless a design really needs its own version, so a
 | Shared logic | `cd shared && dart test` |
 | Server | `cd server && npm test` |
 | iPhone location logic | `tools/geofence_sim/run.sh test` and `tools/geofence_sim/run.sh` |
+| Android location logic (unit tests and the walk simulator) | `cd android && ./gradlew :taskwise_android:testDebugUnitTest` (needs a JDK 21; build the APK once first) |
+| Android app on the emulator | `flutter run -d emulator-5554` (see `docs/install-android.md` for Location Accuracy) |

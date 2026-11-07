@@ -1,0 +1,23 @@
+name: taskwise_android
+description: "Taskwise's own Android code: location reminders (geofencing) and saving files. Not published; used by the app as a path dependency."
+publish_to: none
+version: 1.0.0
+resolution: workspace
+
+environment:
+  sdk: ^3.13.0
+  flutter: '>=3.3.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+# An Android-only plugin, so Flutter registers it in every engine, including
+# the background-sync engine workmanager starts (an app-local plugin in
+# MainActivity would only exist in the app's own engine).
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: io.github.krkr8.taskwise_android
+        pluginClass: TaskwiseAndroidPlugin

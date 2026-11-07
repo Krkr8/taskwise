@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="taskwise_reminders_channel">التذكيرات</string>
+    <string name="taskwise_location_check_channel">التحقق من الموقع</string>
+    <string name="taskwise_location_check">يتحقق من موقعك لأجل تذكير…</string>
+</resources>

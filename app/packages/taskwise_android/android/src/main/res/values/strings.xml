@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Prefixed, so they don't clash with the app's own strings. -->
+    <string name="taskwise_reminders_channel">Reminders</string>
+    <string name="taskwise_location_check_channel">Location check</string>
+    <string name="taskwise_location_check">Checking your location for a reminder…</string>
+</resources>
