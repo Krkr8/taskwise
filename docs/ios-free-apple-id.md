@@ -1,4 +1,4 @@
-# What works with a free Apple ID (sideloaded with SideStore)
+# What works with a free Apple ID (sideloaded)
 
 SideStore signs Taskwise with a **free** Apple ID. Free signing can grant **Info.plist features**: anything enabled by an Info.plist key needs no entitlement, so signing can't block it. It can't grant some **entitlement-based capabilities**.
 
@@ -23,4 +23,4 @@ Taskwise's iOS project has **no entitlements file**. Everything it needs is an I
 - A paid Apple Developer Program membership ($99/year) removes these limits and gives 1-year signing. It's optional.
 - **Sign-in can break without warning:** free sideloaders sign in to Apple with a device identity ("anisette") that Apple can reject at any time. In October 2026, Apple's changes broke SideStore sign-in with -80045 and -80046 until a workaround was found (see Troubleshooting in [install-ios-sidestore.md](install-ios-sidestore.md)). If this keeps happening, the reliable fallback is the paid program with **TestFlight**. TestFlight needs the paid account; a free Apple ID can't use it.
 
-"Expected to work" means it follows from how the feature is enabled, but hasn't been tested on the owner's iPhone yet. Each row is updated to ✅ confirmed in the milestone listed.
+"Expected to work" means it follows from how the feature is enabled, but hasn't been tested on an iPhone yet. Each row is updated to ✅ confirmed in the milestone listed.

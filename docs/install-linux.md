@@ -1,16 +1,14 @@
-# Install Taskwise on Linux (Fedora)
+# Install Taskwise on Linux
 
-Taskwise installs for your user only. You don't need `sudo`.
+Taskwise installs for your user only. You don't need `sudo`. The build is for 64-bit x86 Linux; it is tested on Fedora with GNOME, and other distributions with GTK 3 should work too.
 
 ## Install or update
 
-1. Download the latest Linux build. Because the repository is private, use the GitHub CLI (you're already logged in) or the website while signed in:
+1. Open **[Releases](https://github.com/Krkr8/taskwise/releases/latest)** and download `taskwise-<version>-linux-x64.tar.gz` (into `~/Downloads`, say). Or, with the GitHub CLI:
    ```bash
    cd ~/Downloads
    gh release download --repo Krkr8/taskwise --pattern '*linux-x64.tar.gz'
    ```
-   If the release is still a **draft** (not published yet), add its version, because the command above only finds published releases: `gh release download v0.1.0 --repo Krkr8/taskwise --pattern '*linux-x64.tar.gz'`.
-   On the website, open **Releases** and download `taskwise-<version>-linux-x64.tar.gz`.
 2. Extract it and run the installer:
    ```bash
    tar -xzf taskwise-*-linux-x64.tar.gz
@@ -27,7 +25,8 @@ Linux can't schedule notifications ahead, so **reminders only appear while Taskw
 
 - **Tray icon on GNOME:** GNOME only shows tray icons with the AppIndicator extension. To get it:
   ```bash
-  sudo dnf install -y gnome-shell-extension-appindicator
+  sudo dnf install -y gnome-shell-extension-appindicator     # Fedora
+  sudo apt install gnome-shell-extension-appindicator        # Debian, Ubuntu
   ```
   Log out and back in, then turn it on in the **Extensions** app. The teal check icon appears at the top right; click it for **Show Taskwise** / **Quit Taskwise**.
 - **Without the extension** Taskwise still runs in the background. Open it again from Activities and the existing window comes back (only one copy ever runs).

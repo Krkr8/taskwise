@@ -84,7 +84,7 @@ The reply:
 
 The `device` objects match the shared `Device` model.
 
-**The main device** (`"main": true`) manages the account's devices (owner's request, 2026-11-02):
+**The main device** (`"main": true`) manages the account's devices:
 - The first device to sign in becomes the main device. If there is no active main device, the next one to sign in becomes it.
 - Only the main device can remove other devices, rename other devices, and pass the role to another device.
 - Any device can rename itself and sign itself out.

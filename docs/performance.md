@@ -2,7 +2,7 @@
 
 The M8 performance check: is the app still quick with a lot of tasks, in
 every design? It is. Below is how to measure it, what we measured on the
-owner's Fedora laptop, and what was changed.
+a Fedora laptop, and what was changed.
 
 ## How to run it
 

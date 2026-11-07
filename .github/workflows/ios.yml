@@ -1,7 +1,7 @@
 name: iOS
 
 # The iPhone's native Swift code (location reminders) can't be built on the
-# Fedora laptop, so this job compiles the app and runs the Swift unit tests
+# Linux, so this job compiles the app and runs the Swift unit tests
 # (app/ios/RunnerTests) on a simulator whenever iOS code or plugins change.
 on:
   push:

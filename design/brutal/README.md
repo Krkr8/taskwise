@@ -7,7 +7,7 @@ Taskwise looks like a desk covered in paper cards. Every block (a list of tasks,
 Fonts: **Space Grotesk** for Latin text and **Alexandria** for Arabic. Both are geometric, both have a heavy bold, and both use the SIL Open Font License (`app/assets/fonts/OFL-*.txt`). They replace Noto Sans.
 
 Colours, light: ink `#141414`, paper `#F7F0E1`, cards `#FFFDF8`, yellow `#FFD23F`, cobalt `#3355FF`, tomato `#FF6B4A`, mint `#3DDC97`, lilac `#C4B5FD`.
-Dark mode ("warm charcoal", chosen by the owner from three options) is the light mode at night: a warm brown-grey ground (`#3B342E`), cream text and lines (`#F1E8D7`), near-black hard shadows, and the same colour blocks outlined in dark ink. Buttons use a lighter blue (`#98ACFF`) so they read on the dark cards.
+Dark mode ("warm charcoal", picked from three options) is the light mode at night: a warm brown-grey ground (`#3B342E`), cream text and lines (`#F1E8D7`), near-black hard shadows, and the same colour blocks outlined in dark ink. Buttons use a lighter blue (`#98ACFF`) so they read on the dark cards.
 
 ## What changed, screen by screen
 
@@ -34,7 +34,7 @@ Dark mode ("warm charcoal", chosen by the owner from three options) is the light
 ## Why
 
 - Thick outlines and colour blocks make the structure visible at a glance: where a group starts, which tab is open, what is selected. The rows stay quiet, so the bold parts don't compete with your tasks.
-- The press-into-shadow motion gives the subtle hover animation you asked for, and it is clear on touch screens too.
+- The press-into-shadow motion gives a subtle hover animation, and it is clear on touch screens too.
 - One accent per meaning (yellow = now/selected, tomato = overdue) means colour carries information instead of decoration.
 - Square, bordered controls are large and easy to hit at 390 × 844.
 

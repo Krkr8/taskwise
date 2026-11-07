@@ -7,7 +7,7 @@ Thank you for wanting to help. Taskwise is a personal project, so small, focused
 Follow [docs/dev-setup-fedora.md](docs/dev-setup-fedora.md). It installs Flutter 3.47.7, Node.js 24 and the Linux build tools. Other Linux distributions work too if you install the same things. Then:
 
 ```bash
-gh repo clone Krkr8/taskwise
+git clone https://github.com/Krkr8/taskwise.git
 cd taskwise
 flutter pub get          # fetches the app and shared packages in one go
 cd app && flutter run -d linux
@@ -133,7 +133,7 @@ Only a maintainer does this.
    git push origin v0.6.0
    ```
 5. The **Release builds** workflow builds Linux, Windows and an unsigned iOS file, and creates a **draft** release named after the tag. The text of the release is the matching section of the changelog (or GitHub's generated notes if there is none). The workflow stops with an error if the tag and the pubspec version differ.
-6. Download the files to try them: `gh release download v0.6.0 --dir ~/Downloads/taskwise-0.6.0`.
+6. Download the files to try them: `gh release download v0.6.0 --dir taskwise-0.6.0`.
 7. Open the draft on GitHub, check the text and the files, and press **Publish release**. Until then nobody else can see it.
 
 You can also run **Release builds** by hand from the Actions tab. That makes build files you can download for a week, but no release.

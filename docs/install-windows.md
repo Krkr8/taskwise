@@ -4,7 +4,7 @@ Taskwise comes as a portable folder. There's no installer and you don't need adm
 
 ## Install or update
 
-1. **Download.** On the PC, sign in to github.com (the repository is private) and open **Krkr8/taskwise → Releases**. Download `taskwise-<version>-windows-x64.zip`.
+1. **Download.** Open **[Releases](https://github.com/Krkr8/taskwise/releases/latest)** and download `taskwise-<version>-windows-x64.zip`.
 2. **Unblock the zip** (this avoids a security prompt for every file). Right-click the zip → **Properties** → tick **Unblock** at the bottom → **OK**.
 3. **Extract.** Right-click the zip → **Extract All…** → enter this folder and click **Extract**:
    ```
@@ -14,7 +14,7 @@ Taskwise comes as a portable folder. There's no installer and you don't need adm
 4. **First start.** Open that folder and double-click `taskwise.exe`. If **"Windows protected your PC"** (SmartScreen) appears, click **More info → Run anyway**. Windows shows this because the app isn't code-signed. It's only asked once.
 5. **Start menu shortcut** (optional). Right-click `taskwise.exe` → **Show more options** → **Pin to Start**, or **Send to → Desktop (create shortcut)**.
 
-To update, close Taskwise, then extract the new zip into the same `%LOCALAPPDATA%\Programs` folder and choose **Replace the files in the destination**. Your tasks stay.
+To update, quit Taskwise (right-click its tray icon → **Quit Taskwise**), then extract the new zip into the same `%LOCALAPPDATA%\Programs` folder and choose **Replace the files in the destination**. Your tasks stay.
 
 ## Where things are
 

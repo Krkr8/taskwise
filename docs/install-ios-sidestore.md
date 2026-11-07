@@ -1,15 +1,17 @@
-# Install Taskwise on iPhone with SideStore (from Fedora)
+# Install Taskwise on iPhone (iloader or SideStore)
 
-You don't have a Mac and Taskwise isn't on the App Store, so it's **sideloaded**: GitHub builds an unsigned app file (`.ipa`), and **SideStore** on the phone signs it with your free Apple ID and installs it.
+Taskwise isn't on the App Store, so it's **sideloaded**: GitHub builds an unsigned app file (`.ipa`), and a sideloading tool signs it with your free Apple ID and installs it. No Mac is needed: **iloader** runs on Linux, Windows and macOS.
 
-You need the Fedora laptop for the initial setup over USB. While SideStore's sign-in is broken (see Part 5), you also need it once a week to refresh the app.
+You need a computer and a USB cable for the first setup. While SideStore's sign-in is broken (see Part 5), you also need the computer once a week to refresh the app.
+
+**Only want Taskwise, without SideStore?** Do Part 1, step 3 of Part 3 (connect and trust), sign in to iloader with your Apple ID, then go to Part 5. After the install, do Part 4 steps 8–9 (trust your Apple ID and turn on Developer Mode).
 
 > Sources: [SideStore docs](https://docs.sidestore.io/docs/installation/prerequisites) and [iloader](https://iloader.app), checked 2026-10-20. If a screen looks different, those pages are the reference.
 
 ## What you need
 
 - iPhone with a **passcode** set (iOS 15 or newer)
-- A USB cable, and the phone and laptop on the **same Wi-Fi** (mobile data doesn't work for SideStore)
+- A USB cable, and the phone and computer on the **same Wi-Fi** (mobile data doesn't work for SideStore)
 - An **Apple ID**. A secondary/burner one is recommended, because it holds a free developer certificate. It doesn't have to be the Apple ID signed in on the phone. Passwords are case-sensitive.
 
 ## Free Apple ID limits (read this once)
@@ -18,15 +20,18 @@ You need the Fedora laptop for the initial setup over USB. While SideStore's sig
 - At most **10 different apps (App IDs) per 7 days**.
 - Apps **expire after 7 days** unless refreshed. SideStore refreshes them (see "Every week" below).
 
-## Part 1: Laptop (Fedora)
+## Part 1: Computer
 
-1. Install `usbmuxd` (it lets Linux talk to the iPhone) and **iloader** (SideStore's installer):
-   ```bash
-   sudo dnf install -y usbmuxd
-   cd ~/Downloads
-   curl -fLO https://github.com/nab138/iloader/releases/latest/download/iloader-linux-x86_64.rpm
-   sudo dnf install -y ./iloader-linux-x86_64.rpm
-   ```
+1. Install **iloader** (SideStore's installer) from <https://iloader.app> or its [releases page](https://github.com/nab138/iloader/releases/latest).
+   - **Linux** also needs `usbmuxd`, which lets it talk to the iPhone. On Fedora:
+     ```bash
+     sudo dnf install -y usbmuxd
+     cd ~/Downloads
+     curl -fLO https://github.com/nab138/iloader/releases/latest/download/iloader-linux-x86_64.rpm
+     sudo dnf install -y ./iloader-linux-x86_64.rpm
+     ```
+     On Debian or Ubuntu: `sudo apt install usbmuxd`, then install iloader's `.deb` or AppImage.
+   - **Windows** needs Apple's iPhone driver: install **Apple Devices** (or iTunes) from the Microsoft Store if the phone isn't seen.
 
 ## Part 2: Phone, before connecting
 
@@ -34,16 +39,16 @@ You need the Fedora laptop for the initial setup over USB. While SideStore's sig
 
 ## Part 3: Install SideStore with iloader
 
-3. Connect the iPhone to the laptop with USB. If the phone asks **Trust This Computer?**, tap **Trust** and enter your passcode.
-4. Open **iloader** (Activities → search "iloader").
+3. Connect the iPhone to the computer with USB. If the phone asks **Trust This Computer?**, tap **Trust** and enter your passcode.
+4. Open **iloader**.
 5. Sign in with your Apple ID.
 6. Select your iPhone, then choose **Install SideStore (Stable)**. Wait until it finishes.
-7. Place the **pairing file** (it lets SideStore talk to the phone without the laptop):
+7. Place the **pairing file** (it lets SideStore talk to the phone without the computer):
    1. Click **Delete Stored Pairing**.
    2. Click your device and tap **Trust** on the phone.
    3. Click **Manage Pairing File**, then **Place** next to SideStore. Wait for "Pairing file placed successfully!" in green.
 
-If iloader doesn't see the phone, unplug and replug it. Still nothing? In one terminal run `sudo systemctl stop usbmuxd`, then `sudo usbmuxd -v -f`, and try again in iloader.
+If iloader doesn't see the phone, unplug and replug it. Still nothing on Linux? In one terminal run `sudo systemctl stop usbmuxd`, then `sudo usbmuxd -v -f`, and try again in iloader.
 
 ## Part 4: Phone, enable and trust
 
@@ -55,14 +60,12 @@ If iloader doesn't see the phone, unplug and replug it. Still nothing? In one te
 
 ## Part 5: Install Taskwise
 
-> **Status (2026-10-30):** Apple currently blocks sign-in inside SideStore (error -80045, see Troubleshooting), but iloader on the laptop still works. So for now Taskwise is installed **from the laptop with iloader** (this is how it was first installed and confirmed). SideStore stays on the phone, and can take over once its sign-in works again.
+> **Status (2026-10-30):** Apple currently blocks sign-in inside SideStore (error -80045, see Troubleshooting), but iloader on the computer still works. So for now, install Taskwise **from the computer with iloader** (this is the tested way). SideStore can take over once its sign-in works again.
 
-13. On the laptop, download the iPhone build (it's `taskwise-<version>-ios-unsigned.ipa` on the release). If the release is still a **Draft**, it's only visible while you're signed in to GitHub as the repository owner. With the GitHub CLI:
+13. On the computer, open **[Releases](https://github.com/Krkr8/taskwise/releases/latest)** and download `taskwise-<version>-ios-unsigned.ipa`. Or, with the GitHub CLI:
     ```bash
-    mkdir -p ~/Downloads/taskwise-ios && cd ~/Downloads/taskwise-ios
-    gh release download v0.1.1 --repo Krkr8/taskwise --pattern '*ios-unsigned.ipa' --clobber
+    gh release download --repo Krkr8/taskwise --pattern '*ios-unsigned.ipa' --clobber
     ```
-    (Replace `v0.1.1` with the newest version.)
 14. Connect the iPhone by USB and unlock it. Open **iloader** (signed in with your Apple ID), select the phone, choose **Import IPA**, and pick the downloaded `.ipa`. Wait until it finishes.
 15. Open **Taskwise** from the home screen.
 
@@ -95,7 +98,7 @@ iOS runs **one VPN at a time**, and SideStore needs LocalDevVPN to install and r
   4. **User Customizations → Reset adi.pb**.
   5. Connect LocalDevVPN and sign in again (it's slow).
 
-  If it still fails, install the `.ipa` from the laptop with iloader (see the fallback in Part 5), and check the SideStore issue for newer fixes.
+  If it still fails, install the `.ipa` from the computer with iloader (see the fallback in Part 5), and check the SideStore issue for newer fixes.
 - **iloader problems** are supported on the *idevice* Discord, not SideStore's.
 
 What a free Apple ID can and can't do is in [ios-free-apple-id.md](ios-free-apple-id.md).

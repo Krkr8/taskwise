@@ -133,7 +133,7 @@ jobs:
         with:
           path: dist
           merge-multiple: true
-      # Draft only: drafts stay private until the owner publishes them by hand.
+      # Draft only: drafts stay private until a maintainer publishes them by hand.
       # The release text is this version's section of CHANGELOG.md. Without
       # one, GitHub writes notes from the commits instead.
       - name: Create draft GitHub Release

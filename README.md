@@ -41,13 +41,19 @@ More screenshots (every screen, light, dark, phone and Arabic) are in [design/](
 
 ## Install
 
-Builds for each platform are attached to [GitHub Releases](https://github.com/Krkr8/taskwise/releases). What changed in each version is in the [changelog](CHANGELOG.md).
+Download the newest build from **[Releases](https://github.com/Krkr8/taskwise/releases/latest)**. What changed in each version is in the [changelog](CHANGELOG.md).
 
-- [Linux (Fedora)](docs/install-linux.md)
-- [Windows 11](docs/install-windows.md)
-- [iPhone with SideStore or iloader](docs/install-ios-sidestore.md) (no Mac needed; see also [what works with a free Apple ID](docs/ios-free-apple-id.md))
+| Platform | File | Guide |
+|---|---|---|
+| Linux (x64, tested on Fedora) | `taskwise-<version>-linux-x64.tar.gz` | [Install on Linux](docs/install-linux.md) |
+| Windows 11 (x64) | `taskwise-<version>-windows-x64.zip` | [Install on Windows](docs/install-windows.md) |
+| iPhone (iOS 15+) | `taskwise-<version>-ios-unsigned.ipa` | [Install on iPhone](docs/install-ios-sidestore.md) |
 
-Taskwise needs no server to work. Add one later if you want your devices to share their tasks.
+- **Linux:** extract the file and run `./install.sh`. It installs for your user only, with no `sudo`.
+- **Windows:** a portable folder. Extract the zip and run `taskwise.exe`; no installer and no admin rights. Windows warns about it once because the app isn't code-signed.
+- **iPhone:** Taskwise isn't on the App Store. You install the `.ipa` yourself with a free Apple ID, using [iloader](https://iloader.app) or [SideStore](https://sidestore.io) from a Linux, Windows or Mac computer. A free Apple ID has to refresh the app every 7 days. [What works with a free Apple ID](docs/ios-free-apple-id.md).
+
+There is no account to make and no server needed: Taskwise works on its own. Add a sync server later if you want your devices to share their tasks.
 
 ## Run your own sync server
 
@@ -60,7 +66,7 @@ See the **[self-hosting guide](docs/self-hosting.md)**.
 Want to change something? Read [CONTRIBUTING.md](CONTRIBUTING.md). The short version:
 
 ```bash
-gh repo clone Krkr8/taskwise
+git clone https://github.com/Krkr8/taskwise.git
 cd taskwise
 flutter pub get                                # fetch dependencies for all packages
 (cd app && flutter run -d linux)               # run the app
@@ -69,7 +75,7 @@ flutter pub get                                # fetch dependencies for all pack
 (cd server && npm ci && npm test)              # server tests (Node.js 24)
 ```
 
-Set up a Fedora machine with [docs/dev-setup-fedora.md](docs/dev-setup-fedora.md) first. `flutter pub get` fetches both Dart packages at once, because `app` and `shared` form a [pub workspace](https://dart.dev/tools/pub/workspaces).
+Set up a Linux machine with [docs/dev-setup-fedora.md](docs/dev-setup-fedora.md) first (written for Fedora; other distributions need the same packages). `flutter pub get` fetches both Dart packages at once, because `app` and `shared` form a [pub workspace](https://dart.dev/tools/pub/workspaces).
 
 ### Where the app keeps its data
 

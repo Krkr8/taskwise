@@ -62,7 +62,7 @@ Screenshots for all four looks are in this folder (`desktop-light`, `desktop-dar
 - **One meaning per colour.** Blue means "you can act on this" (buttons, selection, the plus). Saffron means "today". Red means "overdue" or "high priority". Because each colour has one job, the screen stays simple even with many tasks.
 - **Sheets on paper.** White sheets on grey paper group tasks without heavy lines, and work the same in dark mode (navy sheets on darker navy).
 - **One font for both scripts.** Mixed English titles in the Arabic app no longer switch between two fonts with different heights.
-- **Keyboard shortcuts.** On the laptop and the Windows PC, adding a task is now Ctrl+N, type, Enter, without touching the mouse.
+- **Keyboard shortcuts.** On desktop, adding a task is now Ctrl+N, type, Enter, without touching the mouse.
 
 ## Notes and things not finished
 

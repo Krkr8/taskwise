@@ -15,7 +15,7 @@ Vercel's Hobby plan is for **personal, non-commercial use**, which is what this 
 
 ## 1. Make three secrets
 
-On the laptop, run:
+On your computer, run:
 
 ```bash
 echo "SETUP_SECRET=$(openssl rand -base64 32)"
@@ -62,7 +62,7 @@ From now on, every push to `main` on GitHub redeploys the server automatically, 
 
 ## 4. Check it works
 
-On the laptop, replace the address with yours:
+On your computer, replace the address with yours:
 
 ```bash
 curl https://taskwise-abc.vercel.app/api/v1/health
@@ -88,7 +88,7 @@ If Vercel shows a deployment as **Blocked** with "Vercel couldn't find a Git acc
 
 ## 5. Create your account (optional now)
 
-From M6 the app has a setup page for this. You can also do it now from the laptop. Choose a username and a password of at least 10 characters:
+From M6 the app has a setup page for this. You can also do it now from your computer. Choose a username and a password of at least 10 characters:
 
 ```bash
 curl -X POST https://taskwise-abc.vercel.app/api/v1/auth/setup \
