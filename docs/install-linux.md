@@ -1,8 +1,36 @@
 # Install Taskwise on Linux
 
-Taskwise installs for your user only. You don't need `sudo`. The build is for 64-bit x86 Linux; it is tested on Fedora with GNOME, and other distributions with GTK 3 should work too.
+Taskwise comes in two forms for 64-bit x86 Linux. Neither needs `sudo`.
 
-## Install or update
+- **AppImage:** one file that runs on most distributions (Debian 12 or newer, Ubuntu 22.04 or newer, Arch, Fedora, Linux Mint, Manjaro…). Nothing to install.
+- **tar.gz with `install.sh`:** installs Taskwise for your user, with a menu entry.
+
+Both are the same app and keep your tasks in the same place, so you can switch between them. Taskwise is tested on Fedora with GNOME; every AppImage release is also started on Debian 12, Ubuntu 22.04 and 24.04 and Arch (`tool/appimage_smoke_test.sh`).
+
+## AppImage (any distribution)
+
+1. Open **[Releases](https://github.com/Krkr8/taskwise/releases/latest)** and download `taskwise-<version>-linux-x86_64.AppImage`. Or, with the GitHub CLI:
+   ```bash
+   mkdir -p ~/Applications && cd ~/Applications
+   gh release download --repo Krkr8/taskwise --pattern '*.AppImage'
+   ```
+2. Make it executable and start it:
+   ```bash
+   chmod +x ~/Applications/taskwise-*-linux-x86_64.AppImage
+   ~/Applications/taskwise-*-linux-x86_64.AppImage
+   ```
+   In a file manager you can also right-click it → **Properties** → allow it to run as a program, then double-click it.
+3. To get it in the app menu, use [Gear Lever](https://flathub.org/apps/it.mijorus.gearlever) or AppImageLauncher, or install the tar.gz below instead.
+
+To update, download the new AppImage and delete the old one. If **Start when I log in** is on, open the new file once so the login entry points at it.
+
+**If it doesn't start:**
+- *"AppImages require FUSE to run"* (some Ubuntu and Debian installs): install FUSE with `sudo apt install libfuse2t64` (Ubuntu 24.04+) or `sudo apt install libfuse2` (Debian, older Ubuntu). Or run it without FUSE: `./taskwise-*.AppImage --appimage-extract-and-run`.
+- *"Couldn't open libEGL.so.1"* or *"libGLESv2.so.2"* (only on very minimal installs): install the graphics libraries with `sudo apt install libegl1 libgles2` (Debian, Ubuntu) or `sudo pacman -S mesa` (Arch).
+- **Signing in to a sync server** keeps the device token in your desktop's keyring (GNOME Keyring or KWallet). On a desktop without one, install `gnome-keyring`.
+- Run it from a terminal to see error messages.
+
+## Install or update (tar.gz)
 
 1. Open **[Releases](https://github.com/Krkr8/taskwise/releases/latest)** and download `taskwise-<version>-linux-x64.tar.gz` (into `~/Downloads`, say). Or, with the GitHub CLI:
    ```bash
@@ -37,14 +65,14 @@ Linux can't schedule notifications ahead, so **reminders only appear while Taskw
 
 | What | Where |
 |---|---|
-| The app | `~/.local/share/taskwise/` |
+| The app | `~/.local/share/taskwise/` (tar.gz), or wherever you keep the AppImage |
 | Menu entry and icon | `~/.local/share/applications/io.github.krkr8.taskwise.desktop`, `~/.local/share/icons/hicolor/256x256/apps/` |
 | **Your tasks** (database) | `~/.local/share/io.github.krkr8.taskwise/` |
 | Start-on-login entry (if turned on) | `~/.config/autostart/Taskwise.desktop` |
 
 ## Uninstall
 
-From the extracted folder:
+AppImage: delete the file. tar.gz: from the extracted folder, run:
 ```bash
 ./install.sh --uninstall
 ```

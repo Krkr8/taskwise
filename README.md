@@ -45,11 +45,12 @@ Download the newest build from **[Releases](https://github.com/Krkr8/taskwise/re
 
 | Platform | File | Guide |
 |---|---|---|
-| Linux (x64, tested on Fedora) | `taskwise-<version>-linux-x64.tar.gz` | [Install on Linux](docs/install-linux.md) |
+| Linux (x64): any distribution (Debian, Ubuntu, Arch, Fedora…) | `taskwise-<version>-linux-x86_64.AppImage` | [Install on Linux](docs/install-linux.md#appimage-any-distribution) |
+| Linux (x64), installed for your user | `taskwise-<version>-linux-x64.tar.gz` | [Install on Linux](docs/install-linux.md#install-or-update-targz) |
 | Windows 11 (x64) | `taskwise-<version>-windows-x64.zip` | [Install on Windows](docs/install-windows.md) |
 | iPhone (iOS 15+) | `taskwise-<version>-ios-unsigned.ipa` | [Install on iPhone](docs/install-ios-sidestore.md) |
 
-- **Linux:** extract the file and run `./install.sh`. It installs for your user only, with no `sudo`.
+- **Linux:** the AppImage is one file that runs on Debian 12+, Ubuntu 22.04+, Arch, Fedora and most other distributions: make it executable and open it. Or extract the tar.gz and run `./install.sh`, which installs for your user only, with no `sudo`.
 - **Windows:** a portable folder. Extract the zip and run `taskwise.exe`; no installer and no admin rights. Windows warns about it once because the app isn't code-signed.
 - **iPhone:** Taskwise isn't on the App Store. You install the `.ipa` yourself with a free Apple ID, using [iloader](https://iloader.app) or [SideStore](https://sidestore.io) from a Linux, Windows or Mac computer. A free Apple ID has to refresh the app every 7 days. [What works with a free Apple ID](docs/ios-free-apple-id.md).
 

@@ -31,7 +31,7 @@ A personal, self-hosted **to-do + reminders app** that runs on:
 | Device | OS | Role |
 |---|---|---|
 | Desktop | Windows 11 | App. |
-| Desktop | Linux (Fedora, GNOME on Wayland) | App. Development machine. |
+| Desktop | Linux (Fedora, GNOME on Wayland) | App. Development machine. Also an AppImage for other distributions (M9). |
 | Phone | iOS 27 (iPhone) | App. **Only device that does location reminders.** |
 | Cloud | Vercel (free Hobby plan) + hosted database | Sync server. Public HTTPS, reachable from anywhere. Nothing to look after. |
 
@@ -277,6 +277,17 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 - README with screenshots, CONTRIBUTING, self-hosting guide, versioned GitHub Releases.
 - **Done when:** maintainer signs off.
 
+### M9 — Linux AppImage
+- Asked for by the maintainer on 2026-11-07 (after M8): an AppImage that runs on Debian/Ubuntu and Arch too. The tar.gz with `install.sh` stays.
+- Built on Ubuntu 22.04 (glibc 2.35) in the release workflow by `tool/package_appimage.sh` (pinned appimagetool 1.9.1 and type2 runtime 20251108, SHA-256 checked). Bundles libsecret; GTK 3, Mesa and glibc come from the system. `patchelf` gives bundled libraries `$ORIGIN` as RUNPATH.
+- "Start when I log in" points at `$APPIMAGE`, not the temporary mount.
+- `tool/appimage_smoke_test.sh` starts the AppImage in podman on Debian 12, Ubuntu 22.04/24.04 and Arch.
+- **Done when:** the AppImage starts on those four and on Fedora.
+
+### M10 — Android
+- Asked for by the maintainer on 2026-11-07: an Android app with everything the iPhone has, location reminders included (native Kotlin, same rules as iOS). Tested on the emulator only (no Android phone).
+- **Done when:** the release APK runs on the emulator: time reminders with the app closed, sync, backup, and arrive/leave reminders on a simulated walk.
+
 ---
 
 ## 6. Maintainer's preferences (summary)
@@ -294,7 +305,8 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 ## 7. Progress Log
 
 ### Where we left off (2026-11-07)
-- **Status for a new chat:** **M8 is built; waiting for the maintainer's sign-off on v0.6.0** (published release, the latest on GitHub; files also in `~/Downloads/taskwise-0.6.0/`). Done in M8: four designs picked per device (v0.5.0, Brutal default); then, from the maintainer's v0.5.0 feedback, Settings centred on wide windows and the cloud button syncs; Settings → Backup (JSON export/import that merges and syncs, `app/lib/data/backup.dart`); Settings → About with the version and a logs viewer (`app/lib/logging/app_log.dart`, uncaught errors logged, plain error messages); performance with 2,000 tasks (lazy task lists, tabs built when first opened; `docs/performance.md`); README with screenshots, `CONTRIBUTING.md`, `docs/self-hosting.md`, `CHANGELOG.md` (draft releases take their notes from it via `tool/changelog_section.sh`); long words in the phone week view no longer split. **Ask the maintainer for the v0.6.0 test results** (list under "How to test"); fix as v0.6.x; M8 closes when they sign off. After M8 there are no more milestones in §5: ask the maintainer what's next (the repo is already public).
+- **Status for a new chat:** M8 was signed off (2026-11-07). The maintainer then asked for two more milestones (§5): **M9 Linux AppImage** (built, v0.6.1) and **M10 Android** with location reminders (next; plan approved 2026-11-07, emulator testing only). Ask the maintainer for the v0.6.1 AppImage result, and work on M10.
+- **Android toolchain on the Linux machine:** Android builds need a full JDK 21 (`sudo dnf install -y java-21-openjdk-devel`, then `flutter config --jdk-dir /usr/lib/jvm/java-21-openjdk`). Only the Java 25 *runtime* is installed, without `javac`/`jlink`. `flutter config --enable-android` is on. The emulator is `Pixel_9_API_36` (google_apis, x86_64).
 - **The repo is public** (2026-11-07). It was recreated on GitHub with a clean history: every commit is by `Krkr8` with the GitHub noreply email, and LICENSE says Krkr8. Don't put the maintainer's name, email or server address anywhere (commits, docs, the repo's homepage field). The docs say "the maintainer" and name no devices or server details. v0.6.0 is published (the earlier drafts were lost with the old repo). Vercel's GitHub app has access to the new repo, and pushes to `main` deploy again.
 - v0.3.1 was confirmed on all devices (2026-11-05); v0.3.2 made the Undo bar fade after 5 seconds.
 - **Things to watch in the M7 device test** (all untestable without the phone):
@@ -317,10 +329,24 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 | M5 Sync server | ✅ Done | 2026-11-02 | TypeScript + Hono server in `server/` (Node 24): account setup with a setup secret, login (argon2id) with database-backed rate limiting, per-device tokens (SHA-256 stored, revocable), devices API, push/pull sync with last-write-wins and a change sequence, daily Vercel Cron (90-day tombstone purge with task children, 7 nightly backups in the database). Generic record store: the server doesn't interpret records. API in `docs/sync-api.md`; contract fixtures in `shared/test/fixtures/sync/` tested by both Dart and TypeScript. Runs on Vercel or Docker (built and run with Podman locally). Dart `server/` placeholder removed; CI has a Node job. Free limits checked 2026-10-31 (Vercel Hobby: 1 M invocations/month, cron daily; Turso Free: 5 GB, 500 M reads, 10 M writes). 228 automated tests (app 53, shared 106, server 69). Deployed on Vercel (`fra1`) with Turso (`aws-eu-central-1`); health checked over HTTPS from the Linux machine and from the iPhone on mobile data. |
 | M6 Client sync + devices | ✅ Done | 2026-11-03 | Optional sign-in from Settings (with account setup), one-time banner, sync engine (trigger-filled outbox, push/pull with last-write-wins, full resync on 410, device list), sync triggers (start, resume, 2 s after changes, every minute, Sync now), status icon, Settings → Sync and → Devices, sign out, "Notify on" per task with each device scheduling only its own reminders. Maintainer-tested v0.3.0: sync connects on Fedora, Windows and iPhone. Closed with the v0.3.1 fixes (Windows scrolling and tray Quit, iOS rescheduling bug, test-notification button, "time passed" reminders) and the **main device** (manages the other devices). Database schema v3. Live test: two app devices through the real TypeScript server (also in CI). 276 automated tests (app 85 incl. 1 live, shared 112, server 79). v0.3.1 confirmed by the maintainer on all devices (2026-11-05); v0.3.2 makes the Undo snackbar fade after 5 s. |
 | M7 Location reminders | ✅ Done | 2026-11-06 | Map picker (flutter_map + OSM, Nominatim search behind a swappable `Geocoder`), saved places, location reminders on every device (Arrive / Leave, 30-500 m, fire every time, 30 min debounce), schema v4 (`reminders.label`). iPhone: native Swift geofencing (outer region + precise check, 20-region limit, debug screen), permission explanation and banner (EN/AR, Arabic `InfoPlist.strings`). iOS background refresh sync with `workmanager` 0.10.10; token readable after first unlock. New iOS CI workflow runs the Swift tests. 300 automated tests (app 102 + 1 live, shared 119, server 79) + 9 Swift tests. v0.4.1: `GeofenceEngine` + walk simulator, 3 geofencing bugs fixed, Linux integration test; 16 Swift tests. Closed by the maintainer without the iPhone walk test (skipped). |
-| M8 Design + polish | 🔶 Built (v0.6.0), maintainer sign-off pending | 2026-11-07 | Design tour screenshots; Opus/Gemini design contest; four designs selectable per device (Classic, Lapis, Slate & Indigo, Brutal default with warm charcoal dark mode); UI split into `ui/shared` + `ui/designs/<name>`; `docs/architecture.md`. v0.6.0: centred Settings, cloud button syncs, JSON backup export/import, logs viewer + error logging, 2,000-task performance test (Opus subagent) with lazy lists, README/CONTRIBUTING/self-hosting/CHANGELOG (Sonnet subagent), whole-word titles in the phone week view. 405 automated tests (app 207 + 1 live, shared 119, server 79) + 16 Swift tests; 3 Linux integration tests (location, design tour, performance). |
+| M8 Design + polish | ✅ Done | 2026-11-07 | Design tour screenshots; Opus/Gemini design contest; four designs selectable per device (Classic, Lapis, Slate & Indigo, Brutal default with warm charcoal dark mode); UI split into `ui/shared` + `ui/designs/<name>`; `docs/architecture.md`. v0.6.0: centred Settings, cloud button syncs, JSON backup export/import, logs viewer + error logging, 2,000-task performance test (Opus subagent) with lazy lists, README/CONTRIBUTING/self-hosting/CHANGELOG (Sonnet subagent), whole-word titles in the phone week view. 405 automated tests (app 207 + 1 live, shared 119, server 79) + 16 Swift tests; 3 Linux integration tests (location, design tour, performance). Signed off by the maintainer on 2026-11-07. |
+| M9 Linux AppImage | ✅ Built (v0.6.1) | 2026-11-07 | `taskwise-<v>-linux-x86_64.AppImage` next to the tar.gz, both built on Ubuntu 22.04. Bundles libsecret (RUNPATH fixed with patchelf, since plugins load it); pinned appimagetool and runtime. Start on login uses `$APPIMAGE`. Smoke test in podman: starts on Debian 12, Ubuntu 22.04, Ubuntu 24.04 and Arch; also run on Fedora with FUSE. Minimal Debian/Ubuntu installs need `libegl1 libgles2` (Flutter loads them; every desktop has them). 408 automated tests (app 210 + 1 live, shared 119, server 79). |
 
 ### How to test the latest milestone
-**M8 (backup, logs, speed, fixes), with v0.6.0.** Files in `~/Downloads/taskwise-0.6.0/` on the Linux machine. Fedora: `git pull`, then `cd app && flutter run -d linux`. Windows: quit Taskwise (tray → Quit), unzip the new zip over the old folder. iPhone: iloader → Import IPA → `taskwise-0.6.0-ios-unsigned.ipa`. Your tasks and sign-in are kept.
+**M9 (AppImage), with v0.6.1.** Files in `~/Downloads/taskwise-0.6.1/` on the Linux machine.
+
+1. Quit the installed Taskwise (tray → **Quit Taskwise**).
+2. Run the AppImage:
+   ```bash
+   chmod +x ~/Downloads/taskwise-0.6.1/taskwise-0.6.1-linux-x86_64.AppImage
+   ~/Downloads/taskwise-0.6.1/taskwise-0.6.1-linux-x86_64.AppImage
+   ```
+   Taskwise opens with your tasks (the AppImage uses the same data as the installed app). Settings → About says 0.6.1.
+3. Turn on **Settings → Background → Start when I log in**, then run `grep Exec ~/.config/autostart/Taskwise.desktop`. It shows the AppImage's path in `~/Downloads/...`, not `/tmp/.mount_…`. Log out and in: Taskwise starts in the background. (Turn it off again afterwards if you prefer the installed app.)
+4. If you have a Debian, Ubuntu or Arch machine (or a friend with one), try the AppImage there too.
+5. The tar.gz still works as before (`./install.sh`).
+
+**Earlier: M8 (backup, logs, speed, fixes), with v0.6.0.** Files in `~/Downloads/taskwise-0.6.0/` on the Linux machine. Fedora: `git pull`, then `cd app && flutter run -d linux`. Windows: quit Taskwise (tray → Quit), unzip the new zip over the old folder. iPhone: iloader → Import IPA → `taskwise-0.6.0-ios-unsigned.ipa`. Your tasks and sign-in are kept.
 
 1. **Settings on a wide window:** maximise Taskwise and open Settings. It sits in the middle, with the scroll bar at the right edge.
 2. **Cloud button:** in the side bar (desktop) or the top bar (phone), tap the cloud. It turns into the syncing icon for a moment, and Settings → Sync says "Synced just now". It no longer opens Settings.

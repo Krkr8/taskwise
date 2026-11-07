@@ -61,11 +61,21 @@ class DesktopShell with WindowListener {
 
     LaunchAtStartup.instance.setup(
       appName: 'Taskwise',
-      appPath: Platform.resolvedExecutable,
+      appPath: launchPath(Platform.environment, Platform.resolvedExecutable),
       args: const [hiddenArg],
     );
     shell._createTray();
     return shell;
+  }
+
+  /// The program a login item should start. Inside an AppImage the
+  /// executable lives in a temporary mount that changes on every run, so the
+  /// AppImage file itself (`$APPIMAGE`, set by its runtime) is used instead.
+  /// The login entry is rewritten at each start, so moving the AppImage
+  /// and opening it once is enough.
+  static String launchPath(Map<String, String> env, String executable) {
+    final appImage = env['APPIMAGE'];
+    return appImage != null && appImage.isNotEmpty ? appImage : executable;
   }
 
   /// True if another Taskwise answered and was told to show its window.

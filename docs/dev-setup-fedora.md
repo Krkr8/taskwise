@@ -10,6 +10,12 @@ Flutter's Linux desktop toolchain needs clang, CMake, Ninja, pkg-config, GTK 3 h
 sudo dnf install -y git clang cmake ninja-build pkgconf-pkg-config gtk3-devel libstdc++-devel libX11-devel libXi-devel libsecret-devel xz
 ```
 
+To build the Linux AppImage locally (`tool/package_appimage.sh`, after `flutter build linux --release`), also install `patchelf`; `tool/appimage_smoke_test.sh` needs `podman`:
+
+```bash
+sudo dnf install -y patchelf podman
+```
+
 The GitHub CLI is optional but handy for checking CI runs:
 
 ```bash

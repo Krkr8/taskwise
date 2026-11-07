@@ -6,6 +6,20 @@ When a version is released, its section becomes the text of the draft GitHub rel
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-11-07
+
+### Added
+
+- **Linux AppImage:** `taskwise-<version>-linux-x86_64.AppImage` is one file that runs on Debian 12+, Ubuntu 22.04+, Arch, Fedora and most other distributions. Make it executable and open it ([how](https://github.com/Krkr8/taskwise/blob/main/docs/install-linux.md#appimage-any-distribution)). The tar.gz with `install.sh` is still there.
+
+### Changed
+
+- The Linux builds are made on Ubuntu 22.04, so they also run on distributions older than the newest Ubuntu.
+
+### Fixed
+
+- "Start when I log in" works from the AppImage: it starts the AppImage file, not the temporary folder the AppImage runs from.
+
 ## [0.6.0] - 2026-11-07
 
 ### Added
