@@ -1,37 +1,92 @@
-# Install Taskwise on iPhone (iloader or SideStore)
+# Install Taskwise on iPhone
 
 Taskwise isn't on the App Store, so it's **sideloaded**: GitHub builds an unsigned app file (`.ipa`), and a sideloading tool signs it with your free Apple ID and installs it. No Mac is needed: **iloader** runs on Linux, Windows and macOS.
 
-You need a computer and a USB cable for the first setup. While SideStore's sign-in is broken (see Part 5), you also need the computer once a week to refresh the app.
+There are two ways:
 
-**Only want Taskwise, without SideStore?** Do Part 1, step 3 of Part 3 (connect and trust), sign in to iloader with your Apple ID, then go to Part 5. After the install, do Part 4 steps 8–9 (trust your Apple ID and turn on Developer Mode).
+| | Way 1: iloader only (recommended) | Way 2: iloader + SideStore |
+|---|---|---|
+| What's on the phone | Only Taskwise | SideStore and Taskwise |
+| Every 7 days | Connect the phone to the computer by USB and install the `.ipa` again (2 minutes) | SideStore refreshes on the phone, with a VPN app |
+| Works right now | **Yes** (the tested way) | Not fully: Apple blocks sign-in inside SideStore since 2026-10-12 (see Troubleshooting) |
+| Extra apps | None | LocalDevVPN, and a pairing file |
 
-> Sources: [SideStore docs](https://docs.sidestore.io/docs/installation/prerequisites) and [iloader](https://iloader.app), checked 2026-10-20. If a screen looks different, those pages are the reference.
+Start with **Way 1**. Move to Way 2 later only if you want on-phone refreshes and SideStore's sign-in works again.
 
-## What you need
+> Sources: [iloader](https://iloader.app) and [SideStore docs](https://docs.sidestore.io/docs/installation/prerequisites), checked 2026-10-20. If a screen looks different, those pages are the reference.
+
+## What you need (both ways)
 
 - iPhone with a **passcode** set (iOS 15 or newer)
-- A USB cable, and the phone and computer on the **same Wi-Fi** (mobile data doesn't work for SideStore)
+- A computer and a USB cable
 - An **Apple ID**. A secondary/burner one is recommended, because it holds a free developer certificate. It doesn't have to be the Apple ID signed in on the phone. Passwords are case-sensitive.
 
-## Free Apple ID limits (read this once)
-
-- At most **3 sideloaded apps at once, SideStore included**: SideStore + Taskwise leaves one spare slot.
+**Free Apple ID limits:**
+- Apps **expire after 7 days** unless they're installed again (refreshed). An expired app won't open, but **your tasks are kept**.
+- At most **3 sideloaded apps at once** (SideStore counts as one in Way 2).
 - At most **10 different apps (App IDs) per 7 days**.
-- Apps **expire after 7 days** unless refreshed. SideStore refreshes them (see "Every week" below).
+
+---
+
+# Way 1: iloader only
+
+## 1. Install iloader on the computer
+
+Download it from <https://iloader.app> or its [releases page](https://github.com/nab138/iloader/releases/latest).
+
+- **Fedora:** it also needs `usbmuxd`, which lets the computer talk to the iPhone:
+  ```bash
+  sudo dnf install -y usbmuxd
+  cd ~/Downloads
+  curl -fLO https://github.com/nab138/iloader/releases/latest/download/iloader-linux-x86_64.rpm
+  sudo dnf install -y ./iloader-linux-x86_64.rpm
+  ```
+- **Debian or Ubuntu:** `sudo apt install usbmuxd`, then install iloader's `.deb` or AppImage.
+- **Windows:** it needs Apple's iPhone driver. If the phone isn't seen, install **Apple Devices** (or iTunes) from the Microsoft Store.
+
+## 2. Download Taskwise
+
+On the computer, open **[Releases](https://github.com/Krkr8/taskwise/releases/latest)** and download `taskwise-<version>-ios-unsigned.ipa`. Or, with the GitHub CLI:
+```bash
+cd ~/Downloads
+gh release download --repo Krkr8/taskwise --pattern '*ios-unsigned.ipa' --clobber
+```
+
+## 3. Install it
+
+1. Connect the iPhone to the computer with USB and unlock it. If the phone asks **Trust This Computer?**, tap **Trust** and enter your passcode.
+2. Open **iloader** and sign in with your Apple ID.
+3. Select your iPhone, choose **Import IPA**, and pick the `.ipa` from step 2. Wait until it finishes.
+
+If iloader doesn't see the phone, unplug and replug it. Still nothing on Linux? In one terminal run `sudo systemctl stop usbmuxd`, then `sudo usbmuxd -v -f`, and try again in iloader.
+
+## 4. Allow it on the phone (first time only)
+
+1. **Settings → General → VPN & Device Management.** Under **Developer App**, tap your Apple ID → **Trust "…"** → **Trust**.
+2. **Settings → Privacy & Security** → scroll to the bottom → **Developer Mode** → on. The phone restarts. After the restart, confirm **Turn On** and enter your passcode.
+3. Open **Taskwise** from the home screen.
+
+## Every 7 days
+
+Connect the phone by USB, open iloader, and repeat **step 3** with the same `.ipa` (or a newer one). It installs over the existing app and keeps your tasks. Steps 1, 2 and 4 aren't needed again.
+
+Tip: do it on the same day each week, before the 7 days are up. If you forget, nothing is lost: install it again and Taskwise opens with your tasks.
+
+## Updating Taskwise
+
+iPhone apps can't update themselves, so from version 1.1.0 on Taskwise only tells you: a banner says a new version is out, with what's new and a link to the release. Download the newer `.ipa` (step 2) and install it (step 3). It replaces the old version and keeps your tasks, and it also counts as this week's refresh.
+
+---
+
+# Way 2: iloader + SideStore
+
+SideStore is an app on the phone that re-signs and refreshes your apps without the computer. It's set up once from the computer with iloader. You also need the phone and computer on the **same Wi-Fi** for the setup (mobile data doesn't work for SideStore).
+
+> **Status (2026-10-30):** Apple currently blocks sign-in inside SideStore (error -80045, see Troubleshooting). Until that's fixed, SideStore can't install or refresh Taskwise, so use **Way 1**.
 
 ## Part 1: Computer
 
-1. Install **iloader** (SideStore's installer) from <https://iloader.app> or its [releases page](https://github.com/nab138/iloader/releases/latest).
-   - **Linux** also needs `usbmuxd`, which lets it talk to the iPhone. On Fedora:
-     ```bash
-     sudo dnf install -y usbmuxd
-     cd ~/Downloads
-     curl -fLO https://github.com/nab138/iloader/releases/latest/download/iloader-linux-x86_64.rpm
-     sudo dnf install -y ./iloader-linux-x86_64.rpm
-     ```
-     On Debian or Ubuntu: `sudo apt install usbmuxd`, then install iloader's `.deb` or AppImage.
-   - **Windows** needs Apple's iPhone driver: install **Apple Devices** (or iTunes) from the Microsoft Store if the phone isn't seen.
+1. Install **iloader** (see Way 1, step 1).
 
 ## Part 2: Phone, before connecting
 
@@ -48,8 +103,6 @@ You need a computer and a USB cable for the first setup. While SideStore's sign-
    2. Click your device and tap **Trust** on the phone.
    3. Click **Manage Pairing File**, then **Place** next to SideStore. Wait for "Pairing file placed successfully!" in green.
 
-If iloader doesn't see the phone, unplug and replug it. Still nothing on Linux? In one terminal run `sudo systemctl stop usbmuxd`, then `sudo usbmuxd -v -f`, and try again in iloader.
-
 ## Part 4: Phone, enable and trust
 
 8. **Settings → General → VPN & Device Management.** Under **Developer App**, tap your Apple ID → **Trust "…"** → **Trust** (or **Allow & Restart**), and enter your passcode if asked.
@@ -58,39 +111,28 @@ If iloader doesn't see the phone, unplug and replug it. Still nothing on Linux? 
 11. Open **SideStore** and sign in with the **same Apple ID** you used in iloader.
 12. In SideStore go to **My Apps** and tap the **7 DAYS** button next to SideStore to refresh it. If it asks about the signing certificate, tap **Yes** / **Refresh Now**. Do this **before installing anything else**.
 
-## Part 5: Install Taskwise
+## Part 5: Install Taskwise with SideStore
 
-> **Status (2026-10-30):** Apple currently blocks sign-in inside SideStore (error -80045, see Troubleshooting), but iloader on the computer still works. So for now, install Taskwise **from the computer with iloader** (this is the tested way). SideStore can take over once its sign-in works again.
-
-13. On the computer, open **[Releases](https://github.com/Krkr8/taskwise/releases/latest)** and download `taskwise-<version>-ios-unsigned.ipa`. Or, with the GitHub CLI:
-    ```bash
-    gh release download --repo Krkr8/taskwise --pattern '*ios-unsigned.ipa' --clobber
-    ```
-14. Connect the iPhone by USB and unlock it. Open **iloader** (signed in with your Apple ID), select the phone, choose **Import IPA**, and pick the downloaded `.ipa`. Wait until it finishes.
+13. Download `taskwise-<version>-ios-unsigned.ipa` in **Safari on the phone** from **[Releases](https://github.com/Krkr8/taskwise/releases/latest)**. It goes to **Files → Downloads**.
+14. Connect **LocalDevVPN**, then in **SideStore → My Apps** tap **+** and pick the file.
 15. Open **Taskwise** from the home screen.
 
-**Installing from SideStore instead (once its sign-in works):** download the `.ipa` in Safari on the phone (it goes to **Files → Downloads**), connect **LocalDevVPN**, then in **SideStore → My Apps** tap **+** and pick the file. *This path hasn't been tested with Taskwise yet.*
+*This path hasn't been tested with Taskwise yet.* If it fails, install Taskwise with iloader instead (Way 1, step 3); SideStore can still refresh it afterwards.
 
-## Every week
+## Every week (SideStore)
 
-- Apps expire **7 days** after they were last signed (this is Apple's limit for free Apple IDs). An expired app won't open, but **your tasks are kept**.
-- **With iloader (current way):** connect the phone by USB and repeat step 14 with the same `.ipa`. It installs over the existing app.
-- **With SideStore (when its sign-in works):** SideStore refreshes apps in the background. To do it yourself, connect **LocalDevVPN**, open **SideStore → My Apps**, and tap **Refresh All**.
+SideStore refreshes apps in the background. To do it yourself, connect **LocalDevVPN**, open **SideStore → My Apps**, and tap **Refresh All**.
 
-## Updating Taskwise
+## Updating Taskwise (SideStore)
 
-iPhone apps can't update themselves, so Taskwise only tells you: from version 1.1.0 on, a banner says when a new version is out, with what's new and a link to the release.
-
-Download the newer `.ipa` (step 13) and install it the same way (step 14). It replaces the old version and keeps your tasks.
-
-**With SideStore (when its sign-in works):** add Taskwise's source once, and SideStore shows and installs updates on the phone. In SideStore, open **Sources → +** and enter:
+Add Taskwise's source once, and SideStore shows and installs updates on the phone. In SideStore, open **Sources → +** and enter:
 ```
 https://github.com/Krkr8/taskwise/releases/latest/download/sidestore-source.json
 ```
 
 ## Only one VPN at a time
 
-iOS runs **one VPN at a time**, and SideStore needs LocalDevVPN to install and refresh apps. If you use another VPN, switch LocalDevVPN on while you refresh or install (which turns the other VPN off), then switch the other VPN back on afterwards. Taskwise doesn't need a VPN: its sync server is reached over normal HTTPS.
+iOS runs **one VPN at a time**, and SideStore needs LocalDevVPN to install and refresh apps. If you use another VPN, switch LocalDevVPN on while you refresh or install (which turns the other VPN off), then switch the other VPN back on afterwards. Taskwise doesn't need a VPN: its sync server is reached over normal HTTPS. Way 1 doesn't need LocalDevVPN at all.
 
 ## Troubleshooting (from SideStore's docs)
 
@@ -105,7 +147,7 @@ iOS runs **one VPN at a time**, and SideStore needs LocalDevVPN to install and r
   4. **User Customizations → Reset adi.pb**.
   5. Connect LocalDevVPN and sign in again (it's slow).
 
-  If it still fails, install the `.ipa` from the computer with iloader (see the fallback in Part 5), and check the SideStore issue for newer fixes.
+  If it still fails, use **Way 1** and check the SideStore issue for newer fixes.
 - **iloader problems** are supported on the *idevice* Discord, not SideStore's.
 
 What a free Apple ID can and can't do is in [ios-free-apple-id.md](ios-free-apple-id.md).
