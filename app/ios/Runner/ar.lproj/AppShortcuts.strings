@@ -1,0 +1,15 @@
+/* Siri phrases in Arabic (AssistantIntents.swift). Each keeps the app's name. */
+
+"Add a task in ${applicationName}" = "أضف مهمة في ${applicationName}";
+"Add a task to ${applicationName}" = "أضف مهمة إلى ${applicationName}";
+"New task in ${applicationName}" = "مهمة جديدة في ${applicationName}";
+"New ${applicationName} task" = "مهمة ${applicationName} جديدة";
+
+"Add a task with a date in ${applicationName}" = "أضف مهمة بتاريخ في ${applicationName}";
+"Add a task with a due date in ${applicationName}" = "أضف مهمة بموعد في ${applicationName}";
+"Add a dated task to ${applicationName}" = "أضف مهمة مؤرخة إلى ${applicationName}";
+
+"What's on my list in ${applicationName}" = "ما هي مهامي في ${applicationName}";
+"What's due today in ${applicationName}" = "ما المطلوب اليوم في ${applicationName}";
+"What do I have today in ${applicationName}" = "ماذا لدي اليوم في ${applicationName}";
+"Read my ${applicationName} tasks" = "اقرأ مهامي في ${applicationName}";

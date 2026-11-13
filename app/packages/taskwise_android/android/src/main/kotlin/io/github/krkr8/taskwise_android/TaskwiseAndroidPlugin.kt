@@ -19,7 +19,13 @@ import io.flutter.plugin.common.PluginRegistry
  *   on the iPhone (see app/lib/location/location_platform.dart), backed by
  *   [LocationReminderManager];
  * - `taskwise/files`: `saveFile`, the system "Save to" screen
- *   (app/lib/ui/shared/common/save_text_file.dart).
+ *   (app/lib/ui/shared/common/save_text_file.dart);
+ * - `taskwise/assistant`: the "New task" shortcut and text shared to
+ *   Taskwise, as actions for app/lib/assistant/assistant_platform.dart
+ *   (see [AssistantIntents]). Android has no Siri inbox, so its inbox is
+ *   always empty;
+ * - `taskwise/update`: `installApk`, installing a downloaded update
+ *   ([AppUpdater], app/lib/update/update_installer.dart).
  *
  * Registered on every Flutter engine, including the background-sync engine,
  * which has no activity: there, requests that need one just report the
@@ -27,7 +33,8 @@ import io.flutter.plugin.common.PluginRegistry
  */
 class TaskwiseAndroidPlugin :
   FlutterPlugin, ActivityAware, MethodChannel.MethodCallHandler,
-  PluginRegistry.RequestPermissionsResultListener, PluginRegistry.ActivityResultListener {
+  PluginRegistry.RequestPermissionsResultListener, PluginRegistry.ActivityResultListener,
+  PluginRegistry.NewIntentListener {
 
   private companion object {
     const val SAVE_REQUEST = 0x7a51
@@ -35,9 +42,15 @@ class TaskwiseAndroidPlugin :
 
   private lateinit var location: MethodChannel
   private lateinit var files: MethodChannel
+  private lateinit var assistant: MethodChannel
+  private lateinit var update: MethodChannel
+  private lateinit var updater: AppUpdater
   private lateinit var manager: LocationReminderManager
   private var binding: ActivityPluginBinding? = null
   private val activity: Activity? get() = binding?.activity
+
+  /** The action Taskwise was started with, until Dart takes it. */
+  private var launchAction: Map<String, Any>? = null
 
   /** The file waiting for the "Save to" screen's answer. */
   private var pendingSave: Pair<ByteArray, MethodChannel.Result>? = null
@@ -48,11 +61,18 @@ class TaskwiseAndroidPlugin :
     location.setMethodCallHandler(this)
     files = MethodChannel(flutter.binaryMessenger, "taskwise/files")
     files.setMethodCallHandler(this)
+    assistant = MethodChannel(flutter.binaryMessenger, "taskwise/assistant")
+    assistant.setMethodCallHandler(this)
+    updater = AppUpdater(flutter.applicationContext)
+    update = MethodChannel(flutter.binaryMessenger, "taskwise/update")
+    update.setMethodCallHandler(this)
   }
 
   override fun onDetachedFromEngine(flutter: FlutterPlugin.FlutterPluginBinding) {
     location.setMethodCallHandler(null)
     files.setMethodCallHandler(null)
+    assistant.setMethodCallHandler(null)
+    update.setMethodCallHandler(null)
   }
 
   override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
@@ -86,6 +106,24 @@ class TaskwiseAndroidPlugin :
       }
       "debugState" -> result.success(manager.debugState())
       "saveFile" -> saveFile(call, result)
+      // taskwise/assistant
+      "takeLaunchAction" -> {
+        result.success(launchAction)
+        launchAction = null
+      }
+      "readInbox" -> result.success("[]")
+      "ackInbox", "setSnapshot" -> result.success(null)
+      // taskwise/update
+      "installApk" -> {
+        val path = call.argument<String>("path")
+        if (path == null) {
+          result.error("bad_args", "Expected a path", null)
+        } else {
+          updater.install(activity, path) { status ->
+            Handler(Looper.getMainLooper()).post { result.success(status) }
+          }
+        }
+      }
       else -> result.notImplemented()
     }
   }
@@ -138,12 +176,36 @@ class TaskwiseAndroidPlugin :
     grantResults: IntArray,
   ): Boolean = manager.onPermissionResult(requestCode, activity)
 
+  /** The assistant action in [intent], once: the intent is marked handled. */
+  private fun takeAction(intent: Intent?): Map<String, Any>? {
+    if (intent == null || intent.getBooleanExtra(AssistantIntents.HANDLED_EXTRA, false)) {
+      return null
+    }
+    val action = AssistantIntents.action(
+      intent.action,
+      intent.type,
+      intent.getCharSequenceExtra(Intent.EXTRA_TEXT),
+      intent.getCharSequenceExtra(Intent.EXTRA_SUBJECT),
+    ) ?: return null
+    intent.putExtra(AssistantIntents.HANDLED_EXTRA, true)
+    return action
+  }
+
+  /** A shortcut or share while Taskwise is already open. */
+  override fun onNewIntent(intent: Intent): Boolean {
+    val action = takeAction(intent) ?: return false
+    assistant.invokeMethod("action", action)
+    return true
+  }
+
   // ActivityAware
 
   override fun onAttachedToActivity(binding: ActivityPluginBinding) {
     this.binding = binding
     binding.addRequestPermissionsResultListener(this)
     binding.addActivityResultListener(this)
+    binding.addOnNewIntentListener(this)
+    takeAction(binding.activity.intent)?.let { launchAction = it }
   }
 
   override fun onDetachedFromActivityForConfigChanges() = onDetachedFromActivity()
@@ -154,6 +216,7 @@ class TaskwiseAndroidPlugin :
   override fun onDetachedFromActivity() {
     binding?.removeRequestPermissionsResultListener(this)
     binding?.removeActivityResultListener(this)
+    binding?.removeOnNewIntentListener(this)
     binding = null
   }
 }

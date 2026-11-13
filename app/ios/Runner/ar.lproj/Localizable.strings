@@ -1,0 +1,25 @@
+/* Siri's names, questions and answers in Arabic (AssistantIntents.swift). */
+
+"Add a task" = "إضافة مهمة";
+"Adds a task to Taskwise." = "يضيف مهمة إلى Taskwise.";
+"Task" = "المهمة";
+"What's the task?" = "ما هي المهمة؟";
+"Add ${taskTitle} to Taskwise" = "أضف ${taskTitle} إلى Taskwise";
+"Added %@ to Taskwise." = "تمت إضافة «%@» إلى Taskwise.";
+
+"Add a task with a due date" = "إضافة مهمة بموعد";
+"Add a task with a date" = "إضافة مهمة بتاريخ";
+"Adds a task with a due date (and a time, if you say one) to Taskwise." = "يضيف مهمة بموعد (ووقت إن ذكرته) إلى Taskwise.";
+"Due" = "الموعد";
+"When is it due?" = "متى موعدها؟";
+"Add ${taskTitle} due ${due} to Taskwise" = "أضف ${taskTitle} بموعد ${due} إلى Taskwise";
+
+"What's due today" = "مهام اليوم";
+"Reads out the Taskwise tasks due today and the overdue ones." = "يقرأ مهام Taskwise المستحقة اليوم والمتأخرة.";
+"Nothing is due today." = "لا توجد مهام لليوم.";
+"Today: %@." = "اليوم: %@.";
+"Overdue: %@." = "متأخرة: %@.";
+"%lld more" = "%lld أخرى";
+
+"The task needs a name." = "المهمة تحتاج إلى اسم.";
+"Taskwise couldn't save the task. Please try again." = "تعذّر على Taskwise حفظ المهمة. حاول مرة أخرى.";

@@ -190,12 +190,13 @@ class _TaskEditorState extends ConsumerState<_TaskEditor> {
     );
     // The first time a task gets a time, add the default reminder (if one
     // is set and the task has no reminders yet).
-    final before = ref.read(appSettingsProvider).defaultReminder.minutesBefore;
-    final reminders = ref.read(reminderRepositoryProvider);
-    if (!hadTime &&
-        before != null &&
-        !await reminders.hasReminders(widget.task.id)) {
-      await reminders.addRelative(widget.task.id, before);
+    if (!hadTime) {
+      await ref
+          .read(reminderRepositoryProvider)
+          .addDefaultReminder(
+            widget.task.id,
+            ref.read(appSettingsProvider).defaultReminder.minutesBefore,
+          );
     }
   }
 

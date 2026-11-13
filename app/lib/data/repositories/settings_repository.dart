@@ -36,6 +36,10 @@ abstract final class SettingKeys {
   static const syncSeq = 'sync_seq';
   static const lastSyncedAt = 'sync_last_synced_at';
   static const syncBannerDismissed = 'sync_banner_dismissed';
+
+  // Updates (device only, M12).
+  static const updateAutoCheck = 'update_auto_check';
+  static const updateCheckedAt = 'update_checked_at';
 }
 
 /// The device-only sync bookkeeping kept in settings.
@@ -135,6 +139,35 @@ class SettingsRepository extends RepositoryBase {
 
   Future<void> setRemindersCheckedAt(DateTime at) => _put(
     SettingKeys.remindersCheckedAt,
+    at.toUtc().toIso8601String(),
+    synced: false,
+  );
+
+  // --------------------------------------------------------------- updates
+
+  /// Whether Taskwise checks for updates by itself (default on), and when it
+  /// last checked.
+  Future<({bool autoCheck, DateTime? checkedAt})> getUpdateSettings() async {
+    final rows =
+        await (db.select(db.settings)..where(
+              (s) => s.id.isIn([
+                SettingKeys.updateAutoCheck,
+                SettingKeys.updateCheckedAt,
+              ]),
+            ))
+            .get();
+    final values = {for (final row in rows) row.id: row.value};
+    return (
+      autoCheck: values[SettingKeys.updateAutoCheck] != 'false',
+      checkedAt: DateTime.tryParse(values[SettingKeys.updateCheckedAt] ?? ''),
+    );
+  }
+
+  Future<void> setUpdateAutoCheck(bool value) =>
+      _put(SettingKeys.updateAutoCheck, '$value', synced: false);
+
+  Future<void> setUpdateCheckedAt(DateTime at) => _put(
+    SettingKeys.updateCheckedAt,
     at.toUtc().toIso8601String(),
     synced: false,
   );

@@ -14,7 +14,9 @@ Taskwise comes as a portable folder. There's no installer and you don't need adm
 4. **First start.** Open that folder and double-click `taskwise.exe`. If **"Windows protected your PC"** (SmartScreen) appears, click **More info → Run anyway**. Windows shows this because the app isn't code-signed. It's only asked once.
 5. **Start menu shortcut** (optional). Right-click `taskwise.exe` → **Show more options** → **Pin to Start**, or **Send to → Desktop (create shortcut)**.
 
-To update, quit Taskwise (right-click its tray icon → **Quit Taskwise**), then extract the new zip into the same `%LOCALAPPDATA%\Programs` folder and choose **Replace the files in the destination**. Your tasks stay.
+**Updating:** from version 1.1.0 on, Taskwise updates itself. When a new version is out, a banner says so; tap **See what's new → Update and restart**. Taskwise downloads it, checks it's a genuine release, replaces its files and starts again. **Settings → About → Check for updates** checks right away. ([How it works](updates.md).) The folder must be one you can write to, like `%LOCALAPPDATA%\Programs\Taskwise` above.
+
+To update by hand instead (or from versions before 1.1.0), quit Taskwise (right-click its tray icon → **Quit Taskwise**), then extract the new zip into the same `%LOCALAPPDATA%\Programs` folder and choose **Replace the files in the destination**. Your tasks stay.
 
 ## Where things are
 

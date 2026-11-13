@@ -70,18 +70,22 @@ class TaskRepository extends RepositoryBase {
     return row == null ? null : toTask(row);
   }
 
-  /// Creates a task. Throws [ArgumentError] if [title] is blank.
+  /// Creates a task. Throws [ArgumentError] if [title] is blank. [id] is
+  /// for tasks made elsewhere first (Siri's inbox); new ids are UUID v7.
   Future<Task> createTask({
     required String title,
+    String notes = '',
     LocalDate? dueDate,
     int? dueTimeMinutes,
     Priority priority = Priority.none,
     String? categoryId,
+    String? id,
   }) async {
     final at = now();
     final task = Task(
-      id: newId(),
+      id: id ?? newId(),
       title: Task.validateTitle(title),
+      notes: notes,
       dueDate: dueDate,
       dueTimeMinutes: dueDate == null ? null : dueTimeMinutes,
       priority: priority,

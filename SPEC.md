@@ -171,6 +171,18 @@ Two types, a task can mix both:
 - Export / import data as JSON (backup)
 - About (version, license, GitHub link)
 
+### 3.7 Assistants (M11)
+- **Siri (iPhone)**, English and Arabic, without opening the app: "Add a task in Taskwise" (Siri asks for the title), "Add a task with a date in Taskwise" (then "When is it due?"; a day alone is all-day), "What's on my list in Taskwise" (today's and overdue tasks). Apple allows no free text inside the phrase and requires the app's name in it.
+- How it works (maintainer's choice, 2026-11-12: add quietly, without opening the app): App Intents in `app/ios/Runner/AssistantIntents.swift`. Native code never writes the database. Siri appends to an **inbox** file (`AssistantStore.swift`, ids are UUID v7 and become the task ids); Dart moves the entries in through `TaskRepository.createTask` at start, on resume, when Siri adds while the app runs, and in the background sync (`app/lib/assistant/assistant_sync.dart`), adding the default reminder to timed ones. Dart writes a **snapshot** of open tasks due within 7 days plus overdue ones (`buildAssistantSnapshot` in shared); Siri filters it by its own "today".
+- **Android:** a static "New task" shortcut (long-press the icon → quick add focused) and a share target (`ACTION_SEND text/plain`: first line or subject = title, the rest = notes, "Added …" with Open). `AssistantIntents.kt` in the local plugin; channel `taskwise/assistant`, same methods on both phones.
+- **Gemini:** not possible yet (AppFunctions for Gemini is in a closed preview, Android 16+). See "Notes for later". User guide: `docs/assistants.md`.
+
+### 3.8 Updates inside the app (M12)
+- Maintainer's choices (2026-11-12): **ask, then install** (daily check, banner, one tap), **signed updates**, one commit for M11 + M12 released as 1.1.0 (the last manual install).
+- Check: `GET api.github.com/repos/Krkr8/taskwise/releases/latest` (published releases only) at start + 15 s and when 20 h have passed, if "Check for updates automatically" is on (device setting); Settings → About → Check for updates. Versions compared as semver (`AppVersion` in shared).
+- Safety: the release workflow writes `SHA256SUMS` and an Ed25519 `SHA256SUMS.sig` (`tool/sign_release.sh`, secret `UPDATE_SIGNING_KEY`, checked against the app's key); the app verifies the signature with the built-in public key (`app/lib/update/update_key.dart`, package `cryptography`), then the file's SHA-256, before installing. A verified download is kept for a retry (Android permission, Cancel).
+- Install (`app/lib/update/update_installer.dart`): Windows: a PowerShell helper (robocopy, no deletes) after Taskwise quits; Linux AppImage: rename over `$APPIMAGE`; Linux tar.gz: swap `~/.local/share/taskwise`; both restart through a detached `sh` that waits for the old process (single instance). Android: `PackageInstaller` session (`AppUpdater.kt`, `REQUEST_INSTALL_PACKAGES`). iPhone and source builds: notice + release page (`url_launcher`). Each release also has `sidestore-source.json` for SideStore. Guide: `docs/updates.md`.
+
 ### 3.6 Design
 - Simple and clean. Light and dark mode with a single accent color (user can pick from ~6 accents — nice to have).
 - Material 3 base, rounded corners, generous spacing, good typography. Use a font that supports Arabic well (e.g., Noto Sans + Noto Sans Arabic, or IBM Plex Sans Arabic).
@@ -291,6 +303,14 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 - Asked for by the maintainer on 2026-11-07: an Android app with everything the iPhone has, location reminders included (native Kotlin, same rules as iOS). Tested on the emulator only (no Android phone).
 - **Done when:** the release APK runs on the emulator: time reminders with the app closed, sync, backup, and arrive/leave reminders on a simulated walk.
 
+### M11 — Siri and Android shortcuts
+- Asked for by the maintainer on 2026-11-12: talk to Taskwise through a phone assistant. Research: Siri works through App Intents (no entitlement, so it should work with free signing; to be confirmed on the iPhone); Gemini can't call third-party apps yet. Scope chosen: Siri (add, add with a date, what's due; EN + AR) and on Android the "New task" shortcut and "Share to Taskwise". Details in 3.7.
+- **Done when:** the tests pass (shared, app, Swift on Linux, Kotlin), the Android shortcut and share work on the emulator, and Siri adds and reads tasks on the maintainer's iPhone.
+
+### M12 — In-app updates
+- Asked for by the maintainer on 2026-11-12: install updates from inside the app on every platform. Possible on Windows, Linux and Android; the iPhone gets a notice (iOS apps can't install apps) and a SideStore source. Details in 3.8.
+- **Done when:** tests pass (signature, tampering, Linux installers on real files), a real update works on the Android emulator, the 1.1.0 release is signed by the workflow, and later the maintainer updates Windows and Linux from 1.1.0 to the next version with one tap.
+
 ---
 
 ## 6. Maintainer's preferences (summary)
@@ -307,9 +327,10 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 
 ## 7. Progress Log
 
-### Where we left off (2026-11-07)
-- **Status for a new chat:** **v1.0.0 is published** (2026-11-07), the first stable version for all platforms: M9 (Linux AppImage) and M10 (Android, emulator-tested) plus the tray-menu fix (Windows/Linux: the right-click menu never opened, because tray_manager 0.7+ needs `setContextMenuTrigger`). v0.6.1 and v0.7.0 were never published (their drafts are superseded). Ask the maintainer for the 1.0.0 test results (list under "How to test"); after that there are no planned milestones: ask what's next.
-- **Android toolchain on the Linux machine:** Android builds need a full JDK 21 (`sudo dnf install -y java-21-openjdk-devel`, then `flutter config --jdk-dir /usr/lib/jvm/java-21-openjdk`). Only the Java 25 *runtime* is installed, without `javac`/`jlink`. `flutter config --enable-android` is on. The emulator is `Pixel_9_API_36` (google_apis, x86_64).
+### Where we left off (2026-11-12)
+- **Status for a new chat:** **M11 (Siri and Android shortcuts) and M12 (in-app updates) are built** but not committed: the maintainer asked for one commit for both, together with the SPEC.md privacy cleanup (the "How to test" walkthroughs and the server regions were removed from this public file on 2026-11-12; they stay in git history, and the maintainer chose not to rewrite it). Next: the maintainer sets the GitHub secret `UPDATE_SIGNING_KEY` (command in docs/updates.md; the key is in `~/.config/taskwise/update-signing-key.pem`, made 2026-11-12), then commit `M11 + M12: Siri, Android shortcuts and in-app updates`, push, tag `v1.1.0`, check the draft has `SHA256SUMS`, `.sig` and `sidestore-source.json`, and give the maintainer the test steps (Siri on the iPhone; 1.1.0 installed by hand everywhere, the last manual install). The 1.0.0 test results (tray menu, M9 and M10 checks) are still to be confirmed.
+- **Siri is unconfirmed on a free-signed install.** App Intents need no entitlement, so they should work, but nobody has reported it for sideloaded apps. If Siri doesn't see the commands after the steps in `docs/assistants.md`, check the release build log for "Extract App Intents Metadata" and whether iloader's re-signing keeps `Metadata.appintents` in the app bundle.
+- **Android toolchain on the Linux machine:** Android builds need a full JDK 21: Eclipse Temurin 21 in `~/.local/jdk-21` (Fedora 45 has no JDK 21 package), set with `flutter config --jdk-dir`. Gradle on its own needs `JAVA_HOME=$HOME/.local/jdk-21` (the system has only a Java 25 runtime). `flutter config --enable-android` is on. The emulator is `Pixel_9_API_36` (google_apis, x86_64).
 - **The repo is public** (2026-11-07). It was recreated on GitHub with a clean history: every commit is by `Krkr8` with the GitHub noreply email, and LICENSE says Krkr8. Don't put the maintainer's name, email or server address anywhere (commits, docs, the repo's homepage field). The docs say "the maintainer" and name no devices or server details. v0.6.0 is published (the earlier drafts were lost with the old repo). Vercel's GitHub app has access to the new repo, and pushes to `main` deploy again.
 - v0.3.1 was confirmed on all devices (2026-11-05); v0.3.2 made the Undo bar fade after 5 seconds.
 - **Things to watch in the M7 device test** (all untestable without the phone):
@@ -329,139 +350,17 @@ Each milestone ends with: tests passing, commit + push, Progress Log updated, an
 | M2 Build pipeline | ✅ Done | 2026-10-30 | Release workflow builds Linux, Windows and unsigned iOS into a draft v0.1.0 release. Maintainer-tested on Fedora, Windows and iPhone. The iPhone app is installed with iloader from the Linux machine, because Apple blocks SideStore's own sign-in (-80045) since 2026-10-12. Also fixed from iPhone testing: tapping outside a text field (or scrolling) closes the keyboard, and selected Settings options use the accent colour. 69 automated tests. |
 | M3 Calendar + recurrence | ✅ Done | 2026-10-30 | Calendar tab with week (7 day columns listing tasks, all-day first then by time) and month views on all platforms; repeating tasks (RRULE subset in `shared`, editor with presets and Custom, done copy + next occurrence with Undo); upcoming repeats shown faded in the calendar. Selected chips now clearly highlighted. 115 automated tests (shared tests run in 3 timezones in CI). |
 | M4 Time reminders | ✅ Done | 2026-10-31 | Time reminders (relative + absolute, several per task, follow repeats), scheduling engine in `shared`, notifications with Done/Snooze/open, iOS 64-limit scheduling, desktop tray + single instance + start on login, notification settings. A real reminder fired on Fedora (GNOME) with Done/Snooze buttons. Closed by the maintainer on 2026-10-31 before device tests: **Windows and iPhone are untested** (see Where we left off). 138 automated tests. |
-| M5 Sync server | ✅ Done | 2026-11-02 | TypeScript + Hono server in `server/` (Node 24): account setup with a setup secret, login (argon2id) with database-backed rate limiting, per-device tokens (SHA-256 stored, revocable), devices API, push/pull sync with last-write-wins and a change sequence, daily Vercel Cron (90-day tombstone purge with task children, 7 nightly backups in the database). Generic record store: the server doesn't interpret records. API in `docs/sync-api.md`; contract fixtures in `shared/test/fixtures/sync/` tested by both Dart and TypeScript. Runs on Vercel or Docker (built and run with Podman locally). Dart `server/` placeholder removed; CI has a Node job. Free limits checked 2026-10-31 (Vercel Hobby: 1 M invocations/month, cron daily; Turso Free: 5 GB, 500 M reads, 10 M writes). 228 automated tests (app 53, shared 106, server 69). Deployed on Vercel (`fra1`) with Turso (`aws-eu-central-1`); health checked over HTTPS from the Linux machine and from the iPhone on mobile data. |
+| M5 Sync server | ✅ Done | 2026-11-02 | TypeScript + Hono server in `server/` (Node 24): account setup with a setup secret, login (argon2id) with database-backed rate limiting, per-device tokens (SHA-256 stored, revocable), devices API, push/pull sync with last-write-wins and a change sequence, daily Vercel Cron (90-day tombstone purge with task children, 7 nightly backups in the database). Generic record store: the server doesn't interpret records. API in `docs/sync-api.md`; contract fixtures in `shared/test/fixtures/sync/` tested by both Dart and TypeScript. Runs on Vercel or Docker (built and run with Podman locally). Dart `server/` placeholder removed; CI has a Node job. Free limits checked 2026-10-31 (Vercel Hobby: 1 M invocations/month, cron daily; Turso Free: 5 GB, 500 M reads, 10 M writes). 228 automated tests (app 53, shared 106, server 69). Deployed on Vercel with Turso; health checked over HTTPS from the Linux machine and from the iPhone on mobile data. |
 | M6 Client sync + devices | ✅ Done | 2026-11-03 | Optional sign-in from Settings (with account setup), one-time banner, sync engine (trigger-filled outbox, push/pull with last-write-wins, full resync on 410, device list), sync triggers (start, resume, 2 s after changes, every minute, Sync now), status icon, Settings → Sync and → Devices, sign out, "Notify on" per task with each device scheduling only its own reminders. Maintainer-tested v0.3.0: sync connects on Fedora, Windows and iPhone. Closed with the v0.3.1 fixes (Windows scrolling and tray Quit, iOS rescheduling bug, test-notification button, "time passed" reminders) and the **main device** (manages the other devices). Database schema v3. Live test: two app devices through the real TypeScript server (also in CI). 276 automated tests (app 85 incl. 1 live, shared 112, server 79). v0.3.1 confirmed by the maintainer on all devices (2026-11-05); v0.3.2 makes the Undo snackbar fade after 5 s. |
 | M7 Location reminders | ✅ Done | 2026-11-06 | Map picker (flutter_map + OSM, Nominatim search behind a swappable `Geocoder`), saved places, location reminders on every device (Arrive / Leave, 30-500 m, fire every time, 30 min debounce), schema v4 (`reminders.label`). iPhone: native Swift geofencing (outer region + precise check, 20-region limit, debug screen), permission explanation and banner (EN/AR, Arabic `InfoPlist.strings`). iOS background refresh sync with `workmanager` 0.10.10; token readable after first unlock. New iOS CI workflow runs the Swift tests. 300 automated tests (app 102 + 1 live, shared 119, server 79) + 9 Swift tests. v0.4.1: `GeofenceEngine` + walk simulator, 3 geofencing bugs fixed, Linux integration test; 16 Swift tests. Closed by the maintainer without the iPhone walk test (skipped). |
 | M8 Design + polish | ✅ Done | 2026-11-07 | Design tour screenshots; Opus/Gemini design contest; four designs selectable per device (Classic, Lapis, Slate & Indigo, Brutal default with warm charcoal dark mode); UI split into `ui/shared` + `ui/designs/<name>`; `docs/architecture.md`. v0.6.0: centred Settings, cloud button syncs, JSON backup export/import, logs viewer + error logging, 2,000-task performance test (Opus subagent) with lazy lists, README/CONTRIBUTING/self-hosting/CHANGELOG (Sonnet subagent), whole-word titles in the phone week view. 405 automated tests (app 207 + 1 live, shared 119, server 79) + 16 Swift tests; 3 Linux integration tests (location, design tour, performance). Signed off by the maintainer on 2026-11-07. |
 | M9 Linux AppImage | ✅ Built (v0.6.1), maintainer test pending | 2026-11-07 | `taskwise-<v>-linux-x86_64.AppImage` next to the tar.gz, both built on Ubuntu 22.04. Bundles libsecret (RUNPATH fixed with patchelf, since plugins load it); pinned appimagetool and runtime. Start on login uses `$APPIMAGE`. Smoke test in podman: starts on Debian 12, Ubuntu 22.04, Ubuntu 24.04 and Arch; also run on Fedora with FUSE. Minimal Debian/Ubuntu installs need `libegl1 libgles2` (Flutter loads them; every desktop has them). 408 automated tests (app 210 + 1 live, shared 119, server 79). |
 | M10 Android | ✅ Built (v0.7.0), emulator-tested | 2026-11-07 | Android app (minSdk 26, target 36), signed release APK from the release workflow (key `CN=Taskwise` in GitHub secrets and `~/.config/taskwise/`). `MobileNotifier` (iOS + Android, exact alarms via `USE_EXACT_ALARM`), WorkManager background sync, "Save to" export (`saveTextFile`). Location reminders in Kotlin (`app/packages/taskwise_android`): `GeofenceEngine.kt` port + `GeofencingClient` + precise-check foreground service + boot/update re-registration; 18 Kotlin tests incl. the walk simulator (8 walks, 300/300). `DeviceType.android` in shared and the server. Fixed on all platforms: Done on a set-time reminder of a one-off task opened it instead of ticking it off. Emulator (Pixel 9, Android 16, release build): time reminder on the minute with the app killed, Done/Snooze; fake walk with Google Maps keeping GPS on: Leave fired at 120 m, Arrive at 25 m, Done on a location notification ticked the task; geofences re-added after an app update; backup export/import; Back button. Not tested: sign-in/sync on Android (needs the maintainer's password), a real phone. 418 automated tests (app 211 + 1 live, shared 119, server 80) + 16 Swift + 18 Kotlin tests. |
+| M11 Siri + Android shortcuts | 🔨 Built, not committed (with M12) | 2026-11-12 | Siri (App Intents, iOS 17+): add a task, add with a date (`DateComponents`, a day alone = all-day), what's due today/overdue; EN + AR phrases (`ar.lproj/AppShortcuts.strings`, `Localizable.strings`). Siri writes an inbox, the app imports it (start, resume, Siri while open, background sync) and writes a snapshot for "what's due" (`app/lib/assistant/`, `AssistantStore.swift`, `assistant.dart` in shared). Android: static "New task" shortcut and `ACTION_SEND text/plain` share target (`AssistantIntents.kt`), "Added …" message with Open. `ReminderRepository.addDefaultReminder` replaces four copies in the designs. Found by tests: an import started while another ran could miss a task Siri just added (now queued). Emulator (debug build): shortcut from Settings focuses quick add; share while open and from closed both add the task; Taskwise is listed as a share target. Siri compiled only by CI; not tried on the iPhone yet. 461 automated tests (app 225 + 1 live, shared 130, server 80) + 25 Swift + 22 Kotlin tests. |
+| M12 In-app updates | 🔨 Built, not committed (with M11) | 2026-11-12 | Daily check of GitHub's latest published release, banner + dialog with the notes, Settings → About (check now, automatic switch). Signed releases: `tool/sign_release.sh` (SHA256SUMS + Ed25519 signature, checked against the app's key in the workflow), verified in the app with `cryptography` 2.9.0; key made locally (`~/.config/taskwise/update-signing-key.pem`), public key in `update_key.dart`. Installers: Windows (PowerShell + robocopy after quitting), Linux AppImage (rename over `$APPIMAGE`), Linux tar.gz (folder swap), restart through a detached `sh` waiting for the old pid; Android `PackageInstaller` (`AppUpdater.kt`); iPhone and source builds: notice + release page (`url_launcher` 6.3.3) and a SideStore source in each release. Found by tests: the saved "automatic" setting could overwrite a just-flipped switch. Emulator (debug builds, fake signed release from a local server): banner after 15 s, notes, download with progress, "Allow from this source" once, Android's update screen, updated to 1.2.0 with tasks kept; a retry reuses the verified download. Windows not tried (no Windows here). 468 automated tests (app 251 + 1 live, shared 137, server 80) + 25 Swift + 23 Kotlin tests. |
 
 ### How to test the latest milestone
-**v1.0.0 (published).** Files in `~/Downloads/taskwise-1.0.0/`, or from the [latest release](https://github.com/Krkr8/taskwise/releases/latest). Install it on every device as before (Fedora: the AppImage or the tar.gz, both are there).
-
-1. **Tray menu (Windows and Fedora):** right-click the Taskwise tray icon. A menu with **Show Taskwise** and **Quit Taskwise** opens; both work. (Fedora needs the AppIndicator extension, see `docs/install-linux.md`.)
-2. Then the M10 and M9 steps below, with the 1.0.0 files.
-
-**M10 (Android), with v0.7.0.** Files in `~/Downloads/taskwise-0.7.0/`. The server must be redeployed first: it happens by itself (the push to `main` deploys it). Desktops and iPhone: install v0.7.0 as usual (the Done fix below is for every device).
-
-*Without an Android phone (the emulator on Fedora):*
-1. Start the emulator: `~/Android/Sdk/emulator/emulator -avd Pixel_9_API_36 &` (it needs about 5 GB of RAM; close other big apps).
-2. `~/Android/Sdk/platform-tools/adb install ~/Downloads/taskwise-0.7.0/taskwise-0.7.0-android.apk`, then open Taskwise from the emulator's app list.
-3. **Sign in:** Settings → Sync → Connect, with your server address (`SERVER_URL` in `~/.config/taskwise/server-secrets.env`), username and password. Your tasks appear; Settings → Sync → Devices lists "Android phone" with a phone icon. Make a task on Fedora: it appears on Android within a minute or two (or tap the cloud).
-4. **Reminder:** give a task a reminder 2 minutes ahead (Add reminder → Custom date & time…), allow notifications, swipe Taskwise away. The reminder comes on time. Tap **Done**: the task is ticked off.
-
-*With an Android phone (any time later):* follow `docs/install-android.md`, then the same steps, plus a location reminder at home ("Leave"), a short walk (200 m+) and back (with "Arrive"). Settings → Location reminders → Location debug shows what happened.
-
-*Everywhere:* a task **without a due date** and a reminder at a set time: **Done** on the notification now ticks it off (before, it only opened the task).
-
-**Earlier: M9 (AppImage), with v0.6.1.** Files in `~/Downloads/taskwise-0.6.1/` on the Linux machine.
-
-1. Quit the installed Taskwise (tray → **Quit Taskwise**).
-2. Run the AppImage:
-   ```bash
-   chmod +x ~/Downloads/taskwise-0.6.1/taskwise-0.6.1-linux-x86_64.AppImage
-   ~/Downloads/taskwise-0.6.1/taskwise-0.6.1-linux-x86_64.AppImage
-   ```
-   Taskwise opens with your tasks (the AppImage uses the same data as the installed app). Settings → About says 0.6.1.
-3. Turn on **Settings → Background → Start when I log in**, then run `grep Exec ~/.config/autostart/Taskwise.desktop`. It shows the AppImage's path in `~/Downloads/...`, not `/tmp/.mount_…`. Log out and in: Taskwise starts in the background. (Turn it off again afterwards if you prefer the installed app.)
-4. If you have a Debian, Ubuntu or Arch machine (or a friend with one), try the AppImage there too.
-5. The tar.gz still works as before (`./install.sh`).
-
-**Earlier: M8 (backup, logs, speed, fixes), with v0.6.0.** Files in `~/Downloads/taskwise-0.6.0/` on the Linux machine. Fedora: `git pull`, then `cd app && flutter run -d linux`. Windows: quit Taskwise (tray → Quit), unzip the new zip over the old folder. iPhone: iloader → Import IPA → `taskwise-0.6.0-ios-unsigned.ipa`. Your tasks and sign-in are kept.
-
-1. **Settings on a wide window:** maximise Taskwise and open Settings. It sits in the middle, with the scroll bar at the right edge.
-2. **Cloud button:** in the side bar (desktop) or the top bar (phone), tap the cloud. It turns into the syncing icon for a moment, and Settings → Sync says "Synced just now". It no longer opens Settings.
-3. **Export:** Settings → Backup → **Export to a file**.
-   - Fedora/Windows: pick a folder and save. A message shows where the file went.
-   - iPhone: the message says it's in the **Files** app → **On My iPhone** → **Taskwise**. Open the Files app and check the file is there.
-4. **Import:** delete a task (and don't press Undo). Then Settings → Backup → **Import from a file**, and pick the file from step 3. The task comes back, and the message counts what was added. After a minute it's back on your other devices too.
-5. **Logs:** Settings → About shows "Taskwise 0.6.0". Tap **View logs**: you see lines like "Synced: …". Try **Problems only**, and the copy button. No task titles appear in the logs.
-6. **Phone week view:** Calendar → week on the iPhone. Long words end with "…" instead of breaking in the middle.
-7. **Speed:** scrolling the task list and switching tabs should feel instant, in every design.
-8. Tell me what you think. If everything is fine, say so and **M8 is done**.
-
-**Earlier: M8 step 1 (designs), with v0.5.0.** Files in `~/Downloads/taskwise-0.5.0/` on the Linux machine. Fedora: `git pull`, then `cd app && flutter run -d linux`. Windows: quit Taskwise (tray → Quit), unzip the new zip over the old folder. iPhone: iloader → Import IPA → `taskwise-0.5.0-ios-unsigned.ipa`. Your tasks and sign-in are kept.
-
-1. Taskwise opens in the **Brutal** design (cream paper, black outlines). The app icon is new too (on Windows and the iPhone it may take a restart or a minute to refresh).
-2. **Settings → Appearance → Design:** tap **Classic**, **Lapis**, **Slate & Indigo** and **Brutal** in turn. The whole app changes at once and stays on Settings.
-3. In each design, look at Tasks, open a task, the Calendar (week and month) and Settings. Try **Theme → Dark** and **Language → العربية** too.
-4. Close and reopen Taskwise: it keeps the design you chose. Each device keeps its own (try a different one on the iPhone).
-5. Desktop shortcuts in Lapis and Brutal: **Ctrl+N** new task, **Ctrl+F** search, **Esc** closes the open task.
-6. Tell me which design you keep using, and anything that looks wrong (a screenshot in `tempscreenshot/` helps).
-
-**M7 (location reminders), with v0.4.1.** Files in `~/Downloads/taskwise-0.4.1/` on the Linux machine. Fedora: `git pull`, then `cd app && flutter run -d linux`. Windows: unzip the new zip over the old folder. iPhone: iloader → Import IPA → `taskwise-0.4.1-ios-unsigned.ipa`. Quit Taskwise first everywhere (tray → Quit). Your tasks and sign-in are kept.
-
-*At home, on Fedora (or Windows):*
-1. **Settings → Location reminders → Saved places → Add place.** Type your street or area in the search box and press Enter (or the arrow), pick a result, then tap the map exactly on your front door. Name it "Home" and press **Save**. Optionally add "Work" or a shop the same way.
-2. Make a task "Test: arrive home". **Add reminder → At a location…** → tap the **Home** chip → **Arrive** → **Save**. The task shows "Arrive at Home · 30 m", a 📍 in the list, and "Only reminds on the iPhone".
-3. Make a task "Test: leave home" with a location reminder at Home, **Leave**.
-4. Within a minute or two both tasks appear on the iPhone (or open Taskwise there).
-
-*On the iPhone:*
-5. Open Taskwise and one of the two tasks. If Taskwise asks about location: read the explanation, press **Continue**, choose **Allow While Using App**, and when iOS asks again, **Change to Always Allow**. If it never asks for "Always": iPhone **Settings → Taskwise → Location → Always**, and turn **Precise Location** on.
-6. **Settings → Location reminders → Location debug:** "Location access: Always", 2 location reminders, and both watched areas listed. Keep this screen in mind: it shows what happened if a reminder doesn't fire.
-7. Swipe Taskwise away (close it completely). Lock the phone.
-
-*The walk (the real test):*
-8. **Leave:** walk (or drive) away from home, at least 200 m. "Test: leave home · You left Home" appears, usually 150-400 m from home (iOS takes a moment to notice).
-9. **Arrive:** come back. "Test: arrive home · You're at Home" appears when you're close to the door, about 30 m. Press **Done** on it: the task is ticked off.
-10. Open **Location debug** and press refresh: the events list shows "enter", "precise on", "notify …". Please send a screenshot of it, especially if something didn't fire or fired at the wrong place.
-11. Make a third task with **Arrive** at a shop or a friend's place (search it on the map). Next time you go there, it reminds you. It reminds again on later visits until you tick the task off.
-
-*Background sync (needs a few hours):*
-12. Leave Taskwise closed on the iPhone. On Fedora, make a task with a time reminder for this evening. Without opening Taskwise on the iPhone, it may still remind you: iOS lets Taskwise sync in the background now and then (iOS decides when; sometimes only after you've used the app for a few days). Afterwards, Settings → Sync on the iPhone shows when it last synced.
-
-Also on Windows/Fedora: Settings → **Default radius for location reminders** changes on all devices.
-
-**M6 (sync), with the v0.3.0 build.** Fedora: `git pull`, then `cd app && flutter run -d linux` (needs `sudo dnf install -y libsecret-devel` once). Windows and iPhone: install v0.3.0 from the draft release (as in `docs/install-windows.md` and `docs/install-ios-sidestore.md`). Quit any running Taskwise first (tray menu → Quit) so the new version starts.
-
-1. **Fedora first, to create the account:** Tasks shows a banner "Sync your devices…". Click **Connect**.
-   - Server address: your Vercel address (in `~/.config/taskwise/server-secrets.env`, `SERVER_URL`).
-   - Click **First time? Create the account**, paste the setup secret (`SETUP_SECRET` in the same file), choose a username and a password of at least 10 characters, keep the device name, and press **Create account and sign in**.
-   - The banner disappears, and a cloud icon with a tick appears at the bottom of the side bar. **Settings → Sync** says "Synced just now".
-2. **Windows, then iPhone:** Connect with the same address, username and password (not the "first time" link). Your existing tasks from each device are merged.
-3. Make a task on one device. Within about 1–2 minutes (or press **Sync now** in Settings, or switch away and back to the app) it appears on the others. Try editing, completing and deleting too.
-4. **Settings → Week starts on** changes on all devices. Theme and language stay per device.
-5. **Settings → Sync → Devices:** all three devices are listed. Rename one; remove none yet.
-6. **Notify on:** open a task with a reminder 5 minutes ahead and under **Notify on** untick everything except the iPhone. Only the iPhone reminds; on the others the 🔔 becomes a crossed-out bell.
-7. **Offline:** turn the Linux machine's Wi-Fi off, edit a task (the cloud icon shows offline), turn it on: the change arrives on the other devices.
-8. **Sign out** on one device (Settings → Sync): its tasks stay; it no longer syncs, and it is gone from the Devices list on the others.
-
-Also run the **M4 list below on Windows and the iPhone** with this build (reminders were never tested there).
-
-**M5 (sync server).** Follow `docs/server-setup-vercel.md` step by step. In short:
-1. `git pull`. Make the setup and cron secrets (step 1) and keep them in your password manager.
-2. Create the Turso database and copy its URL and token (step 2).
-3. Import the repo in Vercel with **Root Directory = `server`**, add the four environment variables, deploy, and set the function region near the database (step 3).
-4. From the Linux machine, run `curl https://<your-app>.vercel.app/api/v1/health`. It should print `{"status":"ok","apiVersion":1,…}`.
-5. On the iPhone, turn Wi-Fi off and open the same address in Safari. You should see the same text.
-6. Optional: create your account with the `curl` in step 5 of the guide. A second try should say "The account already exists".
-7. Tell Claude Code the result (and the error text or Vercel **Logs** if something fails).
-
-Local checks (optional): `cd server && npm ci && npm test`. To run the server on the Linux machine: `cp .env.example .env && npm run dev`, then `curl http://localhost:8787/api/v1/health`.
-
-**M4.** Fedora: `git pull`, then `cd app && flutter run -d linux`. Windows and iPhone: the next release build (v0.2.0).
-
-On every device:
-1. Open a task, give it a due date and a time about 5 minutes from now. Under **Reminders**, tap **Add reminder → 5 minutes before** (and try **At due time** too). The row shows a 🔔.
-   - iPhone: allow notifications when asked.
-2. Wait. A notification "Task title / Due: Today, …" appears with **Done** and **Snooze** buttons.
-3. Press **Snooze 5 minutes**: it comes back 5 minutes later. Press **Done**: the task is ticked off.
-4. Tap a notification (not a button): Taskwise opens on that task.
-5. **Repeating task:** make a daily task with a reminder, tick it off. Tomorrow's copy has the same reminder.
-6. **Custom date & time…** in Add reminder: pick a time 2 minutes away; it fires.
-7. **Settings → Notifications:** set Default reminder to "15 min before", then give a new task a time: the reminder is added by itself. Change the snooze options and check the buttons change.
-
-Desktop (Windows and Fedora):
-8. Close the window with a reminder pending: it still fires (Taskwise stays in the tray). Open Taskwise again from the menu: the same window comes back.
-9. Tray menu → **Quit Taskwise**, set a reminder 1 minute ahead next time and start Taskwise after it was due: it shows as missed when the app starts.
-10. **Settings → Background → Start when I log in**, log out and in: Taskwise is running in the background.
-    - Fedora tray icon needs `sudo dnf install -y gnome-shell-extension-appindicator` (see `docs/install-linux.md`).
-
-iPhone only:
-11. Close Taskwise completely (swipe it away) with a reminder pending: it still fires.
-
-Automated checks (optional): from the repo root, run `flutter analyze`, then `cd app && flutter test`, `cd ../shared && dart test` and `cd ../server && npm ci && npm test`. If `flutter test` fails with "Building native assets failed", see the ccache note in `docs/dev-setup-fedora.md`.
+Test steps are given to the maintainer in the chat at the end of each milestone. They are not kept here, because this file is public.
 
 ### Known issues
 - **Tray (fixed in 1.0.0):** with tray_manager 0.7+ the menu only opens if `setContextMenuTrigger` is set (`app/lib/desktop/desktop_shell.dart`); on Linux, without it the icon reports `Menu = /NO_DBUSMENU`. Check it with D-Bus: `gdbus call --session -d <bus name> -o /StatusNotifierItem -m org.freedesktop.DBus.Properties.Get org.kde.StatusNotifierItem Menu`.
@@ -476,6 +375,9 @@ Automated checks (optional): from the repo root, run `flutter analyze`, then `cd
 - GTK prints harmless `Atk-CRITICAL` / cursor-theme warnings to the terminal on GNOME.
 
 ### Notes for later
+- **Updates (M12):** the MaterialBanner on phones leaves a gap under it (the page keeps its own top safe-area padding); cosmetic. On Android the app closes after updating itself and must be reopened (Android's behaviour). The Windows updater is untested on a real PC until the first update after 1.1.0. If the release key is lost or leaks, see docs/updates.md (one manual install everywhere).
+- **Gemini (M11):** Gemini only calls other apps through AppFunctions (Android 16+, `androidx.appfunctions`), in a closed preview with trusted testers as of 2026-11; Google's Connected Apps platform (cloud MCP server or AppFunctions, Google Connected Console) opens in phases. When it opens, expose "add a task" and "what's due" as AppFunctions reusing the `taskwise/assistant` design (an inbox like the iPhone's, since Gemini may call while the app is closed). Old Assistant App Actions (`shortcuts.xml` capabilities) aren't invoked by Gemini.
+- **Siri (M11, later):** the phrases can't carry the task title (Apple allows no free-text parameters in App Shortcut phrases). Siri tasks don't sync until Taskwise runs; pushing from Swift would need the token from the keychain and the sync API in Swift (not worth it now). A date-and-time said as exactly midnight is taken as all-day.
 - **Android (M10):** building needs a full JDK 21 (`java-21-openjdk-devel`, see Where we left off). `workmanager_android` still applies the Kotlin Gradle plugin; Flutter warns that future versions will refuse such plugins, so update workmanager when it migrates to built-in Kotlin. `androidx.core` is pinned to 1.18.0 because 1.19 needs compileSdk 37. Gradle's heap is capped at 3 GB (`app/android/gradle.properties`) so builds fit next to the emulator. `adb emu kill`/`adb reboot` may stop the T3-started emulator; use the device panel to start it. `am force-stop` cancels an app's alarms (as Settings → Force stop does), so test "app closed" with Home + swipe away instead.
 - **`test` is pinned to 1.31.1** because Flutter 3.47.7's `flutter_test` pins `test_api` 0.7.12, and a pub workspace resolves to one version. Whenever Flutter is upgraded, bump `test` (in shared) to the release that uses the new `test_api`. The same constraint caps `analyzer` below 14, which keeps `build_runner` at 2.15.x.
 - Flutter's version is pinned in two places: `.github/workflows/ci.yml` and `docs/dev-setup-fedora.md`. Keep them in sync.

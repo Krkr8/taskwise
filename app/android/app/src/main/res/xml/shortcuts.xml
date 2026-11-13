@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Long-press the Taskwise icon: "New task" opens Taskwise with the
+     quick-add field focused (handled in packages/taskwise_android,
+     AssistantIntents.kt, and app/lib/ui/shared/assistant/). -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="new_task"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_new_task"
+        android:shortcutShortLabel="@string/shortcut_new_task"
+        android:shortcutLongLabel="@string/shortcut_new_task_long">
+        <intent
+            android:action="io.github.krkr8.taskwise.NEW_TASK"
+            android:targetPackage="io.github.krkr8.taskwise"
+            android:targetClass="io.github.krkr8.taskwise.MainActivity" />
+    </shortcut>
+</shortcuts>

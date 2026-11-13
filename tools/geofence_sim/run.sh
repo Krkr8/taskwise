@@ -3,7 +3,8 @@
 # Mac needed on the laptop):
 #   tools/geofence_sim/run.sh             walk simulator, all scenarios
 #   tools/geofence_sim/run.sh trace 4 7   event log of scenario 4, seed 7
-#   tools/geofence_sim/run.sh test        the Swift unit tests (RunnerTests)
+#   tools/geofence_sim/run.sh test        the Swift unit tests (RunnerTests:
+#                                         location and Siri's inbox)
 set -euo pipefail
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 if [[ "${1:-}" == "test" ]]; then
@@ -11,8 +12,8 @@ if [[ "${1:-}" == "test" ]]; then
   script='
     set -eo pipefail
     mkdir -p /pkg/Sources/Runner /pkg/Tests/RunnerTests
-    cp app/ios/Runner/GeofenceDecider.swift /pkg/Sources/Runner/
-    cp app/ios/RunnerTests/RunnerTests.swift /pkg/Tests/RunnerTests/
+    cp app/ios/Runner/GeofenceDecider.swift app/ios/Runner/AssistantStore.swift /pkg/Sources/Runner/
+    cp app/ios/RunnerTests/*.swift /pkg/Tests/RunnerTests/
     cat > /pkg/Package.swift <<PKG
 // swift-tools-version:5.9
 import PackageDescription

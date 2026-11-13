@@ -165,16 +165,20 @@ class _QuickAddFieldState extends ConsumerState<QuickAddField> {
   }
 
   @override
-  Widget build(BuildContext context) => TextField(
-    controller: _controller,
-    focusNode: _focus,
-    onSubmitted: _submit,
-    textInputAction: TextInputAction.done,
-    decoration: InputDecoration(
-      hintText: context.l10n.quickAddHint,
-      prefixIcon: const Icon(Icons.add),
-    ),
-  );
+  Widget build(BuildContext context) {
+    // Android's "New task" shortcut.
+    ref.listen(quickAddRequestProvider, (_, _) => _focus.requestFocus());
+    return TextField(
+      controller: _controller,
+      focusNode: _focus,
+      onSubmitted: _submit,
+      textInputAction: TextInputAction.done,
+      decoration: InputDecoration(
+        hintText: context.l10n.quickAddHint,
+        prefixIcon: const Icon(Icons.add),
+      ),
+    );
+  }
 }
 
 /// Flattened, collapsible list of task sections.

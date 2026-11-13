@@ -331,6 +331,19 @@ final shellTabProvider = NotifierProvider<ShellTabNotifier, int>(
   ShellTabNotifier.new,
 );
 
+/// Counts requests to focus the quick-add field (Android's "New task"
+/// shortcut). Each design's quick-add field listens and takes the focus.
+class QuickAddRequestNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void request() => state++;
+}
+
+final quickAddRequestProvider = NotifierProvider<QuickAddRequestNotifier, int>(
+  QuickAddRequestNotifier.new,
+);
+
 /// A task the app was asked to open (from a notification). The shell shows
 /// it and clears the request.
 class OpenTaskRequestNotifier extends Notifier<String?> {

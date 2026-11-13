@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter/foundation.dart';
@@ -7,6 +9,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:taskwise/app.dart';
+import 'package:taskwise/assistant/assistant_platform.dart';
+import 'package:taskwise/assistant/assistant_sync.dart';
+import 'package:taskwise/update/update_controller.dart';
+import 'package:taskwise/update/update_verifier.dart';
+import 'package:taskwise/version.dart';
 import 'package:taskwise/data/app_settings.dart';
 import 'package:taskwise/data/db/app_database.dart';
 import 'package:taskwise/data/repositories/settings_repository.dart';
@@ -24,6 +31,9 @@ import 'package:taskwise/ui/designs/classic/location/location_picker_page.dart';
 import 'package:taskwise/ui/designs/classic/tasks/task_detail.dart';
 import 'package:taskwise/ui/designs/classic/theme/app_theme.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
+
+import '../assistant/fake_assistant_platform.dart';
+import '../update/fake_update.dart';
 
 /// Tuesday 2026-10-20, 09:00 local.
 final _now = DateTime(2026, 10, 20, 9);
@@ -99,6 +109,169 @@ Future<void> _quickAdd(WidgetTester tester, String title) async {
 }
 
 void main() {
+  group('updates', () {
+    late FakeRelease release;
+    late Directory dir;
+    late FakeInstaller installer;
+
+    setUp(() async {
+      release = await FakeRelease.create();
+      dir = await Directory.systemTemp.createTemp('taskwise-update-ui');
+      installer = FakeInstaller(dir);
+    });
+    tearDown(() => dir.delete(recursive: true));
+
+    // Lazy: the fakes are made in setUp, after the tests are declared.
+    List<Override> overrides({bool ios = false}) => [
+      updateConfigProvider.overrideWith(
+        (ref) => UpdateConfig(
+          enabled: true,
+          installer: ios ? null : installer,
+          isIos: ios,
+          releaseUrl: '${FakeRelease.base}/latest',
+        ),
+      ),
+      currentVersionProvider.overrideWith(
+        (ref) => AppVersion.tryParse('1.1.0')!,
+      ),
+      updateHttpClientProvider.overrideWith((ref) => release.client()),
+      updateVerifierProvider.overrideWith(
+        (ref) => UpdateVerifier(publicKey: release.publicKey),
+      ),
+    ];
+
+    Future<void> check(WidgetTester tester) async {
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(TaskwiseApp)),
+      );
+      await tester.runAsync(
+        () => container.read(updateControllerProvider.notifier).check(),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    appTest('a new version shows a banner; the dialog installs it', (
+      tester,
+      repo,
+    ) async {
+      await check(tester);
+      expect(find.text('Taskwise 1.2.0 is available'), findsOneWidget);
+
+      await tester.tap(find.text("See what's new"));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('• Updates inside the app.'), findsOneWidget);
+      expect(find.text('You have $appVersion.'), findsOneWidget);
+
+      await tester.runAsync(() async {
+        await tester.tap(find.text('Update now'));
+        // Download and verify (real file IO).
+        for (var i = 0; i < 50 && installer.installed == null; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 20));
+        }
+      });
+      await tester.pump();
+      expect(installer.installed, isNotNull);
+      expect(find.text('Installing…'), findsOneWidget);
+    }, overrides: overrides());
+
+    appTest('Later hides the banner', (tester, repo) async {
+      await check(tester);
+      await tester.tap(find.text('Later'));
+      await tester.pumpAndSettle();
+      expect(find.text('Taskwise 1.2.0 is available'), findsNothing);
+    }, overrides: overrides());
+
+    appTest('on the iPhone the dialog explains iloader instead of installing', (
+      tester,
+      repo,
+    ) async {
+      await check(tester);
+      await tester.tap(find.text("See what's new"));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('install it with iloader'), findsOneWidget);
+      expect(find.text('Open download page'), findsOneWidget);
+      expect(find.text('Update now'), findsNothing);
+    }, overrides: overrides(ios: true));
+
+    appTest('Settings → About checks for updates', (tester, repo) async {
+      release.files.clear();
+      await tester.tap(find.text('Settings').first);
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Check for updates'),
+        300,
+        scrollable: find
+            .descendant(
+              of: find.byType(ListView).first,
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      expect(find.text('Check for updates automatically'), findsOneWidget);
+      await tester.runAsync(() async {
+        await tester.tap(find.text('Check for updates'));
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      });
+      await tester.pumpAndSettle();
+      // The release is newer, so the dialog opens.
+      expect(find.text('Taskwise 1.2.0'), findsOneWidget);
+    }, overrides: overrides());
+  });
+
+  group('Android shortcut and share', () {
+    final android = FakeAssistantPlatform(hasInbox: false);
+
+    appTest(
+      'shared text becomes a task, and Open shows it',
+      (tester, repo) async {
+        android.events$.add(
+          const SharedTextAction('Read this article\nhttps://example.com'),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Added “Read this article”'), findsOneWidget);
+        final task = (await repo.watchEntries().first).single.task;
+        expect(task.notes, 'https://example.com');
+
+        await tester.tap(find.text('Open'));
+        await tester.pumpAndSettle();
+        expect(find.byType(TaskDetailPage), findsOneWidget);
+      },
+      size: _phone,
+      overrides: [assistantPlatformProvider.overrideWithValue(android)],
+    );
+
+    appTest(
+      '"New task" goes to Tasks and focuses quick add',
+      (tester, repo) async {
+        // Start on Settings.
+        await tester.tap(find.text('Settings').last);
+        await tester.pumpAndSettle();
+        android.events$.add(const NewTaskAction());
+        await tester.pumpAndSettle();
+        final field = tester.widget<TextField>(
+          find.widgetWithText(TextField, 'Add a task and press Enter'),
+        );
+        expect(field.focusNode!.hasFocus, isTrue);
+      },
+      size: _phone,
+      overrides: [assistantPlatformProvider.overrideWithValue(android)],
+    );
+
+    appTest(
+      'a share that started the app is added too',
+      (tester, repo) async {
+        expect(find.text('Added “Buy milk”'), findsOneWidget);
+      },
+      size: _phone,
+      overrides: [
+        assistantPlatformProvider.overrideWithValue(
+          FakeAssistantPlatform(hasInbox: false)
+            ..launchAction = const SharedTextAction('Buy milk'),
+        ),
+      ],
+    );
+  });
+
   appTest('shows the empty state on first launch', (tester, repo) async {
     expect(
       find.text('No tasks yet. Add your first one above.'),

@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workmanager/workmanager.dart';
 
+import '../assistant/assistant_sync.dart';
 import '../bootstrap.dart';
 import '../location/location_reminder_sync.dart';
 import '../notifications/reminder_scheduler.dart';
@@ -57,18 +58,31 @@ void backgroundDispatcher() {
   });
 }
 
-/// One background run: sync with the server (if signed in), then bring the
-/// scheduled notifications and the watched places up to date.
+/// One background run: take in the tasks Siri added, sync with the server
+/// (if signed in), then bring the scheduled notifications, the watched
+/// places and Siri's list up to date.
 Future<void> runBackgroundSync() async {
   WidgetsFlutterBinding.ensureInitialized();
   final boot = await AppBootstrap.start();
   final container = ProviderContainer(overrides: boot.overrides);
   try {
+    await importAssistantInbox(container);
     await syncOnceInBackground(container);
     await refreshReminders(container);
   } finally {
     container.dispose();
     await boot.db.close();
+  }
+}
+
+/// Moves the tasks Siri added while Taskwise was closed into the database,
+/// so the sync that follows uploads them.
+Future<void> importAssistantInbox(ProviderContainer container) async {
+  final subscription = container.listen(assistantSyncProvider, (_, _) {});
+  try {
+    await container.read(assistantSyncProvider).importInbox();
+  } finally {
+    subscription.close();
   }
 }
 
@@ -106,6 +120,7 @@ Future<void> refreshReminders(ProviderContainer container) async {
   final subscriptions = [
     container.listen(reminderSchedulerProvider, (_, _) {}),
     container.listen(locationReminderSyncProvider, (_, _) {}),
+    container.listen(assistantSyncProvider, (_, _) {}),
   ];
   try {
     await _refresh(container);
@@ -127,4 +142,5 @@ Future<void> _refresh(ProviderContainer container) async {
   ]);
   await container.read(reminderSchedulerProvider).replanNow();
   await container.read(locationReminderSyncProvider).apply();
+  await container.read(assistantSyncProvider).applySnapshot();
 }

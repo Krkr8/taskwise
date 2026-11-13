@@ -32,11 +32,13 @@ More screenshots (every screen, light, dark, phone and Arabic) are in [design/](
 - **Time reminders:** at a set time or before the due time, as many as you like, with **Done** and **Snooze** buttons on the notification.
 - **Location reminders (iPhone and Android):** pick a place on a map and get a reminder when you arrive or leave. The default radius is 30 m. You can make them on any device; phones remind you.
 - **Calendar:** a week view and a month view.
+- **Siri (iPhone):** "Add a task in Taskwise", "Add a task with a date in Taskwise" and "What's on my list in Taskwise", in English and Arabic, without opening the app. **Android:** a "New task" shortcut on the app icon, and "Share to Taskwise" from any app. [Details](docs/assistants.md).
 - **Search, filters and sorting** by category, priority and tag, plus quick add.
 - **English and Arabic**, with full right-to-left layout.
 - **Light and dark** themes, and **four designs** to choose from.
 - **Sync across devices** through your own free server. Each device keeps its own full copy, so the app works offline.
 - **JSON backup:** export all your data to a file and import it again (Settings → Backup).
+- **Updates inside the app** (Windows, Linux, Android): Taskwise tells you about a new version and installs it with one tap, after checking it's a genuine, signed release. The iPhone gets the notice, and updates through iloader or SideStore. [How it works](docs/updates.md).
 - **Keyboard shortcuts** on desktop (in Lapis and Brutal): `Ctrl+N` new task, `Ctrl+F` search, `Esc` closes the open task. Lapis also has `Ctrl+1`, `Ctrl+2` and `Ctrl+3` for the main tabs.
 
 ## Install

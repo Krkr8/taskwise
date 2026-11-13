@@ -20,6 +20,12 @@
 		7A1E00012F00000100000004 /* LocationReminderManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1E00012F00000100000003 /* LocationReminderManager.swift */; };
 		7A1E00012F00000100000006 /* LocationRemindersPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1E00012F00000100000005 /* LocationRemindersPlugin.swift */; };
 		7A1E00012F00000100000009 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 7A1E00012F00000100000007 /* InfoPlist.strings */; };
+		7A1E00012F0000010000000B /* AssistantStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1E00012F0000010000000A /* AssistantStore.swift */; };
+		7A1E00012F0000010000000D /* AssistantIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1E00012F0000010000000C /* AssistantIntents.swift */; };
+		7A1E00012F0000010000000F /* AssistantPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1E00012F0000010000000E /* AssistantPlugin.swift */; };
+		7A1E00012F00000100000011 /* AssistantStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A1E00012F00000100000010 /* AssistantStoreTests.swift */; };
+		7A1E00012F00000100000014 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 7A1E00012F00000100000012 /* Localizable.strings */; };
+		7A1E00012F00000100000017 /* AppShortcuts.strings in Resources */ = {isa = PBXBuildFile; fileRef = 7A1E00012F00000100000015 /* AppShortcuts.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -67,6 +73,12 @@
 		7A1E00012F00000100000003 /* LocationReminderManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationReminderManager.swift; sourceTree = "<group>"; };
 		7A1E00012F00000100000005 /* LocationRemindersPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationRemindersPlugin.swift; sourceTree = "<group>"; };
 		7A1E00012F00000100000008 /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		7A1E00012F0000010000000A /* AssistantStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantStore.swift; sourceTree = "<group>"; };
+		7A1E00012F0000010000000C /* AssistantIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantIntents.swift; sourceTree = "<group>"; };
+		7A1E00012F0000010000000E /* AssistantPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantPlugin.swift; sourceTree = "<group>"; };
+		7A1E00012F00000100000010 /* AssistantStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantStoreTests.swift; sourceTree = "<group>"; };
+		7A1E00012F00000100000013 /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/Localizable.strings; sourceTree = "<group>"; };
+		7A1E00012F00000100000016 /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -85,6 +97,7 @@
 			isa = PBXGroup;
 			children = (
 				331C807B294A618700263BE5 /* RunnerTests.swift */,
+				7A1E00012F00000100000010 /* AssistantStoreTests.swift */,
 			);
 			path = RunnerTests;
 			sourceTree = "<group>";
@@ -135,6 +148,11 @@
 				7A1E00012F00000100000003 /* LocationReminderManager.swift */,
 				7A1E00012F00000100000005 /* LocationRemindersPlugin.swift */,
 				7A1E00012F00000100000007 /* InfoPlist.strings */,
+				7A1E00012F0000010000000A /* AssistantStore.swift */,
+				7A1E00012F0000010000000C /* AssistantIntents.swift */,
+				7A1E00012F0000010000000E /* AssistantPlugin.swift */,
+				7A1E00012F00000100000012 /* Localizable.strings */,
+				7A1E00012F00000100000015 /* AppShortcuts.strings */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 			);
 			path = Runner;
@@ -243,6 +261,8 @@
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
 				7A1E00012F00000100000009 /* InfoPlist.strings in Resources */,
+				7A1E00012F00000100000014 /* Localizable.strings in Resources */,
+				7A1E00012F00000100000017 /* AppShortcuts.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -288,6 +308,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */,
+				7A1E00012F00000100000011 /* AssistantStoreTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -301,6 +322,9 @@
 				7A1E00012F00000100000002 /* GeofenceDecider.swift in Sources */,
 				7A1E00012F00000100000004 /* LocationReminderManager.swift in Sources */,
 				7A1E00012F00000100000006 /* LocationRemindersPlugin.swift in Sources */,
+				7A1E00012F0000010000000B /* AssistantStore.swift in Sources */,
+				7A1E00012F0000010000000D /* AssistantIntents.swift in Sources */,
+				7A1E00012F0000010000000F /* AssistantPlugin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -337,6 +361,22 @@
 				7A1E00012F00000100000008 /* ar */,
 			);
 			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		7A1E00012F00000100000012 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				7A1E00012F00000100000013 /* ar */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		7A1E00012F00000100000015 /* AppShortcuts.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				7A1E00012F00000100000016 /* ar */,
+			);
+			name = AppShortcuts.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */

@@ -8,6 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:taskwise/app.dart';
+import 'package:taskwise/assistant/assistant_platform.dart';
+import 'package:taskwise/assistant/assistant_sync.dart';
 import 'package:taskwise/data/app_settings.dart';
 import 'package:taskwise/data/db/app_database.dart';
 import 'package:taskwise/data/repositories/settings_repository.dart';
@@ -26,6 +28,8 @@ import 'package:taskwise/ui/designs/lapis/shell/adaptive_shell.dart';
 import 'package:taskwise/ui/designs/lapis/tasks/task_detail.dart';
 import 'package:taskwise/ui/designs/lapis/theme/app_theme.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
+
+import '../../assistant/fake_assistant_platform.dart';
 
 /// Tuesday 2026-10-20, 09:00 local.
 final _now = DateTime(2026, 10, 20, 9);
@@ -101,6 +105,21 @@ Future<void> _quickAdd(WidgetTester tester, String title) async {
 }
 
 void main() {
+  final android = FakeAssistantPlatform(hasInbox: false);
+  appTest(
+    'Android\'s "New task" shortcut focuses quick add',
+    (tester, repo) async {
+      android.events$.add(const NewTaskAction());
+      await tester.pumpAndSettle();
+      final field = tester.widget<TextField>(
+        find.widgetWithText(TextField, 'Add a task and press Enter'),
+      );
+      expect(field.focusNode!.hasFocus, isTrue);
+    },
+    size: _phone,
+    overrides: [assistantPlatformProvider.overrideWithValue(android)],
+  );
+
   appTest('shows the empty state on first launch', (tester, repo) async {
     expect(
       find.text('Type one in the box above and press Enter.'),

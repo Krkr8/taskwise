@@ -79,7 +79,14 @@ If iloader doesn't see the phone, unplug and replug it. Still nothing on Linux? 
 
 ## Updating Taskwise
 
+iPhone apps can't update themselves, so Taskwise only tells you: from version 1.1.0 on, a banner says when a new version is out, with what's new and a link to the release.
+
 Download the newer `.ipa` (step 13) and install it the same way (step 14). It replaces the old version and keeps your tasks.
+
+**With SideStore (when its sign-in works):** add Taskwise's source once, and SideStore shows and installs updates on the phone. In SideStore, open **Sources → +** and enter:
+```
+https://github.com/Krkr8/taskwise/releases/latest/download/sidestore-source.json
+```
 
 ## Only one VPN at a time
 

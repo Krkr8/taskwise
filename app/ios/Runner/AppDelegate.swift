@@ -21,11 +21,14 @@ import workmanager_apple
     LocationReminderManager.shared.start()
 
     // Background sync (workmanager). The background engine gets the same
-    // plugins as the app, plus the location channel.
+    // plugins as the app, plus the location and assistant channels.
     WorkmanagerPlugin.setPluginRegistrantCallback { registry in
       GeneratedPluginRegistrant.register(with: registry)
       if let registrar = registry.registrar(forPlugin: "LocationRemindersPlugin") {
         LocationRemindersPlugin.register(with: registrar)
+      }
+      if let registrar = registry.registrar(forPlugin: "AssistantPlugin") {
+        AssistantPlugin.register(with: registrar)
       }
     }
     // Scenes register plugins after this method returns, so the task's
@@ -41,6 +44,10 @@ import workmanager_apple
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "LocationRemindersPlugin") {
       LocationRemindersPlugin.register(with: registrar)
+    }
+    // Siri's inbox and snapshot (AssistantIntents.swift).
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "AssistantPlugin") {
+      AssistantPlugin.register(with: registrar)
     }
   }
 }

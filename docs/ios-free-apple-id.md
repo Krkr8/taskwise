@@ -10,6 +10,7 @@ Apple's table of capabilities by account type: [Supported capabilities (iOS)](ht
 | **Local notifications** (reminders) | Runtime permission prompt, no entitlement | ✅ expected to work | M4 |
 | **Background location / geofencing** (location reminders) | `UIBackgroundModes: location` + location usage texts in Info.plist; "Always" permission prompt | ✅ expected to work | M7 |
 | **Background refresh** (sync while closed) | `UIBackgroundModes: fetch` in Info.plist | ✅ expected to work | M6 |
+| **Siri and Shortcuts** (App Intents: "Add a task in Taskwise") | App Intents code in the app; no Siri entitlement (that one is only for the old SiriKit intents) | ✅ expected to work | M11 |
 | Keychain (storing the sync token) | Default access-group entitlement, which every signed app gets | ✅ expected to work | M6 |
 | **Push notifications (APNs)** | `aps-environment` entitlement | ❌ needs the paid program. **Taskwise doesn't use it**: every phone notification is a local notification the app schedules itself. | n/a |
 | iCloud, App Groups, Associated Domains, Sign in with Apple | Entitlements | ❌ or limited. **Not used by Taskwise.** | n/a |

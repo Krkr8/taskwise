@@ -22,7 +22,9 @@ Both are the same app and keep your tasks in the same place, so you can switch b
    In a file manager you can also right-click it → **Properties** → allow it to run as a program, then double-click it.
 3. To get it in the app menu, use [Gear Lever](https://flathub.org/apps/it.mijorus.gearlever) or AppImageLauncher, or install the tar.gz below instead.
 
-To update, download the new AppImage and delete the old one. If **Start when I log in** is on, open the new file once so the login entry points at it.
+**Updating:** from version 1.1.0 on, Taskwise updates itself: when a banner says a new version is out, tap **See what's new → Update and restart** (or **Settings → About → Check for updates**). It replaces the AppImage file where it is, keeping its name and place, so menu entries and **Start when I log in** keep working. ([How it works](updates.md).)
+
+To update by hand, download the new AppImage and delete the old one. If **Start when I log in** is on, open the new file once so the login entry points at it.
 
 **If it doesn't start:**
 - *"AppImages require FUSE to run"* (some Ubuntu and Debian installs): install FUSE with `sudo apt install libfuse2t64` (Ubuntu 24.04+) or `sudo apt install libfuse2` (Debian, older Ubuntu). Or run it without FUSE: `./taskwise-*.AppImage --appimage-extract-and-run`.
@@ -45,7 +47,7 @@ To update, download the new AppImage and delete the old one. If **Start when I l
    ```
 3. Press the Super key, type **Taskwise** and open it. You can right-click the icon in the dash and choose **Pin to Dash**.
 
-To update, repeat the same steps with the newer file. `install.sh` replaces the old version. Your tasks stay.
+**Updating:** from version 1.1.0 on, Taskwise updates itself (a banner, then **Update and restart**; see [updates.md](updates.md)). To update by hand, repeat the same steps with the newer file. `install.sh` replaces the old version. Your tasks stay.
 
 ## Reminders and running in the background
 

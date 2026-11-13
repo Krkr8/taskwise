@@ -10,7 +10,9 @@ Taskwise isn't on Google Play. You install the APK file from GitHub yourself ("s
 4. Tap **Install**. If **Google Play Protect** warns that it doesn't know the app, tap **More details → Install anyway**. It warns because Taskwise isn't from the Play Store.
 5. Open Taskwise from the app list.
 
-**Updating:** download the newer APK and install it the same way. Android replaces the old version and keeps your tasks and sign-in. Every release is signed with the same key, so updates install over each other. A build you make yourself is signed with a different key, so uninstall the release first.
+**Updating:** from version 1.1.0 on, Taskwise updates itself. When a banner says a new version is out, tap **See what's new → Update now**. The first time, Android opens **Install unknown apps** for Taskwise: turn on **Allow from this source**, go back, and tap **Try again**. Android then asks **Do you want to update this app?**: tap **Update**. Taskwise closes; open it again. ([How it works](updates.md).)
+
+To update by hand, download the newer APK and install it the same way. Android replaces the old version and keeps your tasks and sign-in. Every release is signed with the same key, so updates install over each other. A build you make yourself is signed with a different key, so uninstall the release first.
 
 ## Permissions
 

@@ -1390,4 +1390,101 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get logsFilterProblems => 'Problems only';
+
+  @override
+  String sharedTaskAdded(String title) {
+    return 'Added “$title”';
+  }
+
+  @override
+  String updateAvailable(String version) {
+    return 'Taskwise $version is available';
+  }
+
+  @override
+  String get updateLater => 'Later';
+
+  @override
+  String get updateSee => 'See what\'s new';
+
+  @override
+  String updateTitle(String version) {
+    return 'Taskwise $version';
+  }
+
+  @override
+  String updateCurrent(String version) {
+    return 'You have $version.';
+  }
+
+  @override
+  String get updateNow => 'Update now';
+
+  @override
+  String get updateNowRestart => 'Update and restart';
+
+  @override
+  String updateDownloading(int percent) {
+    return 'Downloading… $percent%';
+  }
+
+  @override
+  String get updateDownloadingNoSize => 'Downloading…';
+
+  @override
+  String get updateInstalling => 'Installing…';
+
+  @override
+  String get updateOpenPage => 'Open download page';
+
+  @override
+  String get updateIosHint =>
+      'iPhone apps can\'t update themselves. Download the new .ipa and install it with iloader (or SideStore), as before. Your tasks are kept.';
+
+  @override
+  String get updateManualHint =>
+      'This copy of Taskwise can\'t update itself. Download the new version from the release page.';
+
+  @override
+  String get updateAndroidHint =>
+      'Android asks you to confirm the update. Your tasks are kept.';
+
+  @override
+  String get updateDesktopHint =>
+      'Taskwise downloads the update, checks that it really comes from Taskwise\'s releases, then restarts. Your tasks are kept.';
+
+  @override
+  String get updateCheck => 'Check for updates';
+
+  @override
+  String get updateChecking => 'Checking…';
+
+  @override
+  String get updateUpToDate => 'Taskwise is up to date';
+
+  @override
+  String get updateAuto => 'Check for updates automatically';
+
+  @override
+  String get updateAutoSubtitle => 'About once a day, on GitHub';
+
+  @override
+  String get updateErrorCheck => 'Couldn\'t check for updates. Are you online?';
+
+  @override
+  String get updateErrorDownload => 'The download failed. Try again later.';
+
+  @override
+  String get updateErrorVerification =>
+      'The download didn\'t pass the safety check, so nothing was installed.';
+
+  @override
+  String get updateErrorInstall => 'The update couldn\'t be installed.';
+
+  @override
+  String get updateErrorPermission =>
+      'Allow Taskwise to install apps (\"Allow from this source\"), then tap Update again.';
+
+  @override
+  String get updateTryAgain => 'Try again';
 }

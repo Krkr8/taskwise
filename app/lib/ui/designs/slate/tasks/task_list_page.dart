@@ -301,6 +301,8 @@ class _QuickAddFieldState extends ConsumerState<QuickAddField> {
 
   @override
   Widget build(BuildContext context) {
+    // Android's "New task" shortcut.
+    ref.listen(quickAddRequestProvider, (_, _) => _focus.requestFocus());
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final l10n = context.l10n;

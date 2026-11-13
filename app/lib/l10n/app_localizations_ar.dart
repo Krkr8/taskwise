@@ -1426,4 +1426,102 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get logsFilterProblems => 'المشكلات فقط';
+
+  @override
+  String sharedTaskAdded(String title) {
+    return 'تمت إضافة «$title»';
+  }
+
+  @override
+  String updateAvailable(String version) {
+    return 'يتوفر Taskwise $version';
+  }
+
+  @override
+  String get updateLater => 'لاحقًا';
+
+  @override
+  String get updateSee => 'ما الجديد';
+
+  @override
+  String updateTitle(String version) {
+    return 'Taskwise $version';
+  }
+
+  @override
+  String updateCurrent(String version) {
+    return 'لديك الإصدار $version.';
+  }
+
+  @override
+  String get updateNow => 'حدّث الآن';
+
+  @override
+  String get updateNowRestart => 'حدّث وأعد التشغيل';
+
+  @override
+  String updateDownloading(int percent) {
+    return 'جارٍ التنزيل… $percent٪';
+  }
+
+  @override
+  String get updateDownloadingNoSize => 'جارٍ التنزيل…';
+
+  @override
+  String get updateInstalling => 'جارٍ التثبيت…';
+
+  @override
+  String get updateOpenPage => 'افتح صفحة التنزيل';
+
+  @override
+  String get updateIosHint =>
+      'لا يمكن لتطبيقات iPhone تحديث نفسها. نزّل ملف ‎.ipa الجديد وثبّته باستخدام iloader (أو SideStore) كالمعتاد. مهامك تبقى كما هي.';
+
+  @override
+  String get updateManualHint =>
+      'لا تستطيع هذه النسخة من Taskwise تحديث نفسها. نزّل الإصدار الجديد من صفحة الإصدار.';
+
+  @override
+  String get updateAndroidHint =>
+      'سيطلب منك Android تأكيد التحديث. مهامك تبقى كما هي.';
+
+  @override
+  String get updateDesktopHint =>
+      'ينزّل Taskwise التحديث ويتحقق من أنه صادر فعلًا عن إصدارات Taskwise، ثم يعيد التشغيل. مهامك تبقى كما هي.';
+
+  @override
+  String get updateCheck => 'التحقق من التحديثات';
+
+  @override
+  String get updateChecking => 'جارٍ التحقق…';
+
+  @override
+  String get updateUpToDate => 'Taskwise محدَّث';
+
+  @override
+  String get updateAuto => 'التحقق من التحديثات تلقائيًا';
+
+  @override
+  String get updateAutoSubtitle => 'مرة في اليوم تقريبًا، من GitHub';
+
+  @override
+  String get updateErrorCheck =>
+      'تعذّر التحقق من التحديثات. هل أنت متصل بالإنترنت؟';
+
+  @override
+  String get updateErrorDownload => 'فشل التنزيل. حاول لاحقًا.';
+
+  @override
+  String get updateErrorVerification =>
+      'لم يجتز التنزيل فحص الأمان، فلم يُثبَّت شيء.';
+
+  @override
+  String get updateErrorInstall => 'تعذّر تثبيت التحديث.';
+
+  @override
+  String get updateErrorPermission =>
+      'اسمح لـ Taskwise بتثبيت التطبيقات (\"السماح من هذا المصدر\")، ثم اضغط تحديث مرة أخرى.';
+
+  @override
+  String get updateTryAgain => 'حاول مرة أخرى';
 }

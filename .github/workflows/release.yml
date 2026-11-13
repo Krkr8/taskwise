@@ -1,7 +1,8 @@
 name: Release builds
 
 # Builds the app for Linux (tar.gz and AppImage), Windows, Android (signed
-# APK) and iOS (unsigned, for SideStore).
+# APK) and iOS (unsigned, for SideStore), and signs the list of files for
+# the in-app updates.
 # - Manual run (Actions tab → "Release builds" → Run workflow): artifacts only.
 # - Pushing a tag like v0.1.0: also creates a draft GitHub Release, with the
 #   matching CHANGELOG.md section as its text.
@@ -187,6 +188,16 @@ jobs:
         with:
           path: dist
           merge-multiple: true
+      # In-app updates (M12): SHA256SUMS of every file, signed with the
+      # release key (secret UPDATE_SIGNING_KEY; the app has the public half),
+      # plus the SideStore source for the iPhone. See docs/updates.md.
+      - name: Sign for in-app updates
+        env:
+          UPDATE_SIGNING_KEY: ${{ secrets.UPDATE_SIGNING_KEY }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          tool/make_sidestore_source.sh "$VERSION" dist > dist/sidestore-source.json
+          tool/sign_release.sh dist
       # Draft only: drafts stay private until a maintainer publishes them by hand.
       # The release text is this version's section of CHANGELOG.md. Without
       # one, GitHub writes notes from the commits instead.

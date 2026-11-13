@@ -2,4 +2,7 @@
 <resources>
     <!-- The name stays Latin, like on the iPhone. -->
     <string name="app_name">Taskwise</string>
+    <!-- The long-press shortcut (res/xml/shortcuts.xml). -->
+    <string name="shortcut_new_task">مهمة جديدة</string>
+    <string name="shortcut_new_task_long">إضافة مهمة جديدة</string>
 </resources>

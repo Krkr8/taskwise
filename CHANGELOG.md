@@ -6,6 +6,26 @@ When a version is released, its section becomes the text of the draft GitHub rel
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-12
+
+### Added
+
+- **Siri on the iPhone** ([how to use it](https://github.com/Krkr8/taskwise/blob/main/docs/assistants.md)), in English and Arabic, without opening Taskwise:
+  - "Add a task in Taskwise": Siri asks "What's the task?" and adds it.
+  - "Add a task with a date in Taskwise": Siri also asks "When is it due?". Say a day ("tomorrow") for an all-day task, or a day and a time ("Friday at 5 pm").
+  - "What's on my list in Taskwise": Siri reads the tasks due today and the overdue ones.
+  - The commands are in the Shortcuts app too, so they can go on the Action Button or the home screen.
+  - A task added by Siri reaches your other devices the next time Taskwise opens or syncs in the background.
+- **Updates inside the app** ([how it works](https://github.com/Krkr8/taskwise/blob/main/docs/updates.md)). Taskwise checks for a new version about once a day and shows a banner with what's new. On **Windows and Linux** (AppImage or tar.gz), **Update and restart** downloads it, checks it, installs it and starts the new version. On **Android**, **Update now** hands it to Android's update screen. Your tasks and sign-in are kept. **Settings → About** has **Check for updates** and a switch to turn the daily check off.
+  - Every release is signed: Taskwise installs only files listed in a release's `SHA256SUMS` with a valid signature from the Taskwise release key.
+  - **iPhone:** iOS apps can't update themselves, so Taskwise only tells you and links to the release. Each release also has a SideStore source, so SideStore can update Taskwise on the phone once its sign-in works.
+  - **This version is the last one to install by hand.**
+- **Android:** long-press the Taskwise icon for **New task**, which opens Taskwise ready to type. **Share to Taskwise** from any app turns the shared text into a task: the first line (or the page title) is the title, and the rest goes into the notes.
+
+### Changed
+
+- The default reminder for a task's first due time is added in one place now, so every design and Siri behave the same.
+
 ## [1.0.0] - 2026-11-07
 
 The first stable version, for every platform: Windows, Linux (AppImage and tar.gz), Android and iPhone. It includes everything from 0.6.1 and 0.7.0 (the Linux AppImage and the Android app), which were never published on their own.

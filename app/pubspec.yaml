@@ -1,7 +1,7 @@
 name: taskwise
 description: "Personal self-hosted to-do and reminders app."
 publish_to: none
-version: 1.0.0+12
+version: 1.1.0+13
 resolution: workspace
 
 environment:
@@ -31,6 +31,9 @@ dependencies:
   latlong2: 0.10.1
   workmanager: 0.10.10
   file_selector: 1.1.0
+  # Updates (M12): Ed25519 signature checks, opening the release page.
+  cryptography: 2.9.0
+  url_launcher: 6.3.3
   # Taskwise's own Android code (location reminders, saving files).
   taskwise_android:
     path: packages/taskwise_android

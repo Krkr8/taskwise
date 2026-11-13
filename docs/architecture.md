@@ -5,7 +5,7 @@ Taskwise is three projects in one repository:
 | Folder | What it is |
 |---|---|
 | `app/` | The Flutter app for Linux, Windows, iPhone and Android. |
-| `app/packages/taskwise_android/` | Taskwise's own Android code as a local plugin: location reminders (`GeofenceEngine.kt`, a port of the Swift engine, and `LocationReminderManager.kt`) and the "Save to" dialog. A plugin, so it is also registered in the background-sync engine. |
+| `app/packages/taskwise_android/` | Taskwise's own Android code as a local plugin: location reminders (`GeofenceEngine.kt`, a port of the Swift engine, and `LocationReminderManager.kt`), the "Save to" dialog, and the "New task" shortcut and share (`AssistantIntents.kt`). A plugin, so it is also registered in the background-sync engine. |
 | `shared/` | Pure Dart models and logic used by the app (and mirrored by the server's tests): tasks, reminders, places, repeat rules, the reminder schedule, task grouping, the location plan. No Flutter in here. |
 | `server/` | The TypeScript + Hono sync server (Vercel + Turso). API: `docs/sync-api.md`. |
 | `tools/geofence_sim/` | The walk simulator and Linux runner for the iPhone's Swift location code (the Android twin is `GeofenceWalkTest.kt`). |
@@ -24,6 +24,8 @@ Taskwise is three projects in one repository:
 | `notifications/` | Time reminders: scheduling, the desktop notifier and the phones' notifier (`mobile_notifier.dart`, iPhone and Android). |
 | `location/` | Location reminders: the address search, the bridge to the phones' native code (`taskwise/location` channel: Swift on the iPhone, Kotlin on Android, same methods), keeping the phone's list up to date. |
 | `background/` | The phones' background sync job (iOS background refresh, Android WorkManager). |
+| `update/` | In-app updates: checking GitHub Releases, verifying the signed `SHA256SUMS`, and the installers for Windows, the Linux AppImage and tar.gz, and Android (`AppUpdater.kt`, channel `taskwise/update`). See `docs/updates.md`. |
+| `assistant/` | Siri's inbox and snapshot on the iPhone, and Android's "New task" shortcut and share (channel `taskwise/assistant`: `AssistantPlugin.swift` and `AssistantIntents.swift` on the iPhone, `TaskwiseAndroidPlugin.kt` on Android). See `docs/assistants.md`. |
 | `desktop/` | Tray icon, single window, start on login. |
 | `version.dart` | The app version (a test keeps it equal to `pubspec.yaml`). |
 | `l10n/` | English and Arabic texts (`app_en.arb`, `app_ar.arb`); the Dart files next to them are generated. |
@@ -90,6 +92,6 @@ Keep new screens in `shared/` unless a design really needs its own version, so a
 | Speed with 2,000 tasks, every design | `flutter drive --profile -d linux --driver=test_driver/integration_test.dart --target=integration_test/performance_test.dart` (see `docs/performance.md`) |
 | Shared logic | `cd shared && dart test` |
 | Server | `cd server && npm test` |
-| iPhone location logic | `tools/geofence_sim/run.sh test` and `tools/geofence_sim/run.sh` |
-| Android location logic (unit tests and the walk simulator) | `cd android && ./gradlew :taskwise_android:testDebugUnitTest` (needs a JDK 21; build the APK once first) |
+| iPhone location logic and Siri's inbox | `tools/geofence_sim/run.sh test` and `tools/geofence_sim/run.sh` |
+| Android location logic, shortcut and share (unit tests and the walk simulator) | `cd android && JAVA_HOME=$HOME/.local/jdk-21 ./gradlew :taskwise_android:testDebugUnitTest` (build the APK once first) |
 | Android app on the emulator | `flutter run -d emulator-5554` (see `docs/install-android.md` for Location Accuracy) |

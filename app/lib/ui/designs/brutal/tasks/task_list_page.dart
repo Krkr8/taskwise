@@ -281,6 +281,8 @@ class _QuickAddFieldState extends ConsumerState<QuickAddField> {
 
   @override
   Widget build(BuildContext context) {
+    // Android's "New task" shortcut.
+    ref.listen(quickAddRequestProvider, (_, _) => _focus.requestFocus());
     final b = BrutalTheme.of(context);
     final wideDesktop =
         _isDesktop && MediaQuery.sizeOf(context).width >= Breakpoints.compact;

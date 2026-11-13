@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
 
+import 'assistant/assistant_platform.dart';
+import 'assistant/assistant_sync.dart';
 import 'data/app_settings.dart';
 import 'data/db/app_database.dart';
 import 'data/repositories/settings_repository.dart';
@@ -17,6 +19,8 @@ import 'notifications/notifier.dart';
 import 'notifications/reminder_scheduler.dart';
 import 'state/providers.dart';
 import 'sync/sync_controller.dart';
+import 'update/update_controller.dart';
+import 'update/update_installer.dart';
 
 /// What every start of Taskwise needs before the providers run: the open
 /// database, this device's id and settings, and the platform services.
@@ -29,6 +33,8 @@ final class AppBootstrap {
     required this.settings,
     required this.notifier,
     required this.location,
+    required this.assistant,
+    required this.update,
   });
 
   final AppDatabase db;
@@ -37,6 +43,8 @@ final class AppBootstrap {
   final AppSettings settings;
   final ReminderNotifier notifier;
   final LocationPlatform location;
+  final AssistantPlatform assistant;
+  final UpdateConfig update;
 
   static bool get isDesktop => Platform.isWindows || Platform.isLinux;
 
@@ -70,6 +78,15 @@ final class AppBootstrap {
           ? MobileNotifier()
           : NoopNotifier(),
       location: isMobile ? NativeLocationPlatform() : NoLocationPlatform(),
+      // Siri's inbox is on the iPhone; Android only sends actions.
+      assistant: isMobile
+          ? NativeAssistantPlatform(hasInbox: Platform.isIOS)
+          : NoAssistantPlatform(),
+      update: UpdateConfig(
+        enabled: isDesktop || isMobile,
+        installer: await detectUpdateInstaller(),
+        isIos: Platform.isIOS,
+      ),
     );
   }
 
@@ -80,6 +97,8 @@ final class AppBootstrap {
     initialSettingsProvider.overrideWithValue(settings),
     reminderNotifierProvider.overrideWithValue(notifier),
     locationPlatformProvider.overrideWithValue(location),
+    assistantPlatformProvider.overrideWithValue(assistant),
+    updateConfigProvider.overrideWithValue(update),
     deviceTypeProvider.overrideWithValue(deviceType),
   ];
 }

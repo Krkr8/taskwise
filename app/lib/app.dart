@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'assistant/assistant_sync.dart';
 import 'data/app_settings.dart';
 import 'desktop/desktop_shell.dart';
 import 'l10n/app_localizations.dart';
@@ -10,6 +11,9 @@ import 'notifications/reminder_scheduler.dart';
 import 'state/providers.dart';
 import 'sync/sync_controller.dart';
 import 'ui/designs/design.dart';
+import 'ui/shared/assistant/assistant_action_listener.dart';
+import 'ui/shared/update/update_listener.dart';
+import 'update/update_controller.dart';
 
 /// Root widget: theme, language/RTL and time format come from settings.
 class TaskwiseApp extends ConsumerWidget {
@@ -20,9 +24,12 @@ class TaskwiseApp extends ConsumerWidget {
     final settings = ref.watch(appSettingsProvider);
     final design = ref.watch(appDesignProvider);
     final spec = designSpec(design);
-    // Starts the reminder scheduler, location reminders and sync (kept alive by these watches).
+    // Starts the reminder scheduler, location reminders, Siri's inbox, the
+    // update checks and sync (kept alive by these watches).
     ref
       ..watch(reminderSchedulerProvider)
+      ..watch(assistantSyncProvider)
+      ..watch(updateControllerProvider)
       ..watch(locationReminderSyncProvider)
       ..watch(syncControllerProvider);
     ref.listen(
@@ -73,7 +80,7 @@ class TaskwiseApp extends ConsumerWidget {
           child: child!,
         ),
       ),
-      home: spec.shell(),
+      home: UpdateListener(child: AssistantActionListener(child: spec.shell())),
     );
   }
 }

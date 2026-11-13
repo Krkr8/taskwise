@@ -182,6 +182,14 @@ class ReminderRepository extends RepositoryBase {
       );
 
   /// Whether a task has any live reminder.
+  /// Adds the default reminder ([minutesBefore] the due time) to a task that
+  /// has just got a due time, unless no default is set or the task already
+  /// has reminders.
+  Future<void> addDefaultReminder(String taskId, int? minutesBefore) async {
+    if (minutesBefore == null || await hasReminders(taskId)) return;
+    await addRelative(taskId, minutesBefore);
+  }
+
   Future<bool> hasReminders(String taskId) async =>
       (await (db.select(db.reminders)
                 ..where((r) => r.taskId.equals(taskId) & r.deleted.not())

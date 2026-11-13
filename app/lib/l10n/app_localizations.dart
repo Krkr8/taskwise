@@ -2263,6 +2263,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Problems only'**
   String get logsFilterProblems;
+
+  /// No description provided for @sharedTaskAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Added “{title}”'**
+  String sharedTaskAdded(String title);
+
+  /// No description provided for @updateAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Taskwise {version} is available'**
+  String updateAvailable(String version);
+
+  /// No description provided for @updateLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get updateLater;
+
+  /// No description provided for @updateSee.
+  ///
+  /// In en, this message translates to:
+  /// **'See what\'s new'**
+  String get updateSee;
+
+  /// No description provided for @updateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Taskwise {version}'**
+  String updateTitle(String version);
+
+  /// No description provided for @updateCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'You have {version}.'**
+  String updateCurrent(String version);
+
+  /// No description provided for @updateNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Update now'**
+  String get updateNow;
+
+  /// No description provided for @updateNowRestart.
+  ///
+  /// In en, this message translates to:
+  /// **'Update and restart'**
+  String get updateNowRestart;
+
+  /// No description provided for @updateDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading… {percent}%'**
+  String updateDownloading(int percent);
+
+  /// No description provided for @updateDownloadingNoSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading…'**
+  String get updateDownloadingNoSize;
+
+  /// No description provided for @updateInstalling.
+  ///
+  /// In en, this message translates to:
+  /// **'Installing…'**
+  String get updateInstalling;
+
+  /// No description provided for @updateOpenPage.
+  ///
+  /// In en, this message translates to:
+  /// **'Open download page'**
+  String get updateOpenPage;
+
+  /// No description provided for @updateIosHint.
+  ///
+  /// In en, this message translates to:
+  /// **'iPhone apps can\'t update themselves. Download the new .ipa and install it with iloader (or SideStore), as before. Your tasks are kept.'**
+  String get updateIosHint;
+
+  /// No description provided for @updateManualHint.
+  ///
+  /// In en, this message translates to:
+  /// **'This copy of Taskwise can\'t update itself. Download the new version from the release page.'**
+  String get updateManualHint;
+
+  /// No description provided for @updateAndroidHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Android asks you to confirm the update. Your tasks are kept.'**
+  String get updateAndroidHint;
+
+  /// No description provided for @updateDesktopHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Taskwise downloads the update, checks that it really comes from Taskwise\'s releases, then restarts. Your tasks are kept.'**
+  String get updateDesktopHint;
+
+  /// No description provided for @updateCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Check for updates'**
+  String get updateCheck;
+
+  /// No description provided for @updateChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking…'**
+  String get updateChecking;
+
+  /// No description provided for @updateUpToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Taskwise is up to date'**
+  String get updateUpToDate;
+
+  /// No description provided for @updateAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Check for updates automatically'**
+  String get updateAuto;
+
+  /// No description provided for @updateAutoSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'About once a day, on GitHub'**
+  String get updateAutoSubtitle;
+
+  /// No description provided for @updateErrorCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t check for updates. Are you online?'**
+  String get updateErrorCheck;
+
+  /// No description provided for @updateErrorDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'The download failed. Try again later.'**
+  String get updateErrorDownload;
+
+  /// No description provided for @updateErrorVerification.
+  ///
+  /// In en, this message translates to:
+  /// **'The download didn\'t pass the safety check, so nothing was installed.'**
+  String get updateErrorVerification;
+
+  /// No description provided for @updateErrorInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'The update couldn\'t be installed.'**
+  String get updateErrorInstall;
+
+  /// No description provided for @updateErrorPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow Taskwise to install apps (\"Allow from this source\"), then tap Update again.'**
+  String get updateErrorPermission;
+
+  /// No description provided for @updateTryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get updateTryAgain;
 }
 
 class _AppLocalizationsDelegate
