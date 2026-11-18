@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Taskwise Lapis · M13</title><style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+:root{font-family:'IBM Plex Sans Arabic',sans-serif;color:#171B33;background:#F4F5F9;font-synthesis:none;--paper:#F4F5F9;--sheet:#FFFFFF;--ink:#171B33;--ink-muted:#5C6280;--line:#E2E5EE;--lapis:#2B48C4;--lapis-soft:#E5E9FB;--saffron:#E39B2D;--saffron-soft:#FCEFD9;--vermilion:#C33F2A;--sidebar-bg:#EBEDF4;--container:#EEF0F6}
+*{box-sizing:border-box}body{margin:0;padding:32px 24px 56px}h1{font-size:24px;margin:0 0 8px;font-weight:600}h2{font-size:17px;margin:0 0 16px;font-weight:600}.intro{color:var(--ink-muted);margin:0 0 28px;font-size:14px}
+
+/* Grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:28px;align-items:start}
+.spec{min-width:0}.wide{grid-column:span 2}
+.label{font-size:11.5px;font-weight:600;color:var(--lapis);margin:0 0 9px;text-transform:uppercase;letter-spacing:.07em}
+
+/* Phone */
+.phone{width:100%;max-width:390px;margin:auto;min-height:700px;border:8px solid #171B33;border-radius:36px;background:var(--paper);overflow:hidden;box-shadow:0 12px 34px rgba(23,27,51,.12);position:relative}
+.status{height:24px;padding:5px 18px;font-size:10px;display:flex;justify-content:space-between;color:var(--ink-muted)}
+.heading{padding:20px 24px 10px;display:flex;align-items:flex-start;gap:12px}
+.heading-text h2{margin:0;font-size:22px;line-height:1.15;font-weight:600;color:var(--ink)}
+.heading-text p{margin:2px 0 0;font-size:14px;color:var(--ink-muted)}
+.today-ring{width:38px;height:38px;border-radius:50%;border:4px solid var(--line);position:relative;margin-left:auto;flex-shrink:0}
+.today-ring::after{content:"";position:absolute;inset:-1px;border-radius:50%;border:4px solid var(--saffron);clip-path:polygon(0 0,100% 0,100% 60%,0 60%)}
+.progress-label{font-size:12px;color:var(--ink-muted);text-align:right;margin-top:2px}
+
+/* Quick add */
+.quick-add{margin:6px 16px 8px;background:var(--sheet);border:1px solid var(--line);border-radius:18px;padding:12px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 6px rgba(23,27,51,.05)}
+.quick-add .plus{width:28px;height:28px;border-radius:8px;background:var(--lapis);color:white;display:grid;place-items:center;font-size:18px;font-weight:500}
+.quick-add span{color:var(--ink-muted);font-size:14px}
+
+/* Content */
+.content{padding:0 16px 60px}
+
+/* Section header */
+.group{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;padding:18px 8px 6px;cursor:pointer}
+.group .dot{width:8px;height:8px;border-radius:50%}
+.group .count{font-size:12px;font-weight:500;color:var(--ink-muted);margin-left:2px}
+.group .arrow{margin-left:auto;color:var(--ink-muted);font-size:16px}
+.group.overdue{color:var(--vermilion)}.group.overdue .dot{background:var(--vermilion)}
+.group.today{color:var(--ink)}.group.today .dot{background:var(--saffron)}
+.group.completed{color:var(--ink-muted)}
+
+/* Sheet piece: rounded card sections */
+.sheet{background:var(--sheet);border:1px solid var(--line);overflow:hidden}
+.sheet:first-of-type,.sheet.top{border-radius:18px 18px 0 0}
+.sheet:last-of-type,.sheet.bottom{border-radius:0 0 18px 18px}
+.sheet.top.bottom,.sheet.single{border-radius:18px}
+.sheet+.sheet{border-top:none}
+.sheet .divider{height:1px;background:var(--line);margin-left:52px;margin-right:12px}
+
+/* Task row */
+.task{display:flex;gap:4px;padding:2px 12px 2px 4px;align-items:flex-start;min-height:52px}
+.task.selected{background:rgba(43,72,196,.05)}
+
+/* Checkbox ring */
+.check{flex:none;width:22px;height:22px;border:2px solid #9096AE;border-radius:50%;margin:12px 6px;position:relative;cursor:pointer}
+.check.done{background:var(--lapis);border-color:var(--lapis);color:white;text-align:center;font-size:14px;line-height:18px}
+.check.warn{border-color:var(--vermilion)}
+.check.skipped{border-color:#A87C72;color:#A87C72;text-align:center;font-size:12px;line-height:19px}
+
+.tbody{flex:1;min-width:0;padding:10px 0}
+.title{font-size:15px;font-weight:500;line-height:1.4}
+.meta{font-size:12px;color:var(--ink-muted);display:flex;flex-wrap:wrap;gap:10px;margin-top:3px;align-items:center}
+.meta .icon-sm{font-size:13px}
+.priority-flag{margin-left:auto;padding:12px 0;color:var(--vermilion);font-size:16px;flex:none}
+
+/* Subtask tree */
+.subtree{margin:0 12px 2px 32px;padding-left:16px;border-left:2px solid var(--lapis-soft);position:relative}
+.subrow{height:34px;display:flex;align-items:center;gap:8px;position:relative;font-size:13px;color:var(--ink)}
+.subrow::before{content:"";position:absolute;left:-17px;width:12px;border-top:2px solid var(--lapis-soft)}
+.subcheck{width:16px;height:16px;border:1.5px solid #9096AE;border-radius:50%;flex-shrink:0}
+.subcheck.done{background:var(--lapis);border-color:var(--lapis);color:white;font-size:10px;text-align:center;line-height:13px}
+.done-text{text-decoration:line-through;color:var(--ink-muted)}
+.fold-arrow{color:var(--ink-muted);font-size:16px;padding:12px 4px;cursor:pointer;flex:none}
+.detail-arrow{color:var(--ink-muted);font-size:17px;padding:4px;cursor:pointer;flex:none;width:24px;height:24px;display:grid;place-items:center;border-radius:6px;border:1px solid var(--line);margin:12px 0}
+
+/* Missed repeat */
+.miss-border{border-left:2px solid var(--vermilion);margin-left:-1px}
+
+/* Snack bar */
+.snack{position:absolute;bottom:60px;left:14px;right:14px;border-radius:12px;background:var(--ink);color:var(--paper);padding:14px 16px;font-size:13px;box-shadow:0 5px 16px rgba(23,27,51,.18);display:flex;justify-content:space-between;align-items:center}
+.snack .undo{color:var(--lapis-soft);font-weight:600;font-size:13px;cursor:pointer}
+
+/* Bottom nav */
+.nav{position:absolute;bottom:0;height:66px;background:var(--sheet);border-top:1px solid var(--line);width:100%;display:flex;justify-content:space-around;align-items:center;color:var(--ink-muted);font-size:11.5px;font-weight:500}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:3px}
+.nav-item.active{color:var(--lapis)}
+.nav-item.active .nav-pill{background:var(--lapis-soft);border-radius:16px;padding:2px 16px}
+.nav-icon{font-size:20px}
+
+/* Skipped styles */
+.skipped-badge{font-size:10px;color:#8A5A6A;background:#F3E5EC;border-radius:5px;padding:3px 7px;font-weight:500}
+.done-badge{font-size:10px;color:var(--lapis);background:var(--lapis-soft);border-radius:5px;padding:3px 7px;font-weight:500}
+
+/* Desktop dark */
+.desktop{min-height:620px;border-radius:16px;overflow:hidden;background:#0F1324;color:#E6E8F2;border:1px solid #283050;display:grid;grid-template-columns:220px minmax(360px,1fr) 420px;box-shadow:0 12px 34px rgba(15,19,36,.25)}
+.dk-sidebar{padding:22px 12px;border-right:1px solid #283050;background:#0B0E1C;display:flex;flex-direction:column}
+.dk-brand{font-size:17px;font-weight:600;padding:0 12px 24px;display:flex;align-items:center;gap:10px}
+.dk-brand .mark{width:30px;height:30px;border-radius:10px;background:var(--lapis);display:grid;place-items:center;color:white;font-size:16px;font-weight:700}
+.dk-sideitem{padding:10px 12px;border-radius:12px;color:#9CA2BF;font-size:13px;font-weight:500;display:flex;align-items:center;gap:10px;margin-bottom:4px;cursor:pointer}
+.dk-sideitem.active{background:#161B30;color:#94A7FF;font-weight:600;box-shadow:0 1px 3px rgba(15,19,36,.15)}
+.dk-sideitem .si-icon{font-size:18px;width:22px;text-align:center}
+.dk-sideitem .badge{margin-left:auto;font-size:12px;color:#9CA2BF}
+
+.dk-main{padding:24px 22px;overflow-y:auto}
+.dk-mainhead{display:flex;align-items:flex-start;gap:12px;margin-bottom:8px}
+.dk-mainhead h2{margin:0;font-size:22px;font-weight:600;flex:1;color:#E6E8F2}
+.dk-mainhead-sub{font-size:14px;color:#9CA2BF;margin:0 0 16px}
+.dk-quickadd{background:#161B30;border:1px solid #283050;border-radius:18px;padding:12px 16px;display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.dk-quickadd .plus{width:28px;height:28px;border-radius:8px;background:#94A7FF;color:#0F1324;display:grid;place-items:center;font-size:18px;font-weight:600}
+.dk-quickadd span{color:#9CA2BF;font-size:14px}
+.dk-group{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;padding:16px 8px 6px;cursor:pointer}
+.dk-group .dot{width:8px;height:8px;border-radius:50%}
+.dk-group .count{font-size:12px;font-weight:500;color:#9CA2BF;margin-left:2px}
+.dk-group .arrow{margin-left:auto;color:#9CA2BF;font-size:16px}
+.dk-group.overdue{color:#FF8F7A}.dk-group.overdue .dot{background:#FF8F7A}
+.dk-group.today{color:#E6E8F2}.dk-group.today .dot{background:#F3B85E}
+.dk-sheet{background:#161B30;border:1px solid #283050;overflow:hidden}
+.dk-sheet.top{border-radius:18px 18px 0 0}.dk-sheet.bottom{border-radius:0 0 18px 18px}.dk-sheet.single{border-radius:18px}
+.dk-sheet+.dk-sheet{border-top:none}
+.dk-sheet .dk-divider{height:1px;background:#283050;margin-left:52px;margin-right:12px}
+.dk-task{display:flex;gap:4px;padding:2px 12px 2px 4px;align-items:flex-start;min-height:52px}
+.dk-task.sel{background:rgba(148,167,255,.08)}
+.dk-check{flex:none;width:22px;height:22px;border:2px solid #59607E;border-radius:50%;margin:12px 6px}
+.dk-check.warn{border-color:#FF8F7A}
+.dk-tbody{flex:1;min-width:0;padding:10px 0}
+.dk-title{font-size:15px;font-weight:500;line-height:1.4;color:#E6E8F2}
+.dk-meta{font-size:12px;color:#9CA2BF;display:flex;flex-wrap:wrap;gap:10px;margin-top:3px;align-items:center}
+
+/* Dark subtree */
+.dk-subtree{margin:0 12px 2px 32px;padding-left:16px;border-left:2px solid #243068;position:relative}
+.dk-subrow{height:34px;display:flex;align-items:center;gap:8px;position:relative;font-size:13px;color:#E6E8F2}
+.dk-subrow::before{content:"";position:absolute;left:-17px;width:12px;border-top:2px solid #243068}
+.dk-subcheck{width:16px;height:16px;border:1.5px solid #59607E;border-radius:50%;flex-shrink:0}
+.dk-subcheck.done{background:#94A7FF;border-color:#94A7FF;color:#0F1324;font-size:10px;text-align:center;line-height:13px}
+
+/* Detail panel dark */
+.dk-details{border-left:1px solid #283050;padding:0;background:#161B30;display:flex;flex-direction:column}
+.dk-detail-header{display:flex;justify-content:space-between;padding:12px 12px 0;color:#9CA2BF;font-size:20px}
+.dk-detail-header .btn-icon{cursor:pointer;padding:4px}
+.dk-detail-body{padding:0 24px 24px;overflow-y:auto;flex:1}
+.dk-detail-title-label{font-size:12px;color:#9CA2BF;margin:16px 0 4px;font-weight:500}
+.dk-detail-title{font-size:22px;font-weight:600;margin:0 0 20px;line-height:1.25;color:#E6E8F2}
+
+/* When block (date/time/repeat) */
+.dk-when-block{border:1px solid #283050;border-radius:18px;overflow:hidden;margin-bottom:24px}
+.dk-when-row{display:flex;align-items:center;padding:14px 16px;gap:12px}
+.dk-when-row+.dk-when-row{border-top:1px solid #283050}
+.dk-when-icon{color:#94A7FF;font-size:20px;width:24px;text-align:center}
+.dk-when-text{flex:1}
+.dk-when-value{font-size:15px;color:#E6E8F2}
+.dk-when-label{font-size:12px;color:#9CA2BF}
+.dk-when-clear{color:#9CA2BF;font-size:16px;cursor:pointer;padding:4px}
+
+/* Detail actions */
+.dk-actions{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+.dk-btn{border:1px solid #283050;border-radius:12px;padding:9px 14px;font-size:13px;color:#E6E8F2;background:#1D233B;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px;font-weight:500}
+.dk-btn.primary{background:#94A7FF;border-color:#94A7FF;color:#0F1324}
+.dk-btn.skip{color:#FF8F7A;border-color:#3A2020}
+.dk-btn:hover{opacity:.85}
+
+.dk-section-label{font-size:12.5px;font-weight:600;color:#9CA2BF;margin:0 0 8px}
+
+/* Calendar */
+.calendar{background:var(--sheet);border:1px solid var(--line);border-radius:18px;padding:18px;color:var(--ink);min-height:380px}
+.calhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.calhead strong{font-size:19px;font-weight:600}
+.calhead-sub{font-size:13px;color:var(--ink-muted);margin-bottom:12px}
+.calhead-controls{display:flex;align-items:center;gap:4px}
+.mode-toggle{display:flex;background:var(--container);border-radius:11px;padding:3px;margin-right:4px}
+.mode-seg{padding:5px 12px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--ink-muted);cursor:pointer}
+.mode-seg.active{background:var(--sheet);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(23,27,51,.08)}
+.cal-nav-btn{width:28px;height:28px;display:grid;place-items:center;cursor:pointer;color:var(--ink-muted);font-size:18px}
+.month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:0;text-align:center;font-size:11.5px;color:var(--ink-muted)}
+.weekday{padding:6px 0;font-weight:500}
+.day-cell{min-height:28px;padding:4px 2px;cursor:pointer}
+.day-num{width:26px;height:26px;line-height:26px;margin:auto;border-radius:50%;font-size:12.5px;font-weight:500;color:var(--ink)}
+.day-num.today-num{background:var(--saffron);color:var(--ink);font-weight:600}
+.day-num.selected-num{background:var(--lapis-soft)}
+.day-num.outside{color:rgba(92,98,128,.5)}
+
+/* Day agenda */
+.agenda{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.agtitle{font-size:15px;font-weight:600;margin-bottom:10px}
+.agrow{font-size:13px;padding:8px 0;display:flex;gap:8px;align-items:flex-start}
+.agrow .ag-check{width:18px;height:18px;border:1.5px solid #9096AE;border-radius:50%;flex-shrink:0;margin-top:1px}
+.agrow .ag-time{color:var(--ink-muted);font-size:12px}
+.ag-subtree{margin:0 0 2px 26px;padding-left:12px;border-left:2px solid var(--lapis-soft)}
+.ag-subtree .subrow::before{border-color:var(--lapis-soft)}
+.ag-fold{color:var(--ink-muted);font-size:14px;margin-left:auto;cursor:pointer}
+
+/* Setting panel */
+.setting-card{background:var(--sheet);border-radius:18px;padding:16px;border:1px solid var(--line);max-width:430px}
+.setting-heading{font-size:19px;font-weight:600;margin-bottom:8px}
+.setting-section{font-size:12.5px;font-weight:600;color:var(--ink-muted);margin:20px 0 8px;padding-left:8px}
+.setting-row{display:flex;gap:12px;align-items:center;padding:10px 8px}
+.setting-icon{font-size:20px;color:var(--ink-muted)}
+.setting-copy{flex:1}
+.setting-title{font-size:14px;font-weight:500;color:var(--ink)}
+.setting-desc{font-size:12px;color:var(--ink-muted);margin-top:2px}
+.setting-choices{margin-top:12px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--paper)}
+.choice-opt{padding:11px 14px;font-size:13px;display:flex;justify-content:space-between;cursor:pointer;border-bottom:1px solid var(--line)}
+.choice-opt:last-child{border-bottom:none}
+.choice-opt.active{background:var(--lapis-soft)}
+.choice-opt .check-mark{color:var(--lapis);font-weight:600}
+
+/* Completed section */
+.completed-card{background:var(--sheet);border:1px solid var(--line);border-radius:18px;padding:4px;max-width:430px}
+
+/* Build notes */
+.notes{margin-top:34px;background:var(--sheet);border:1px solid var(--line);border-radius:18px;padding:20px;max-width:960px}
+.notes h2{margin-bottom:10px;font-size:16px}
+.notes ul{margin:0;padding-left:19px;font-size:12.5px;line-height:1.75;color:var(--ink-muted)}
+.notes code{font-size:11px;background:var(--lapis-soft);padding:2px 5px;border-radius:4px;color:var(--lapis);font-family:'IBM Plex Sans Arabic',monospace}
+</style></head><body>
+<h1>Taskwise · Lapis</h1>
+<p class="intro">M13 interaction studies · ink blue on cool paper, IBM Plex Sans Arabic</p>
+
+<div class="grid">
+
+<!-- ==================== PHONE LIGHT: Task list ==================== -->
+<section class="spec"><div class="label">Phone, light · unfolded / folded / missed repeat / skip undo</div>
+<div class="phone">
+<div class="status"><span>9:41</span><span>● ● ▰</span></div>
+<div class="heading">
+  <div class="heading-text">
+    <h2>Tuesday</h2>
+    <p>18 November</p>
+  </div>
+  <div style="text-align:right">
+    <div class="progress-label" style="margin-bottom:4px"><span style="font-size:12px;font-weight:600">3 left</span><br><span style="font-size:11px;color:var(--ink-muted)">2 done</span></div>
+  </div>
+  <div class="today-ring"></div>
+</div>
+<div class="quick-add"><span class="plus">+</span><span>Add a task…</span></div>
+<div class="content">
+
+<div class="group overdue"><span class="dot"></span>Overdue <span class="count">2</span><span class="arrow">▾</span></div>
+
+<!-- Overdue: missed repeat instance (old one stays) -->
+<div class="sheet top bottom" style="margin-bottom:2px">
+<div class="task miss-border">
+  <span class="check warn"></span>
+  <div class="tbody"><div class="title">Send project update</div><div class="meta"><span class="icon-sm">📅</span> Yesterday <span>↻ Daily</span> <span>☑ 2/5</span></div></div>
+  <span class="fold-arrow">›</span>
+</div>
+</div>
+
+<div class="group today"><span class="dot"></span>Today <span class="count">3</span><span class="arrow">▾</span></div>
+
+<!-- Today: unfolded task with 3 subtasks (1 done) -->
+<div class="sheet top">
+<div class="task selected">
+  <span class="check"></span>
+  <div class="tbody"><div class="title">Prepare launch checklist</div><div class="meta"><span class="icon-sm">🕐</span> 10:30 AM <span>☑ 3 subtasks</span></div></div>
+  <span class="fold-arrow">▾</span>
+</div>
+</div>
+<div class="sheet bottom">
+<div class="subtree">
+  <div class="subrow"><span class="subcheck done">✓</span><span class="done-text">Confirm owners</span></div>
+  <div class="subrow"><span class="subcheck"></span><span>Review copy</span></div>
+  <div class="subrow"><span class="subcheck"></span><span>Check links</span></div>
+</div>
+</div>
+
+<!-- Today: missed repeat — new instance of same title -->
+<div class="sheet top bottom" style="margin-top:2px">
+<div class="task">
+  <span class="check"></span>
+  <div class="tbody"><div class="title">Send project update</div><div class="meta"><span class="icon-sm">🕐</span> 4:00 PM <span>↻ Daily</span> <span>☑ 2/5</span></div></div>
+  <span class="fold-arrow">›</span>
+</div>
+</div>
+
+<!-- Today: another task -->
+<div class="sheet top bottom" style="margin-top:2px">
+<div class="task">
+  <span class="check"></span>
+  <div class="tbody"><div class="title">Review budget</div><div class="meta"><span class="icon-sm">📅</span> Today <span style="color:var(--vermilion)">⚑</span></div></div>
+  <span class="priority-flag">⚑</span>
+</div>
+</div>
+
+<div class="group completed">Completed <span class="count">2</span><span class="arrow">▾</span></div>
+
+<!-- Done task -->
+<div class="sheet top">
+<div class="task">
+  <span class="check done">✓</span>
+  <div class="tbody"><div class="title done-text">Water the plants</div><div class="meta">Today <span class="done-badge">✓ Done</span></div></div>
+</div>
+</div>
+<!-- Skipped task -->
+<div class="sheet bottom">
+<div class="divider"></div>
+<div class="task">
+  <span class="check skipped">↷</span>
+  <div class="tbody"><div class="title" style="color:var(--ink-muted);text-decoration:line-through">Call supplier</div><div class="meta">Today <span class="skipped-badge">↷ Skipped</span></div></div>
+</div>
+</div>
+
+</div>
+
+<!-- Undo snack bar -->
+<div class="snack">Skipped "Call supplier" <span class="undo">Undo</span></div>
+
+<div class="nav">
+  <div class="nav-item active"><div class="nav-pill"><span class="nav-icon">☑</span></div><span>Tasks</span></div>
+  <div class="nav-item"><span class="nav-icon">📅</span><span>Calendar</span></div>
+  <div class="nav-item"><span class="nav-icon">⚙</span><span>Settings</span></div>
+</div>
+</div>
+</section>
+
+<!-- ==================== PHONE: "Show subtasks only" mode ==================== -->
+<section class="spec"><div class="label">Phone, light · "Show subtasks only" mode</div>
+<div class="phone" style="min-height:520px">
+<div class="status"><span>9:41</span><span>● ● ▰</span></div>
+<div class="heading">
+  <div class="heading-text">
+    <h2>Tuesday</h2>
+    <p>18 November</p>
+  </div>
+</div>
+<div class="quick-add"><span class="plus">+</span><span>Add a task…</span></div>
+<div class="content">
+
+<div class="group today"><span class="dot"></span>Today <span class="count">2</span><span class="arrow">▾</span></div>
+
+<!-- Unfolded: tap toggled subtasks, arrow opens details -->
+<div class="sheet top">
+<div class="task selected">
+  <span class="check"></span>
+  <div class="tbody"><div class="title">Book annual checkup</div><div class="meta"><span class="icon-sm">🕐</span> 2:00 PM <span>☑ 2/4</span></div></div>
+  <span class="detail-arrow" title="Open details">›</span>
+  <span class="fold-arrow">▾</span>
+</div>
+</div>
+<div class="sheet bottom">
+<div class="subtree">
+  <div class="subrow"><span class="subcheck done">✓</span><span class="done-text">Find clinic number</span></div>
+  <div class="subrow"><span class="subcheck done">✓</span><span class="done-text">Check insurance</span></div>
+  <div class="subrow"><span class="subcheck"></span><span>Choose a time</span></div>
+  <div class="subrow"><span class="subcheck"></span><span>Save confirmation</span></div>
+</div>
+</div>
+
+<!-- Folded: tap row to show subtasks -->
+<div class="sheet top bottom" style="margin-top:2px">
+<div class="task">
+  <span class="check"></span>
+  <div class="tbody"><div class="title">Read design notes</div><div class="meta"><span class="icon-sm">🕐</span> 5:00 PM <span>☑ 2/5</span></div></div>
+  <span class="detail-arrow" title="Open details">›</span>
+  <span class="fold-arrow">›</span>
+</div>
+</div>
+
+<div style="font-size:11.5px;color:var(--ink-muted);margin:18px 8px;line-height:1.5">
+  Tap row toggles subtasks · <span style="border:1px solid var(--line);border-radius:4px;padding:1px 4px;font-size:10px">›</span> opens task details
+</div>
+
+</div>
+<div class="nav">
+  <div class="nav-item active"><div class="nav-pill"><span class="nav-icon">☑</span></div><span>Tasks</span></div>
+  <div class="nav-item"><span class="nav-icon">📅</span><span>Calendar</span></div>
+  <div class="nav-item"><span class="nav-icon">⚙</span><span>Settings</span></div>
+</div>
+</div>
+</section>
+
+<!-- ==================== DESKTOP DARK ==================== -->
+<section class="spec wide"><div class="label">Desktop, dark · list + details side panel with Skip action</div>
+<div class="desktop">
+
+<!-- Sidebar -->
+<aside class="dk-sidebar">
+  <div class="dk-brand"><span class="mark">◆</span> Taskwise</div>
+  <div class="dk-sideitem active"><span class="si-icon">☑</span> Tasks <span class="badge">5</span></div>
+  <div class="dk-sideitem"><span class="si-icon">📅</span> Calendar</div>
+  <div class="dk-sideitem" style="margin-top:auto"><span class="si-icon">⚙</span> Settings</div>
+  <div style="margin-top:16px">
+    <div style="font-size:11px;color:#59607E;padding:0 12px;display:flex;gap:6px;align-items:center">
+      <span style="border:1px solid #283050;border-radius:4px;padding:1px 4px;font-size:10px;color:#9CA2BF">Ctrl</span>
+      <span style="border:1px solid #283050;border-radius:4px;padding:1px 4px;font-size:10px;color:#9CA2BF">N</span>
+      <span style="color:#9CA2BF">New task</span>
+    </div>
+    <div style="font-size:11px;color:#59607E;padding:4px 12px 0;display:flex;gap:6px;align-items:center">
+      <span style="border:1px solid #283050;border-radius:4px;padding:1px 4px;font-size:10px;color:#9CA2BF">Ctrl</span>
+      <span style="border:1px solid #283050;border-radius:4px;padding:1px 4px;font-size:10px;color:#9CA2BF">F</span>
+      <span style="color:#9CA2BF">Search</span>
+    </div>
+  </div>
+</aside>
+
+<!-- Main list -->
+<main class="dk-main">
+  <div class="dk-mainhead"><h2>Tuesday</h2></div>
+  <div class="dk-mainhead-sub">18 November</div>
+  <div class="dk-quickadd"><span class="plus">+</span><span>Add a task…</span></div>
+
+  <div class="dk-group overdue"><span class="dot"></span> Overdue <span class="count">1</span><span class="arrow">▾</span></div>
+  <div class="dk-sheet single">
+    <div class="dk-task">
+      <span class="dk-check warn"></span>
+      <div class="dk-tbody"><div class="dk-title">Send project update</div><div class="dk-meta">Yesterday · ↻ Daily</div></div>
+    </div>
+  </div>
+
+  <div class="dk-group today"><span class="dot"></span> Today <span class="count">2</span><span class="arrow">▾</span></div>
+  <div class="dk-sheet top">
+    <div class="dk-task sel">
+      <span class="dk-check"></span>
+      <div class="dk-tbody"><div class="dk-title">Prepare launch checklist</div><div class="dk-meta">10:30 AM · ☑ 3 subtasks</div></div>
+    </div>
+  </div>
+  <div class="dk-sheet bottom">
+    <div class="dk-subtree">
+      <div class="dk-subrow"><span class="dk-subcheck done">✓</span><span class="done-text">Confirm owners</span></div>
+      <div class="dk-subrow"><span class="dk-subcheck"></span><span>Review copy</span></div>
+      <div class="dk-subrow"><span class="dk-subcheck"></span><span>Check links</span></div>
+    </div>
+  </div>
+
+  <div class="dk-sheet single" style="margin-top:2px">
+    <div class="dk-task">
+      <span class="dk-check"></span>
+      <div class="dk-tbody"><div class="dk-title">Review budget</div><div class="dk-meta">Today · ☑ 2/5</div></div>
+    </div>
+  </div>
+</main>
+
+<!-- Detail panel -->
+<aside class="dk-details">
+  <div class="dk-detail-header">
+    <div></div>
+    <div style="display:flex;gap:4px">
+      <span class="btn-icon" title="Mark done">☑</span>
+      <span class="btn-icon" title="Delete">🗑</span>
+      <span class="btn-icon" title="Close">✕</span>
+    </div>
+  </div>
+  <div class="dk-detail-body">
+    <div class="dk-detail-title-label">Title</div>
+    <div class="dk-detail-title">Prepare launch checklist</div>
+
+    <div class="dk-when-block">
+      <div class="dk-when-row">
+        <span class="dk-when-icon">📅</span>
+        <div class="dk-when-text"><div class="dk-when-value">Today</div><div class="dk-when-label">Due date</div></div>
+        <span class="dk-when-clear">✕</span>
+      </div>
+      <div class="dk-when-row">
+        <span class="dk-when-icon">🕐</span>
+        <div class="dk-when-text"><div class="dk-when-value">10:30 AM</div><div class="dk-when-label">Due time</div></div>
+        <span class="dk-when-clear">✕</span>
+      </div>
+      <div class="dk-when-row">
+        <span class="dk-when-icon">↻</span>
+        <div class="dk-when-text"><div class="dk-when-value">Does not repeat</div><div class="dk-when-label">Repeat</div></div>
+      </div>
+    </div>
+
+    <div class="dk-actions">
+      <button class="dk-btn primary">✓ Done</button>
+      <button class="dk-btn skip">↷ Skip</button>
+      <button class="dk-btn">•••</button>
+    </div>
+
+    <div class="dk-section-label">Subtasks <span style="float:right;font-weight:400">1 of 3</span></div>
+    <div style="border:1px solid #283050;border-radius:12px;padding:10px 14px;margin-bottom:20px;font-size:13px">
+      <div style="display:flex;gap:8px;align-items:center;padding:4px 0"><span class="dk-subcheck done" style="width:14px;height:14px">✓</span><span class="done-text">Confirm owners</span></div>
+      <div style="display:flex;gap:8px;align-items:center;padding:4px 0"><span class="dk-subcheck" style="width:14px;height:14px"></span><span>Review copy</span></div>
+      <div style="display:flex;gap:8px;align-items:center;padding:4px 0"><span class="dk-subcheck" style="width:14px;height:14px"></span><span>Check links</span></div>
+    </div>
+
+    <div class="dk-section-label">Priority</div>
+    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+      <span style="border:1px solid #94A7FF;background:#243068;border-radius:12px;padding:6px 12px;font-size:12px;color:#E6E8F2">None</span>
+      <span style="border:1px solid #283050;border-radius:12px;padding:6px 12px;font-size:12px;color:#9CA2BF">Low</span>
+      <span style="border:1px solid #283050;border-radius:12px;padding:6px 12px;font-size:12px;color:#9CA2BF">Medium</span>
+      <span style="border:1px solid #283050;border-radius:12px;padding:6px 12px;font-size:12px;color:#9CA2BF">High</span>
+    </div>
+
+    <div class="dk-section-label">Notes</div>
+    <div style="border:1px solid #283050;border-radius:12px;padding:12px 14px;font-size:13px;color:#9CA2BF;margin-bottom:20px;min-height:64px">Review everything before sharing.</div>
+  </div>
+</aside>
+
+</div>
+</section>
+
+<!-- ==================== COMPLETED GROUP ==================== -->
+<section class="spec"><div class="label">Completed group · done vs skipped distinction</div>
+<div class="completed-card">
+<div class="group completed" style="margin-top:2px;padding-left:12px">Completed <span class="count">2</span><span class="arrow">▾</span></div>
+<div style="padding:0 4px 4px">
+<div class="sheet top">
+<div class="task">
+  <span class="check done">✓</span>
+  <div class="tbody"><div class="title done-text">Water the plants</div><div class="meta">Today <span class="done-badge">✓ Done</span></div></div>
+</div>
+</div>
+<div class="sheet bottom">
+<div class="divider"></div>
+<div class="task">
+  <span class="check skipped">↷</span>
+  <div class="tbody"><div class="title" style="color:var(--ink-muted);text-decoration:line-through">Call supplier</div><div class="meta">Today <span class="skipped-badge">↷ Skipped</span></div></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ==================== CALENDAR ==================== -->
+<section class="spec"><div class="label">Calendar · month day agenda with unfolded task</div>
+<div class="calendar">
+<div class="calhead">
+  <div>
+    <strong>November 2026</strong>
+    <div class="calhead-sub">This month</div>
+  </div>
+  <div class="calhead-controls">
+    <div class="mode-toggle"><span class="mode-seg">Week</span><span class="mode-seg active">Month</span></div>
+    <span class="cal-nav-btn">‹</span>
+    <span class="cal-nav-btn">›</span>
+  </div>
+</div>
+<div class="month-grid">
+  <span class="weekday">Mon</span><span class="weekday">Tue</span><span class="weekday">Wed</span><span class="weekday">Thu</span><span class="weekday">Fri</span><span class="weekday">Sat</span><span class="weekday">Sun</span>
+  <div class="day-cell"></div><div class="day-cell"></div><div class="day-cell"></div><div class="day-cell"></div><div class="day-cell"></div><div class="day-cell"></div><div class="day-cell"><div class="day-num">1</div></div>
+  <div class="day-cell"><div class="day-num">2</div></div><div class="day-cell"><div class="day-num">3</div></div><div class="day-cell"><div class="day-num">4</div></div><div class="day-cell"><div class="day-num">5</div></div><div class="day-cell"><div class="day-num">6</div></div><div class="day-cell"><div class="day-num">7</div></div><div class="day-cell"><div class="day-num">8</div></div>
+  <div class="day-cell"><div class="day-num">9</div></div><div class="day-cell"><div class="day-num">10</div></div><div class="day-cell"><div class="day-num">11</div></div><div class="day-cell"><div class="day-num">12</div></div><div class="day-cell"><div class="day-num">13</div></div><div class="day-cell"><div class="day-num">14</div></div><div class="day-cell"><div class="day-num">15</div></div>
+  <div class="day-cell"><div class="day-num">16</div></div><div class="day-cell"><div class="day-num">17</div></div><div class="day-cell"><div class="day-num today-num selected-num">18</div></div><div class="day-cell"><div class="day-num">19</div></div><div class="day-cell"><div class="day-num">20</div></div><div class="day-cell"><div class="day-num">21</div></div><div class="day-cell"><div class="day-num">22</div></div>
+  <div class="day-cell"><div class="day-num">23</div></div><div class="day-cell"><div class="day-num">24</div></div><div class="day-cell"><div class="day-num">25</div></div><div class="day-cell"><div class="day-num">26</div></div><div class="day-cell"><div class="day-num">27</div></div><div class="day-cell"><div class="day-num">28</div></div><div class="day-cell"><div class="day-num">29</div></div>
+  <div class="day-cell"><div class="day-num">30</div></div><div class="day-cell"><div class="day-num outside">1</div></div><div class="day-cell"><div class="day-num outside">2</div></div><div class="day-cell"><div class="day-num outside">3</div></div><div class="day-cell"><div class="day-num outside">4</div></div><div class="day-cell"><div class="day-num outside">5</div></div><div class="day-cell"><div class="day-num outside">6</div></div>
+</div>
+<div class="agenda">
+  <div class="agtitle">Tuesday, 18 November</div>
+  <div class="agrow">
+    <span class="ag-check"></span>
+    <div style="flex:1"><span>Prepare launch checklist</span> <span class="ag-time">10:30 AM</span></div>
+    <span class="ag-fold">▾</span>
+  </div>
+  <div class="ag-subtree">
+    <div class="subrow"><span class="subcheck done">✓</span><span class="done-text">Confirm owners</span></div>
+    <div class="subrow"><span class="subcheck"></span><span>Review copy</span></div>
+    <div class="subrow"><span class="subcheck"></span><span>Check links</span></div>
+  </div>
+  <div class="agrow">
+    <span class="ag-check"></span>
+    <div style="flex:1"><span>Review budget</span> <span class="ag-time">3:00 PM</span></div>
+  </div>
+  <div class="agrow">
+    <span class="ag-check"></span>
+    <div style="flex:1"><span>Send project update</span> <span class="ag-time">4:00 PM</span> <span style="font-size:11px;color:var(--ink-muted)">↻</span></div>
+  </div>
+</div>
+</div>
+</section>
+
+<!-- ==================== SETTINGS ROW ==================== -->
+<section class="spec"><div class="label">Settings · Tasks section tap-behaviour row</div>
+<div class="setting-card">
+<div class="setting-heading">Settings</div>
+<div class="setting-section">Tasks</div>
+<div style="background:var(--sheet);border:1px solid var(--line);border-radius:18px;overflow:hidden">
+<div class="setting-row">
+  <span class="setting-icon">☑</span>
+  <div class="setting-copy">
+    <div class="setting-title">When a task with subtasks is tapped</div>
+    <div class="setting-desc">Choose how subtasks appear in task lists</div>
+  </div>
+</div>
+</div>
+<div class="setting-choices">
+  <div class="choice-opt active">Open details and show subtasks <span class="check-mark">✓</span></div>
+  <div class="choice-opt">Show subtasks only</div>
+  <div class="choice-opt">Open details only</div>
+</div>
+</div>
+</section>
+
+</div>
+
+<!-- ==================== BUILD NOTES ==================== -->
+<section class="notes"><h2>Build notes</h2>
+<ul>
+<li>Extend lapis <code>tasks/task_tile.dart</code> with a collapsible tree below the task row; the vertical line uses <code>Palette.lapisSoft (#E5E9FB)</code> in light and <code>Palette.lapisDeep (#243068)</code> in dark, with matching horizontal branches—keeping the lapis accent palette.</li>
+<li>Add the per-device <code>subtaskTapMode</code> enum to <code>AppSettings</code> (open details + subtasks, subtasks only, details only). Store in shared settings; surface a Settings row under a new "Tasks" section in <code>settings/settings_page.dart</code>.</li>
+<li>Tree line & subtask checkboxes re-use existing <code>CheckRing</code> at 16 px and the <code>SheetPiece</code> rounded-sheet container so the tree inherits the planner-page look.</li>
+<li>Skip lives next to Done in <code>tasks/task_detail.dart</code> as an <code>OutlinedButton</code> with <code>scheme.error</code> foreground (<code>#C33F2A</code> light / <code>#FF8F7A</code> dark); badge in Completed uses a warm rose tint (<code>#8A5A6A</code> text, <code>#F3E5EC</code> fill) to visually separate from the lapis Done badge.</li>
+<li>Skipped task row: <code>scheme.onSurfaceVariant</code> title with <code>TextDecoration.lineThrough</code>; check ring shows <code>↷</code> in a muted warm tone instead of the filled lapis circle.</li>
+<li>Undo snack uses the existing <code>SnackBarTheme</code>: <code>inverseSurface (#171B33)</code> bg, <code>Palette.lapisLight (#94A7FF)</code> action text (dark) / <code>Palette.lapisSoft</code> (light).</li>
+<li>"Show subtasks only" mode adds a small bordered arrow button (12 md radius, <code>line</code> border) on the row's end so the user can still open details; a tap anywhere else toggles the tree.</li>
+<li>Missed repeats: no new widget needed—the scheduler creates a new occurrence on Today while leaving the old one in Overdue, so both appear naturally in <code>taskListRowsProvider</code>.</li>
+<li>Calendar inline tree: render in <code>DayAgenda</code> and in week <code>_DayColumn</code> using the same <code>SubtaskTreeWidget</code> under each <code>CalendarChip</code>/<code>ListTile</code>.</li>
+</ul>
+</section>
+
+</body></html>

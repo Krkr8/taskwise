@@ -160,6 +160,34 @@ class SettingsPage extends ConsumerWidget {
               ],
             ),
             ..._section(
+              l10n.settingsTasks,
+              color: b.lilac,
+              children: [
+                _Setting(
+                  label: l10n.taskTapAction,
+                  child: SegmentedButton<TaskTapAction>(
+                    showSelectedIcon: false,
+                    segments: [
+                      ButtonSegment(
+                        value: TaskTapAction.detailsAndSubtasks,
+                        label: Text(l10n.taskTapDetailsAndSubtasks),
+                      ),
+                      ButtonSegment(
+                        value: TaskTapAction.subtasksOnly,
+                        label: Text(l10n.taskTapSubtasksOnly),
+                      ),
+                      ButtonSegment(
+                        value: TaskTapAction.detailsOnly,
+                        label: Text(l10n.taskTapDetailsOnly),
+                      ),
+                    ],
+                    selected: {settings.taskTapAction},
+                    onSelectionChanged: (s) => repo.setTaskTapAction(s.single),
+                  ),
+                ),
+              ],
+            ),
+            ..._section(
               l10n.settingsNotifications,
               color: b.tomato,
               children: [

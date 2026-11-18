@@ -47,8 +47,11 @@ class CalendarChip extends ConsumerWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final l10n = context.l10n;
-    final color = itemColor(ref, item, scheme);
     final task = item.task;
+    final skipped = task.done && task.skipped;
+    final color = skipped
+        ? SkipColors.of(scheme).accent
+        : itemColor(ref, item, scheme);
     final timeFormat = ref.watch(appSettingsProvider).timeFormat;
     final style =
         (dense ? theme.textTheme.labelSmall : theme.textTheme.bodySmall)
@@ -56,6 +59,7 @@ class CalendarChip extends ConsumerWidget {
               color: scheme.onSurface,
               fontWeight: FontWeight.w500,
               decoration: task.done ? TextDecoration.lineThrough : null,
+              decorationStyle: skipped ? TextDecorationStyle.dashed : null,
               height: 1.25,
             );
     final label = showTime && item.timeMinutes != null
@@ -105,6 +109,15 @@ class CalendarChip extends ConsumerWidget {
                   : Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        if (skipped)
+                          Padding(
+                            padding: const EdgeInsetsDirectional.only(end: 3),
+                            child: Icon(
+                              Icons.skip_next_rounded,
+                              size: dense ? 11 : 13,
+                              color: SkipColors.of(scheme).text,
+                            ),
+                          ),
                         if (item.projected || task.recurrenceRule != null)
                           Padding(
                             padding: const EdgeInsetsDirectional.only(end: 3),
@@ -153,7 +166,10 @@ class CalendarChip extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (item.timeMinutes != null || repeats || hasReminders)
+          if (item.timeMinutes != null ||
+              repeats ||
+              hasReminders ||
+              (item.task.done && item.task.skipped))
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: AlignmentDirectional.centerStart,
@@ -167,6 +183,15 @@ class CalendarChip extends ConsumerWidget {
                         Icons.notifications_active_outlined,
                         size: 10,
                         color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  if (item.task.done && item.task.skipped)
+                    Padding(
+                      padding: const EdgeInsetsDirectional.only(end: 3),
+                      child: Icon(
+                        Icons.skip_next_rounded,
+                        size: 11,
+                        color: SkipColors.of(theme.colorScheme).text,
                       ),
                     ),
                   if (repeats)
@@ -221,4 +246,36 @@ Future<String?> addTaskOnDate(
       .read(taskRepositoryProvider)
       .createTask(title: title, dueDate: date, dueTimeMinutes: timeMinutes);
   return task.id;
+}
+
+/// The small button under an unfolded calendar chip that opens the task's
+/// details (shown with the "Show subtasks only" setting).
+class ChipDetailsButton extends StatelessWidget {
+  const ChipDetailsButton({super.key, required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Tooltip(
+      message: context.l10n.openDetails,
+      child: Material(
+        color: scheme.primaryContainer,
+        borderRadius: BorderRadius.circular(Radii.xs + 2),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onPressed,
+          child: SizedBox(
+            height: 20,
+            child: Icon(
+              Icons.open_in_new_rounded,
+              size: 13,
+              color: scheme.primary,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

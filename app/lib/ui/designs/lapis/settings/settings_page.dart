@@ -141,6 +141,23 @@ class SettingsPage extends ConsumerWidget {
                 onSelectionChanged: (s) => repo.setTimeFormat(s.single),
               ),
             ),
+            _Section(l10n.settingsTasks),
+            _Setting(
+              label: l10n.taskTapAction,
+              scrolls: false,
+              child: _ChoiceList<TaskTapAction>(
+                value: settings.taskTapAction,
+                onChanged: repo.setTaskTapAction,
+                choices: [
+                  (
+                    TaskTapAction.detailsAndSubtasks,
+                    l10n.taskTapDetailsAndSubtasks,
+                  ),
+                  (TaskTapAction.subtasksOnly, l10n.taskTapSubtasksOnly),
+                  (TaskTapAction.detailsOnly, l10n.taskTapDetailsOnly),
+                ],
+              ),
+            ),
             _Section(l10n.settingsNotifications),
             _Setting(
               label: l10n.defaultReminder,
@@ -404,11 +421,80 @@ class _Section extends StatelessWidget {
 }
 
 /// A label above a control, wrapping nicely on narrow screens.
+/// A short list of exclusive choices in one rounded box, the chosen one
+/// tinted and ticked.
+class _ChoiceList<T> extends StatelessWidget {
+  const _ChoiceList({
+    required this.value,
+    required this.onChanged,
+    required this.choices,
+  });
+
+  final T value;
+  final ValueChanged<T> onChanged;
+  final List<(T, String)> choices;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final line = LapisColors.of(context).line;
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        border: Border.all(color: line),
+        borderRadius: BorderRadius.circular(Radii.md),
+      ),
+      child: Material(
+        color: scheme.surfaceContainerLow,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final (i, (choice, label)) in choices.indexed) ...[
+              if (i > 0) Divider(height: 1, color: line),
+              Semantics(
+                button: true,
+                selected: choice == value,
+                child: InkWell(
+                  onTap: () => onChanged(choice),
+                  child: Container(
+                    color: choice == value ? scheme.primaryContainer : null,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Spacing.lg,
+                      vertical: Spacing.md,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(child: Text(label)),
+                        if (choice == value)
+                          Icon(Icons.check, size: 18, color: scheme.primary),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _Setting extends StatelessWidget {
-  const _Setting({required this.label, required this.child});
+  const _Setting({
+    required this.label,
+    required this.child,
+    this.scrolls = true,
+  });
 
   final String label;
   final Widget child;
+
+  /// Scrolls sideways when [child] is wider than the screen. Off for a
+  /// child that fills the width.
+  final bool scrolls;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -422,7 +508,10 @@ class _Setting extends StatelessWidget {
               ?.copyWith(fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: Spacing.sm),
-        SingleChildScrollView(scrollDirection: Axis.horizontal, child: child),
+        if (scrolls)
+          SingleChildScrollView(scrollDirection: Axis.horizontal, child: child)
+        else
+          child,
       ],
     ),
   );

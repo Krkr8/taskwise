@@ -74,6 +74,7 @@ List<AppDesign> get designs => _onlyDesigns.isEmpty
       ];
 
 const richTask = 'Plan the weekend trip to Erbil';
+const slidesTask = 'Finish the quarterly slides';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -87,6 +88,9 @@ void main() {
     final richId = (await (db.select(
       db.tasks,
     )..where((t) => t.title.equals(richTask))).getSingle()).id;
+    final slidesId = (await (db.select(
+      db.tasks,
+    )..where((t) => t.title.equals(slidesTask))).getSingle()).id;
 
     for (final design in designs) {
       await container.read(settingsRepositoryProvider).setDesign(design);
@@ -104,6 +108,39 @@ void main() {
             .select(ShellTabNotifier.tasks);
         await settle(tester);
         await shot(tester, n('01-tasks'));
+
+        // 1b. Subtasks unfolded under a task, and Completed open with a done
+        // and a skipped task (M13).
+        container.read(expandedTasksProvider.notifier).expand(slidesId);
+        container
+            .read(collapsedGroupsProvider.notifier)
+            .toggle(TaskGroup.completed);
+        await settle(tester);
+        // The list builds lazily: scroll until the task is built.
+        final position = tester
+            .state<ScrollableState>(
+              find
+                  .ancestor(
+                    of: find.text('Pay the electricity bill').first,
+                    matching: find.byType(Scrollable),
+                  )
+                  .first,
+            )
+            .position;
+        while (find.text(slidesTask).evaluate().isEmpty &&
+            position.pixels < position.maxScrollExtent) {
+          position.jumpTo(position.pixels + 200);
+          await tester.pump();
+        }
+        final slides = tester.element(find.text(slidesTask).first);
+        await Scrollable.ensureVisible(slides, alignment: 0.05);
+        await settle(tester);
+        await shot(tester, n('01b-tasks-unfolded'));
+        position.jumpTo(0);
+        container
+            .read(collapsedGroupsProvider.notifier)
+            .toggle(TaskGroup.completed);
+        await settle(tester);
 
         // 2. A task with everything: notes, subtasks, tags, reminders, repeat.
         container.read(openTaskRequestProvider.notifier).request(richId);
@@ -299,7 +336,7 @@ Future<void> seed(ProviderContainer container) async {
     tags: ['shopping'],
   );
   await add(
-    'Finish the quarterly slides',
+    slidesTask,
     inDays: 1,
     at: 14 * 60,
     priority: Priority.high,
@@ -313,4 +350,13 @@ Future<void> seed(ProviderContainer container) async {
   await add('Fix the kitchen tap', category: home);
   final done = await add('Send the invoice', inDays: -1, category: work);
   await tasks.setDone(done.id, done: true);
+  final skipped = await add('Pick up the dry cleaning', inDays: -1);
+  await tasks.setDone(skipped.id, done: true, skipped: true);
+  // A daily task left undone: the app keeps it in Overdue and adds today's.
+  await add(
+    'Water the plants',
+    inDays: -2,
+    category: home,
+    rule: 'DTSTART=${ymd(today.addDays(-2))};FREQ=DAILY',
+  );
 }

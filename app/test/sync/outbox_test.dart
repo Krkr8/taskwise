@@ -67,6 +67,7 @@ Map<String, Object?> _sample(String type) {
       'priority': 'high',
       'categoryId': 'c1',
       'done': false,
+      'skipped': false,
       'completedAt': null,
       'recurrenceRule': 'FREQ=DAILY',
       'notifyAllDevices': false,

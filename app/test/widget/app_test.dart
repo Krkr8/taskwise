@@ -26,7 +26,9 @@ import 'package:taskwise/notifications/notifier.dart';
 import 'package:taskwise/notifications/reminder_scheduler.dart';
 import 'package:taskwise/state/providers.dart';
 import 'package:taskwise/ui/shared/location/map_providers.dart';
+import 'package:taskwise/ui/shared/tasks/subtask_tree.dart';
 import 'package:taskwise/ui/designs/design.dart';
+import 'package:taskwise/ui/designs/classic/calendar/calendar_page.dart';
 import 'package:taskwise/ui/designs/classic/location/location_picker_page.dart';
 import 'package:taskwise/ui/designs/classic/tasks/task_detail.dart';
 import 'package:taskwise/ui/designs/classic/theme/app_theme.dart';
@@ -68,6 +70,12 @@ void appTest(
     // to the system locale once it emits.
     if (settings.language case final language?) {
       await SettingsRepository(db, deviceId: 'test').setLanguage(language);
+    }
+    if (settings.taskTapAction != const AppSettings().taskTapAction) {
+      await SettingsRepository(
+        db,
+        deviceId: 'test',
+      ).setTaskTapAction(settings.taskTapAction);
     }
 
     await tester.pumpWidget(
@@ -213,8 +221,15 @@ void main() {
         await Future<void>.delayed(const Duration(milliseconds: 100));
       });
       await tester.pumpAndSettle();
-      // The release is newer, so the dialog opens.
-      expect(find.text('Taskwise 1.2.0'), findsOneWidget);
+      // The release is newer, so the dialog opens. (About also shows the
+      // app's own "Taskwise $appVersion", which is 1.2.0 too.)
+      expect(
+        find.descendant(
+          of: find.byType(Dialog),
+          matching: find.text('Taskwise 1.2.0'),
+        ),
+        findsOneWidget,
+      );
     }, overrides: overrides());
   });
 
@@ -760,6 +775,277 @@ void main() {
     );
     expect(saved!.defaultReminder, DefaultReminder.min15);
     expect(saved.snoozeMinutes, [10, 15, 60]);
+  });
+  // ------------------------------------------------------------- M13
+
+  group('M13', () {
+    Future<Task> taskWithSubtasks(
+      WidgetTester tester,
+      TaskRepository repo, {
+      String title = 'Launch',
+      LocalDate? due,
+    }) async {
+      final task = await repo.createTask(title: title, dueDate: due);
+      for (final subtask in ['Confirm owners', 'Review copy', 'Check links']) {
+        await repo.addSubtask(task.id, subtask);
+      }
+      await tester.pumpAndSettle();
+      return task;
+    }
+
+    Finder inTree(String text) => find.descendant(
+      of: find.byType(SubtaskTree),
+      matching: find.text(text),
+    );
+
+    Future<void> tapRow(WidgetTester tester, String title) async {
+      // The side panel repeats the title in its own field; tap the list row.
+      await tester.tap(
+        find
+            .descendant(
+              of: find.byType(ListView).first,
+              matching: find.text(title),
+            )
+            .first,
+      );
+      await tester.pumpAndSettle();
+    }
+
+    appTest('tapping a task with subtasks opens details and toggles the tree', (
+      tester,
+      repo,
+    ) async {
+      await taskWithSubtasks(tester, repo);
+      expect(find.byType(SubtaskTree), findsNothing);
+
+      await tapRow(tester, 'Launch');
+      expect(find.byType(TaskDetailView), findsOneWidget);
+      for (final title in ['Confirm owners', 'Review copy', 'Check links']) {
+        expect(inTree(title), findsOneWidget, reason: title);
+      }
+
+      await tapRow(tester, 'Launch');
+      expect(find.byType(SubtaskTree), findsNothing);
+      expect(find.byType(TaskDetailView), findsOneWidget);
+    });
+
+    appTest('a subtask is ticked in place from the tree', (tester, repo) async {
+      await taskWithSubtasks(tester, repo);
+      await tapRow(tester, 'Launch');
+      await tester.tap(inTree('Review copy'));
+      await tester.pumpAndSettle();
+
+      final subtasks = (await tester.runAsync(
+        () => repo.db.select(repo.db.subtasks).get(),
+      ))!;
+      expect(subtasks.where((s) => s.done).map((s) => s.title), [
+        'Review copy',
+      ]);
+      expect(find.text('1/3'), findsWidgets);
+    });
+
+    appTest(
+      '"Show subtasks only": a tap unfolds, the arrow opens details',
+      (tester, repo) async {
+        await taskWithSubtasks(tester, repo);
+        expect(find.byTooltip('Open details'), findsOneWidget);
+
+        await tapRow(tester, 'Launch');
+        expect(inTree('Review copy'), findsOneWidget);
+        expect(find.byType(TaskDetailView), findsNothing);
+
+        await tester.tap(find.byTooltip('Open details'));
+        await tester.pumpAndSettle();
+        expect(find.byType(TaskDetailView), findsOneWidget);
+        // The tree stays unfolded.
+        expect(inTree('Review copy'), findsOneWidget);
+      },
+      settings: const AppSettings(
+        language: AppLanguage.en,
+        taskTapAction: TaskTapAction.subtasksOnly,
+      ),
+    );
+
+    appTest(
+      '"Open details only" never unfolds',
+      (tester, repo) async {
+        await taskWithSubtasks(tester, repo);
+        expect(find.byTooltip('Open details'), findsNothing);
+        await tapRow(tester, 'Launch');
+        expect(find.byType(TaskDetailView), findsOneWidget);
+        expect(find.byType(SubtaskTree), findsNothing);
+      },
+      settings: const AppSettings(
+        language: AppLanguage.en,
+        taskTapAction: TaskTapAction.detailsOnly,
+      ),
+    );
+
+    appTest(
+      'a task without subtasks opens details and has no tree',
+      (tester, repo) async {
+        await repo.createTask(title: 'Plain');
+        await tester.pumpAndSettle();
+        expect(find.byTooltip('Open details'), findsNothing);
+        await tapRow(tester, 'Plain');
+        expect(find.byType(TaskDetailView), findsOneWidget);
+        expect(find.byType(SubtaskTree), findsNothing);
+      },
+      settings: const AppSettings(
+        language: AppLanguage.en,
+        taskTapAction: TaskTapAction.subtasksOnly,
+      ),
+    );
+
+    appTest('Skip moves a task to Completed as skipped; Undo restores it', (
+      tester,
+      repo,
+    ) async {
+      final task = await repo.createTask(
+        title: 'Call supplier',
+        dueDate: LocalDate(2026, 10, 20),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Today'), findsWidgets);
+
+      await tester.tap(find.text('Call supplier'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(OutlinedButton, 'Skip'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Skipped “Call supplier”'), findsOneWidget);
+      final skipped = (await tester.runAsync(() => repo.getTask(task.id)))!;
+      expect(skipped.done, isTrue);
+      expect(skipped.skipped, isTrue);
+      // Skip is only offered while the task is open.
+      expect(find.widgetWithText(OutlinedButton, 'Skip'), findsNothing);
+
+      await tester.tap(find.text('Completed'));
+      await tester.pumpAndSettle();
+      expect(find.text('Skipped'), findsOneWidget);
+
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+      expect(find.text('Skipped'), findsNothing);
+      final back = (await tester.runAsync(() => repo.getTask(task.id)))!;
+      expect(back.done, isFalse);
+      expect(back.skipped, isFalse);
+    });
+
+    appTest('on a phone Skip works from the full-screen details', (
+      tester,
+      repo,
+    ) async {
+      await repo.createTask(title: 'Call supplier');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Call supplier'));
+      await tester.pumpAndSettle();
+      expect(find.byType(TaskDetailPage), findsOneWidget);
+      await tester.tap(find.widgetWithText(OutlinedButton, 'Skip'));
+      await tester.pumpAndSettle();
+      expect(find.text('Skipped “Call supplier”'), findsOneWidget);
+    }, size: _phone);
+
+    appTest('Settings → Tasks stores the tap choice', (tester, repo) async {
+      await tester.tap(find.text('Settings').first);
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Tapping a task with subtasks'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Open details and show subtasks'), findsOneWidget);
+      expect(find.text('Open details only'), findsOneWidget);
+
+      await tester.ensureVisible(find.text('Show subtasks only'));
+      await tester.tap(find.text('Show subtasks only'));
+      await tester.pumpAndSettle();
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(MaterialApp)),
+      );
+      final saved = await tester.runAsync(
+        () => container.read(settingsRepositoryProvider).loadSettings(),
+      );
+      expect(saved!.taskTapAction, TaskTapAction.subtasksOnly);
+    });
+
+    Future<void> openMonthDay(WidgetTester tester, String dayNumber) async {
+      await tester.tap(find.byIcon(Icons.calendar_month_outlined));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Month'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(dayNumber));
+      await tester.pumpAndSettle();
+      expect(find.byType(DayAgenda), findsOneWidget);
+    }
+
+    // "Show subtasks only", so the agenda stays open (the default also opens
+    // the details, which replace the agenda in the side panel).
+    appTest(
+      'month view: a day agenda task unfolds its subtasks',
+      (tester, repo) async {
+        await taskWithSubtasks(tester, repo, due: LocalDate(2026, 10, 20));
+        await openMonthDay(tester, '20');
+        expect(find.byType(SubtaskTree), findsNothing);
+
+        final row = find.descendant(
+          of: find.byType(DayAgenda),
+          matching: find.text('Launch'),
+        );
+        await tester.tap(row);
+        await tester.pumpAndSettle();
+        expect(inTree('Check links'), findsOneWidget);
+
+        await tester.tap(row);
+        await tester.pumpAndSettle();
+        expect(find.byType(SubtaskTree), findsNothing);
+      },
+      settings: const AppSettings(
+        language: AppLanguage.en,
+        taskTapAction: TaskTapAction.subtasksOnly,
+      ),
+    );
+
+    appTest('month view: a projected repeat never shows a tree', (
+      tester,
+      repo,
+    ) async {
+      final task = await taskWithSubtasks(
+        tester,
+        repo,
+        due: LocalDate(2026, 10, 20),
+      );
+      await repo.saveTask(
+        task.copyWith(recurrenceRule: () => 'DTSTART=20261020;FREQ=DAILY'),
+      );
+      await tester.pumpAndSettle();
+      await openMonthDay(tester, '21');
+
+      final row = find.descendant(
+        of: find.byType(DayAgenda),
+        matching: find.text('Launch'),
+      );
+      expect(row, findsOneWidget);
+      await tester.tap(row);
+      await tester.pumpAndSettle();
+      expect(find.byType(SubtaskTree), findsNothing);
+    });
+
+    appTest('week view: a task with subtasks unfolds under its chip', (
+      tester,
+      repo,
+    ) async {
+      await taskWithSubtasks(tester, repo, due: LocalDate(2026, 10, 20));
+      await tester.tap(find.byIcon(Icons.calendar_month_outlined));
+      await tester.pumpAndSettle();
+      expect(find.byType(SubtaskTree), findsNothing);
+
+      await tester.tap(find.text('Launch'));
+      await tester.pumpAndSettle();
+      expect(inTree('Review copy'), findsOneWidget);
+    });
   });
   // ------------------------------------------------------------- M7
 

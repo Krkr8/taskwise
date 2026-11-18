@@ -570,6 +570,49 @@ class AppLocalizationsAr extends AppLocalizations {
   String get doneSeriesEnded => 'تمت. كانت هذه الأخيرة.';
 
   @override
+  String get skip => 'تخطٍّ';
+
+  @override
+  String get skippedLabel => 'متخطّاة';
+
+  @override
+  String taskSkipped(String title) {
+    return 'تم تخطي «$title»';
+  }
+
+  @override
+  String skippedNextOn(String date) {
+    return 'تم التخطي. القادمة: $date';
+  }
+
+  @override
+  String get skippedSeriesEnded => 'تم التخطي. كانت هذه الأخيرة.';
+
+  @override
+  String get openDetails => 'فتح التفاصيل';
+
+  @override
+  String get showSubtasks => 'إظهار المهام الفرعية';
+
+  @override
+  String get hideSubtasks => 'إخفاء المهام الفرعية';
+
+  @override
+  String get settingsTasks => 'المهام';
+
+  @override
+  String get taskTapAction => 'عند الضغط على مهمة لها مهام فرعية';
+
+  @override
+  String get taskTapDetailsAndSubtasks => 'فتح التفاصيل وإظهار المهام الفرعية';
+
+  @override
+  String get taskTapSubtasksOnly => 'إظهار المهام الفرعية فقط';
+
+  @override
+  String get taskTapDetailsOnly => 'فتح التفاصيل فقط';
+
+  @override
   String get navCalendar => 'التقويم';
 
   @override

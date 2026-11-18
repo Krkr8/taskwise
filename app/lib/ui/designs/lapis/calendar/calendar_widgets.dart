@@ -7,6 +7,7 @@ import '../../../../state/providers.dart';
 import '../../../shared/common/whole_words_text.dart';
 import '../../../shared/common/dialogs.dart';
 import '../../../shared/tasks/labels.dart';
+import '../tasks/task_tile.dart' show skippedColor;
 import '../theme/tokens.dart';
 
 /// The colour a calendar item is drawn in: its category, or the accent.
@@ -105,6 +106,15 @@ class CalendarChip extends ConsumerWidget {
                   : Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        if (task.done && task.skipped)
+                          Padding(
+                            padding: const EdgeInsetsDirectional.only(end: 2),
+                            child: Icon(
+                              Icons.redo,
+                              size: dense ? 10 : 12,
+                              color: skippedColor(context),
+                            ),
+                          ),
                         if (item.projected || task.recurrenceRule != null)
                           Padding(
                             padding: const EdgeInsetsDirectional.only(end: 2),
@@ -141,6 +151,7 @@ class CalendarChip extends ConsumerWidget {
   }) {
     final theme = Theme.of(context);
     final repeats = item.projected || item.task.recurrenceRule != null;
+    final skipped = item.task.done && item.task.skipped;
     final metaStyle = theme.textTheme.labelSmall?.copyWith(
       color: theme.colorScheme.onSurfaceVariant,
       height: 1.2,
@@ -151,7 +162,7 @@ class CalendarChip extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (item.timeMinutes != null || repeats || hasReminders)
+          if (item.timeMinutes != null || repeats || hasReminders || skipped)
             // Shrinks to fit narrow phone columns instead of cutting off.
             FittedBox(
               fit: BoxFit.scaleDown,
@@ -175,6 +186,15 @@ class CalendarChip extends ConsumerWidget {
                         Icons.repeat,
                         size: 10,
                         color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  if (skipped)
+                    Padding(
+                      padding: const EdgeInsetsDirectional.only(end: 2),
+                      child: Icon(
+                        Icons.redo,
+                        size: 10,
+                        color: skippedColor(context),
                       ),
                     ),
                   if (item.timeMinutes != null)

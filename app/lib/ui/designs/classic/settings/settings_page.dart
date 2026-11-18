@@ -128,6 +128,33 @@ class SettingsPage extends ConsumerWidget {
                 onSelectionChanged: (s) => repo.setTimeFormat(s.single),
               ),
             ),
+            _Section(l10n.settingsTasks),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    l10n.taskTapAction,
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: Spacing.sm),
+                  for (final (action, label) in [
+                    (
+                      TaskTapAction.detailsAndSubtasks,
+                      l10n.taskTapDetailsAndSubtasks,
+                    ),
+                    (TaskTapAction.subtasksOnly, l10n.taskTapSubtasksOnly),
+                    (TaskTapAction.detailsOnly, l10n.taskTapDetailsOnly),
+                  ])
+                    _Choice(
+                      label: label,
+                      selected: settings.taskTapAction == action,
+                      onTap: () => repo.setTaskTapAction(action),
+                    ),
+                ],
+              ),
+            ),
             _Section(l10n.settingsNotifications),
             _Setting(
               label: l10n.defaultReminder,
@@ -338,6 +365,59 @@ class _Section extends StatelessWidget {
           ?.copyWith(color: Theme.of(context).colorScheme.primary),
     ),
   );
+}
+
+/// One option of a choice list: a bordered row with a check on the picked one.
+class _Choice extends StatelessWidget {
+  const _Choice({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final radius = BorderRadius.circular(Radii.md);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: Spacing.sm),
+      child: Semantics(
+        button: true,
+        selected: selected,
+        child: Material(
+          color: selected
+              ? scheme.secondaryContainer.withValues(alpha: 0.5)
+              : scheme.surfaceContainerLowest,
+          shape: RoundedRectangleBorder(
+            borderRadius: radius,
+            side: BorderSide(
+              color: selected ? scheme.primary : scheme.outlineVariant,
+            ),
+          ),
+          child: InkWell(
+            borderRadius: radius,
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Spacing.md,
+                vertical: Spacing.md,
+              ),
+              child: Row(
+                children: [
+                  Expanded(child: Text(label)),
+                  if (selected) Icon(Icons.check, color: scheme.primary),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// A label above a control, wrapping nicely on narrow screens.

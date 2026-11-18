@@ -8,6 +8,7 @@ import 'desktop/desktop_shell.dart';
 import 'l10n/app_localizations.dart';
 import 'location/location_reminder_sync.dart';
 import 'notifications/reminder_scheduler.dart';
+import 'state/missed_repeats.dart';
 import 'state/providers.dart';
 import 'sync/sync_controller.dart';
 import 'ui/designs/design.dart';
@@ -24,10 +25,11 @@ class TaskwiseApp extends ConsumerWidget {
     final settings = ref.watch(appSettingsProvider);
     final design = ref.watch(appDesignProvider);
     final spec = designSpec(design);
-    // Starts the reminder scheduler, location reminders, Siri's inbox, the
-    // update checks and sync (kept alive by these watches).
+    // Starts the reminder scheduler, missed repeats, location reminders,
+    // Siri's inbox, the update checks and sync (kept alive by these watches).
     ref
       ..watch(reminderSchedulerProvider)
+      ..watch(missedRepeatsProvider)
       ..watch(assistantSyncProvider)
       ..watch(updateControllerProvider)
       ..watch(locationReminderSyncProvider)

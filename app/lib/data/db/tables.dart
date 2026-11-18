@@ -29,6 +29,9 @@ class Tasks extends Table with SyncColumns {
       textEnum<Priority>().withDefault(Constant(Priority.none.name))();
   TextColumn get categoryId => text().nullable()();
   BoolColumn get done => boolean().withDefault(const Constant(false))();
+
+  /// Set together with [done] when the task was skipped (schema v5).
+  BoolColumn get skipped => boolean().withDefault(const Constant(false))();
   IntColumn get completedAt =>
       integer().map(const UtcMillisConverter()).nullable()();
   TextColumn get recurrenceRule => text().nullable()();

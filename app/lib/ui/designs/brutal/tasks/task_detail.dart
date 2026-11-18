@@ -238,6 +238,20 @@ class _TaskEditorState extends ConsumerState<_TaskEditor> {
                     setTaskDone(context, ref, task, done: !task.done),
                 icon: Icon(task.done ? Icons.check_box : Icons.check),
               ),
+              if (!task.done) ...[
+                const SizedBox(width: Spacing.sm),
+                BrutalIconButton(
+                  tooltip: l10n.skip,
+                  color: b.tomato,
+                  onPressed: () async {
+                    // Like Delete: the task leaves the list, so close it.
+                    final skipping = skipTask(context, ref, task);
+                    widget.onClose();
+                    await skipping;
+                  },
+                  icon: const Icon(Icons.not_interested),
+                ),
+              ],
               const SizedBox(width: Spacing.md),
               BrutalIconButton(
                 tooltip: l10n.deleteTask,

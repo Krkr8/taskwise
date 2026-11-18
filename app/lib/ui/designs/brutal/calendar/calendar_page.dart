@@ -5,6 +5,9 @@ import 'package:taskwise_shared/taskwise_shared.dart';
 
 import '../../../../state/providers.dart';
 import '../../../shared/tasks/labels.dart';
+import '../../../shared/tasks/subtask_tree.dart';
+import '../../../shared/tasks/task_actions.dart';
+import '../tasks/subtask_tree_style.dart';
 import '../tasks/task_detail.dart';
 import '../tasks/task_tile.dart';
 import '../common/brutal_widgets.dart';
@@ -363,33 +366,110 @@ class DayAgenda extends ConsumerWidget {
                   padding: const EdgeInsets.only(bottom: Spacing.xl),
                   children: [
                     for (final item in items)
-                      ListTile(
-                        leading: item.projected
-                            ? const Padding(
-                                padding: EdgeInsets.all(Spacing.sm),
-                                child: Icon(Icons.repeat),
-                              )
-                            : CompleteButton(task: item.task),
-                        title: Text(
-                          item.task.title,
-                          style: item.task.done
-                              ? const TextStyle(
-                                  decoration: TextDecoration.lineThrough,
-                                )
-                              : null,
-                        ),
-                        subtitle: Text(
-                          [
-                            item.timeMinutes == null
-                                ? l10n.allDay
-                                : l10n.clockTime(item.timeMinutes!, timeFormat),
-                            if (item.projected) l10n.repeatingTask,
-                          ].join(' · '),
-                        ),
-                        onTap: () => onOpen(item.task.id),
+                      _AgendaItem(
+                        item: item,
+                        onOpen: onOpen,
+                        timeLabel: item.timeMinutes == null
+                            ? l10n.allDay
+                            : l10n.clockTime(item.timeMinutes!, timeFormat),
                       ),
                   ],
                 ),
+        ),
+      ],
+    );
+  }
+}
+
+/// One row of a day agenda. A real task with subtasks folds and unfolds
+/// them under the row; a projected repeat always opens its task.
+class _AgendaItem extends ConsumerWidget {
+  const _AgendaItem({
+    required this.item,
+    required this.onOpen,
+    required this.timeLabel,
+  });
+
+  final CalendarItem item;
+  final ValueChanged<String> onOpen;
+  final String timeLabel;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final task = item.task;
+    final count = item.projected
+        ? 0
+        : ref.watch(subtaskCountsProvider)[task.id] ?? 0;
+    final expanded =
+        count > 0 && ref.watch(expandedTasksProvider).contains(task.id);
+    final arrow = showsDetailsArrow(ref, hasSubtasks: count > 0);
+    final tile = ListTile(
+      leading: item.projected
+          ? const Padding(
+              padding: EdgeInsets.all(Spacing.sm),
+              child: Icon(Icons.repeat),
+            )
+          : CompleteButton(task: task),
+      title: Text(
+        task.title,
+        style: task.done
+            ? TextStyle(
+                decoration: TextDecoration.lineThrough,
+                decorationStyle: task.skipped
+                    ? TextDecorationStyle.dashed
+                    : TextDecorationStyle.solid,
+              )
+            : null,
+      ),
+      subtitle: Text(
+        [
+          timeLabel,
+          if (item.projected) l10n.repeatingTask,
+          if (task.skipped) l10n.skippedLabel,
+        ].join(' · '),
+      ),
+      trailing: count == 0
+          ? null
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  expanded ? Icons.expand_more : Icons.chevron_right,
+                  color: scheme.onSurfaceVariant,
+                ),
+                if (arrow)
+                  BrutalIconButton(
+                    flat: true,
+                    size: 34,
+                    tooltip: l10n.openDetails,
+                    onPressed: () => onOpen(task.id),
+                    icon: const Icon(Icons.arrow_forward),
+                  ),
+              ],
+            ),
+      onTap: () => handleTaskTap(
+        ref,
+        taskId: task.id,
+        hasSubtasks: count > 0,
+        openDetails: () => onOpen(task.id),
+      ),
+    );
+    if (!expanded) return tile;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        tile,
+        Padding(
+          padding: const EdgeInsetsDirectional.only(
+            start: Spacing.lg,
+            end: Spacing.lg,
+          ),
+          child: SubtaskTree(
+            taskId: task.id,
+            style: brutalSubtaskTreeStyle(context),
+          ),
         ),
       ],
     );

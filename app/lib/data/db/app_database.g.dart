@@ -125,6 +125,21 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskRow> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _skippedMeta = const VerificationMeta(
+    'skipped',
+  );
+  @override
+  late final GeneratedColumn<bool> skipped = GeneratedColumn<bool>(
+    'skipped',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("skipped" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   late final GeneratedColumnWithTypeConverter<DateTime?, int> completedAt =
       GeneratedColumn<int>(
@@ -182,6 +197,7 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskRow> {
     priority,
     categoryId,
     done,
+    skipped,
     completedAt,
     recurrenceRule,
     notifyAllDevices,
@@ -252,6 +268,12 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskRow> {
       context.handle(
         _doneMeta,
         done.isAcceptableOrUnknown(data['done']!, _doneMeta),
+      );
+    }
+    if (data.containsKey('skipped')) {
+      context.handle(
+        _skippedMeta,
+        skipped.isAcceptableOrUnknown(data['skipped']!, _skippedMeta),
       );
     }
     if (data.containsKey('recurrence_rule')) {
@@ -331,6 +353,10 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskRow> {
         DriftSqlType.bool,
         data['${effectivePrefix}done'],
       )!,
+      skipped: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}skipped'],
+      )!,
       completedAt: $TasksTable.$convertercompletedAtn.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.int,
@@ -387,6 +413,9 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
   final Priority priority;
   final String? categoryId;
   final bool done;
+
+  /// Set together with [done] when the task was skipped (schema v5).
+  final bool skipped;
   final DateTime? completedAt;
   final String? recurrenceRule;
   final bool notifyAllDevices;
@@ -403,6 +432,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
     required this.priority,
     this.categoryId,
     required this.done,
+    required this.skipped,
     this.completedAt,
     this.recurrenceRule,
     required this.notifyAllDevices,
@@ -440,6 +470,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
       map['category_id'] = Variable<String>(categoryId);
     }
     map['done'] = Variable<bool>(done);
+    map['skipped'] = Variable<bool>(skipped);
     if (!nullToAbsent || completedAt != null) {
       map['completed_at'] = Variable<int>(
         $TasksTable.$convertercompletedAtn.toSql(completedAt),
@@ -478,6 +509,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
           ? const Value.absent()
           : Value(categoryId),
       done: Value(done),
+      skipped: Value(skipped),
       completedAt: completedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(completedAt),
@@ -508,6 +540,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
       ),
       categoryId: serializer.fromJson<String?>(json['categoryId']),
       done: serializer.fromJson<bool>(json['done']),
+      skipped: serializer.fromJson<bool>(json['skipped']),
       completedAt: serializer.fromJson<DateTime?>(json['completedAt']),
       recurrenceRule: serializer.fromJson<String?>(json['recurrenceRule']),
       notifyAllDevices: serializer.fromJson<bool>(json['notifyAllDevices']),
@@ -531,6 +564,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
       ),
       'categoryId': serializer.toJson<String?>(categoryId),
       'done': serializer.toJson<bool>(done),
+      'skipped': serializer.toJson<bool>(skipped),
       'completedAt': serializer.toJson<DateTime?>(completedAt),
       'recurrenceRule': serializer.toJson<String?>(recurrenceRule),
       'notifyAllDevices': serializer.toJson<bool>(notifyAllDevices),
@@ -550,6 +584,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
     Priority? priority,
     Value<String?> categoryId = const Value.absent(),
     bool? done,
+    bool? skipped,
     Value<DateTime?> completedAt = const Value.absent(),
     Value<String?> recurrenceRule = const Value.absent(),
     bool? notifyAllDevices,
@@ -570,6 +605,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
     priority: priority ?? this.priority,
     categoryId: categoryId.present ? categoryId.value : this.categoryId,
     done: done ?? this.done,
+    skipped: skipped ?? this.skipped,
     completedAt: completedAt.present ? completedAt.value : this.completedAt,
     recurrenceRule: recurrenceRule.present
         ? recurrenceRule.value
@@ -596,6 +632,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
           ? data.categoryId.value
           : this.categoryId,
       done: data.done.present ? data.done.value : this.done,
+      skipped: data.skipped.present ? data.skipped.value : this.skipped,
       completedAt: data.completedAt.present
           ? data.completedAt.value
           : this.completedAt,
@@ -623,6 +660,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
           ..write('priority: $priority, ')
           ..write('categoryId: $categoryId, ')
           ..write('done: $done, ')
+          ..write('skipped: $skipped, ')
           ..write('completedAt: $completedAt, ')
           ..write('recurrenceRule: $recurrenceRule, ')
           ..write('notifyAllDevices: $notifyAllDevices, ')
@@ -644,6 +682,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
     priority,
     categoryId,
     done,
+    skipped,
     completedAt,
     recurrenceRule,
     notifyAllDevices,
@@ -664,6 +703,7 @@ class TaskRow extends DataClass implements Insertable<TaskRow> {
           other.priority == this.priority &&
           other.categoryId == this.categoryId &&
           other.done == this.done &&
+          other.skipped == this.skipped &&
           other.completedAt == this.completedAt &&
           other.recurrenceRule == this.recurrenceRule &&
           other.notifyAllDevices == this.notifyAllDevices &&
@@ -682,6 +722,7 @@ class TasksCompanion extends UpdateCompanion<TaskRow> {
   final Value<Priority> priority;
   final Value<String?> categoryId;
   final Value<bool> done;
+  final Value<bool> skipped;
   final Value<DateTime?> completedAt;
   final Value<String?> recurrenceRule;
   final Value<bool> notifyAllDevices;
@@ -699,6 +740,7 @@ class TasksCompanion extends UpdateCompanion<TaskRow> {
     this.priority = const Value.absent(),
     this.categoryId = const Value.absent(),
     this.done = const Value.absent(),
+    this.skipped = const Value.absent(),
     this.completedAt = const Value.absent(),
     this.recurrenceRule = const Value.absent(),
     this.notifyAllDevices = const Value.absent(),
@@ -717,6 +759,7 @@ class TasksCompanion extends UpdateCompanion<TaskRow> {
     this.priority = const Value.absent(),
     this.categoryId = const Value.absent(),
     this.done = const Value.absent(),
+    this.skipped = const Value.absent(),
     this.completedAt = const Value.absent(),
     this.recurrenceRule = const Value.absent(),
     this.notifyAllDevices = const Value.absent(),
@@ -738,6 +781,7 @@ class TasksCompanion extends UpdateCompanion<TaskRow> {
     Expression<String>? priority,
     Expression<String>? categoryId,
     Expression<bool>? done,
+    Expression<bool>? skipped,
     Expression<int>? completedAt,
     Expression<String>? recurrenceRule,
     Expression<bool>? notifyAllDevices,
@@ -756,6 +800,7 @@ class TasksCompanion extends UpdateCompanion<TaskRow> {
       if (priority != null) 'priority': priority,
       if (categoryId != null) 'category_id': categoryId,
       if (done != null) 'done': done,
+      if (skipped != null) 'skipped': skipped,
       if (completedAt != null) 'completed_at': completedAt,
       if (recurrenceRule != null) 'recurrence_rule': recurrenceRule,
       if (notifyAllDevices != null) 'notify_all_devices': notifyAllDevices,
@@ -776,6 +821,7 @@ class TasksCompanion extends UpdateCompanion<TaskRow> {
     Value<Priority>? priority,
     Value<String?>? categoryId,
     Value<bool>? done,
+    Value<bool>? skipped,
     Value<DateTime?>? completedAt,
     Value<String?>? recurrenceRule,
     Value<bool>? notifyAllDevices,
@@ -794,6 +840,7 @@ class TasksCompanion extends UpdateCompanion<TaskRow> {
       priority: priority ?? this.priority,
       categoryId: categoryId ?? this.categoryId,
       done: done ?? this.done,
+      skipped: skipped ?? this.skipped,
       completedAt: completedAt ?? this.completedAt,
       recurrenceRule: recurrenceRule ?? this.recurrenceRule,
       notifyAllDevices: notifyAllDevices ?? this.notifyAllDevices,
@@ -844,6 +891,9 @@ class TasksCompanion extends UpdateCompanion<TaskRow> {
     if (done.present) {
       map['done'] = Variable<bool>(done.value);
     }
+    if (skipped.present) {
+      map['skipped'] = Variable<bool>(skipped.value);
+    }
     if (completedAt.present) {
       map['completed_at'] = Variable<int>(
         $TasksTable.$convertercompletedAtn.toSql(completedAt.value),
@@ -880,6 +930,7 @@ class TasksCompanion extends UpdateCompanion<TaskRow> {
           ..write('priority: $priority, ')
           ..write('categoryId: $categoryId, ')
           ..write('done: $done, ')
+          ..write('skipped: $skipped, ')
           ..write('completedAt: $completedAt, ')
           ..write('recurrenceRule: $recurrenceRule, ')
           ..write('notifyAllDevices: $notifyAllDevices, ')
@@ -5736,6 +5787,7 @@ typedef $$TasksTableCreateCompanionBuilder = TasksCompanion Function({
   Value<Priority> priority,
   Value<String?> categoryId,
   Value<bool> done,
+  Value<bool> skipped,
   Value<DateTime?> completedAt,
   Value<String?> recurrenceRule,
   Value<bool> notifyAllDevices,
@@ -5754,6 +5806,7 @@ typedef $$TasksTableUpdateCompanionBuilder = TasksCompanion Function({
   Value<Priority> priority,
   Value<String?> categoryId,
   Value<bool> done,
+  Value<bool> skipped,
   Value<DateTime?> completedAt,
   Value<String?> recurrenceRule,
   Value<bool> notifyAllDevices,
@@ -5824,6 +5877,11 @@ class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
 
   ColumnFilters<bool> get done => $composableBuilder(
     column: $table.done,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get skipped => $composableBuilder(
+    column: $table.skipped,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5914,6 +5972,11 @@ class $$TasksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get skipped => $composableBuilder(
+    column: $table.skipped,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get completedAt => $composableBuilder(
     column: $table.completedAt,
     builder: (column) => ColumnOrderings(column),
@@ -5983,6 +6046,9 @@ class $$TasksTableAnnotationComposer
   GeneratedColumn<bool> get done =>
       $composableBuilder(column: $table.done, builder: (column) => column);
 
+  GeneratedColumn<bool> get skipped =>
+      $composableBuilder(column: $table.skipped, builder: (column) => column);
+
   GeneratedColumnWithTypeConverter<DateTime?, int> get completedAt =>
       $composableBuilder(
         column: $table.completedAt,
@@ -6042,6 +6108,7 @@ class $$TasksTableTableManager
                 Value<Priority> priority = const Value.absent(),
                 Value<String?> categoryId = const Value.absent(),
                 Value<bool> done = const Value.absent(),
+                Value<bool> skipped = const Value.absent(),
                 Value<DateTime?> completedAt = const Value.absent(),
                 Value<String?> recurrenceRule = const Value.absent(),
                 Value<bool> notifyAllDevices = const Value.absent(),
@@ -6059,6 +6126,7 @@ class $$TasksTableTableManager
                 priority: priority,
                 categoryId: categoryId,
                 done: done,
+                skipped: skipped,
                 completedAt: completedAt,
                 recurrenceRule: recurrenceRule,
                 notifyAllDevices: notifyAllDevices,
@@ -6078,6 +6146,7 @@ class $$TasksTableTableManager
                 Value<Priority> priority = const Value.absent(),
                 Value<String?> categoryId = const Value.absent(),
                 Value<bool> done = const Value.absent(),
+                Value<bool> skipped = const Value.absent(),
                 Value<DateTime?> completedAt = const Value.absent(),
                 Value<String?> recurrenceRule = const Value.absent(),
                 Value<bool> notifyAllDevices = const Value.absent(),
@@ -6095,6 +6164,7 @@ class $$TasksTableTableManager
                 priority: priority,
                 categoryId: categoryId,
                 done: done,
+                skipped: skipped,
                 completedAt: completedAt,
                 recurrenceRule: recurrenceRule,
                 notifyAllDevices: notifyAllDevices,

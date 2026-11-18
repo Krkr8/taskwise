@@ -5,6 +5,9 @@ import 'package:taskwise_shared/taskwise_shared.dart';
 
 import '../../../../state/providers.dart';
 import '../../../shared/tasks/labels.dart';
+import '../../../shared/tasks/subtask_tree.dart';
+import '../../../shared/tasks/task_actions.dart';
+import '../tasks/subtask_tree_style.dart';
 import '../theme/brutal.dart';
 import '../theme/tokens.dart';
 import 'calendar_widgets.dart';
@@ -163,12 +166,7 @@ class _DayColumn extends StatelessWidget {
                 for (final item in items)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 3),
-                    child: CalendarChip(
-                      item: item,
-                      stacked: true,
-                      dense: true,
-                      onTap: () => onOpenItem(item),
-                    ),
+                    child: _WeekItem(item: item, onOpen: onOpenItem),
                   ),
               ],
             ),
@@ -193,5 +191,49 @@ class _DayColumn extends StatelessWidget {
             decoration: BoxDecoration(border: border),
             child: Material(type: MaterialType.transparency, child: column),
           );
+  }
+}
+
+/// One task in a day column. A real task with subtasks folds and unfolds
+/// them (a small tree under its chip); a projected repeat always opens.
+class _WeekItem extends ConsumerWidget {
+  const _WeekItem({required this.item, required this.onOpen});
+
+  final CalendarItem item;
+  final ValueChanged<CalendarItem> onOpen;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final count = item.projected
+        ? 0
+        : ref.watch(subtaskCountsProvider)[item.task.id] ?? 0;
+    final expanded =
+        count > 0 && ref.watch(expandedTasksProvider).contains(item.task.id);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        CalendarChip(
+          item: item,
+          stacked: true,
+          dense: true,
+          subtaskCount: count,
+          expanded: expanded,
+          onOpenDetails: showsDetailsArrow(ref, hasSubtasks: count > 0)
+              ? () => onOpen(item)
+              : null,
+          onTap: () => handleTaskTap(
+            ref,
+            taskId: item.task.id,
+            hasSubtasks: count > 0,
+            openDetails: () => onOpen(item),
+          ),
+        ),
+        if (expanded)
+          SubtaskTree(
+            taskId: item.task.id,
+            style: brutalSubtaskTreeStyle(context, compact: true),
+          ),
+      ],
+    );
   }
 }

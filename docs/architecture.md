@@ -19,7 +19,7 @@ Taskwise is three projects in one repository:
 | `main.dart`, `bootstrap.dart`, `app.dart` | Start-up (database, device id, settings) and the app root. `app.dart` picks the theme and the first screen from the chosen design. |
 | `data/` | The drift database (`db/`), repositories that read and write it (`repositories/`), `app_settings.dart` (all user settings, including the design) and `backup.dart` (JSON export/import, merged like a sync). |
 | `logging/` | `appLog`: the app's log (memory + a rotating file in the app support folder), and the hooks that log uncaught errors. Never log task titles, notes, places or tokens. |
-| `state/` | Riverpod providers shared by everything: the database, repositories, today's date, the open task, the selected tab. |
+| `state/` | Riverpod providers shared by everything: the database, repositories, today's date, the open task, the selected tab, which tasks have their subtasks unfolded. `missed_repeats.dart` gives repeating tasks that weren't done in time their next copy (at start, at midnight, on resume and when tasks change). |
 | `sync/` | Talking to the sync server: the API client, the sync engine and controller, the token store. |
 | `notifications/` | Time reminders: scheduling, the desktop notifier and the phones' notifier (`mobile_notifier.dart`, iPhone and Android). |
 | `location/` | Location reminders: the address search, the bridge to the phones' native code (`taskwise/location` channel: Swift on the iPhone, Kotlin on Android, same methods), keeping the phone's list up to date. |
@@ -58,6 +58,13 @@ ui/
                      design picker, Backup, About and the logs page, and
                      messages (`common/messages.dart`: showMessage, guardAction)
 ```
+
+**Unfolding subtasks and Skip (M13).** The behaviour is shared and the look is per design:
+`ui/shared/tasks/task_actions.dart` has `handleTaskTap` (what a tap on a task does, following
+the "Tapping a task with subtasks" setting), `showsDetailsArrow` and `skipTask`, and
+`ui/shared/tasks/subtask_tree.dart` draws the subtasks on a tree line. Each design passes a
+`SubtaskTreeStyle` from `designs/<name>/tasks/subtask_tree_style.dart` and draws its own
+Skip button and skipped look. The mockups each design follows are in `design/m13/`.
 
 **How a design finds a file.** A design folder holds only the files that design changed. For any other file it uses Classic's copy, and otherwise the one in `shared/`. For example, Lapis has no reminder editor of its own, so its task details import `designs/classic/tasks/reminder_editor.dart`. Shared files never import from a design folder.
 

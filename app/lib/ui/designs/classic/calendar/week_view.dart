@@ -5,6 +5,9 @@ import 'package:taskwise_shared/taskwise_shared.dart';
 
 import '../../../../state/providers.dart';
 import '../../../shared/tasks/labels.dart';
+import '../../../shared/tasks/subtask_tree.dart';
+import '../../../shared/tasks/task_actions.dart';
+import '../tasks/subtask_tree_style.dart';
 import '../../../shared/theme/tokens.dart';
 import 'calendar_widgets.dart';
 
@@ -146,11 +149,9 @@ class _DayColumn extends StatelessWidget {
                   for (final item in items)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 3),
-                      child: CalendarChip(
+                      child: _WeekItem(
                         item: item,
-                        stacked: true,
-                        dense: true,
-                        onTap: () => onOpenItem(item),
+                        onOpen: () => onOpenItem(item),
                       ),
                     ),
                 ],
@@ -159,6 +160,70 @@ class _DayColumn extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// A task chip in a day column. A real task with subtasks follows the tap
+/// setting and unfolds a compact subtask tree under the chip; a projected
+/// repeat never does.
+class _WeekItem extends ConsumerWidget {
+  const _WeekItem({required this.item, required this.onOpen});
+
+  final CalendarItem item;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final task = item.task;
+    final hasSubtasks =
+        !item.projected && (ref.watch(subtaskCountsProvider)[task.id] ?? 0) > 0;
+    final expanded =
+        hasSubtasks && ref.watch(expandedTasksProvider).contains(task.id);
+    final chip = CalendarChip(
+      item: item,
+      stacked: true,
+      dense: true,
+      onTap: hasSubtasks
+          ? () => handleTaskTap(
+              ref,
+              taskId: task.id,
+              hasSubtasks: true,
+              openDetails: onOpen,
+            )
+          : onOpen,
+    );
+    if (!hasSubtasks) return chip;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        chip,
+        if (expanded) ...[
+          const SizedBox(height: 2),
+          SubtaskTree(
+            taskId: task.id,
+            style: classicSubtaskTreeStyle(
+              context,
+              lineInset: 5,
+              indent: 14,
+              compact: true,
+            ),
+          ),
+        ],
+        if (showsDetailsArrow(ref, hasSubtasks: true))
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: IconButton(
+              tooltip: context.l10n.openDetails,
+              onPressed: onOpen,
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+              iconSize: 16,
+              icon: const Icon(Icons.chevron_right),
+            ),
+          ),
+      ],
     );
   }
 }

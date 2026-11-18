@@ -5,6 +5,9 @@ import 'package:taskwise_shared/taskwise_shared.dart';
 
 import '../../../../state/providers.dart';
 import '../../../shared/tasks/labels.dart';
+import '../../../shared/tasks/subtask_tree.dart';
+import '../../../shared/tasks/task_actions.dart';
+import '../tasks/subtask_tree_style.dart';
 import '../theme/tokens.dart';
 import 'calendar_widgets.dart';
 
@@ -40,6 +43,8 @@ class WeekView extends ConsumerWidget {
             .value ??
         const <LocalDate, List<CalendarItem>>{};
     final grid = LapisColors.of(context).line;
+    final subtaskCounts = ref.watch(subtaskCountsProvider);
+    final expandedIds = ref.watch(expandedTasksProvider);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -57,6 +62,8 @@ class WeekView extends ConsumerWidget {
                 end: i == 6 ? BorderSide(color: grid) : BorderSide.none,
               ),
               addLabel: l10n.addTaskOn(l10n.relativeDate(day, today)),
+              subtaskCounts: subtaskCounts,
+              expandedIds: expandedIds,
               onOpenItem: onOpenItem,
               onAdd: () => onAdd(day),
             ),
@@ -66,7 +73,7 @@ class WeekView extends ConsumerWidget {
   }
 }
 
-class _DayColumn extends StatelessWidget {
+class _DayColumn extends ConsumerWidget {
   const _DayColumn({
     required this.day,
     required this.items,
@@ -74,6 +81,8 @@ class _DayColumn extends StatelessWidget {
     required this.gridColor,
     required this.border,
     required this.addLabel,
+    required this.subtaskCounts,
+    required this.expandedIds,
     required this.onOpenItem,
     required this.onAdd,
   });
@@ -84,11 +93,13 @@ class _DayColumn extends StatelessWidget {
   final Color gridColor;
   final BorderDirectional border;
   final String addLabel;
+  final Map<String, int> subtaskCounts;
+  final Set<String> expandedIds;
   final ValueChanged<CalendarItem> onOpenItem;
   final VoidCallback onAdd;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
@@ -158,12 +169,7 @@ class _DayColumn extends StatelessWidget {
                   for (final item in items)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 3),
-                      child: CalendarChip(
-                        item: item,
-                        stacked: true,
-                        dense: true,
-                        onTap: () => onOpenItem(item),
-                      ),
+                      child: _unfoldable(context, ref, item),
                     ),
                 ],
               ),
@@ -171,6 +177,35 @@ class _DayColumn extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  /// A chip; a real task with subtasks unfolds them under it (never a
+  /// projected repeat).
+  Widget _unfoldable(BuildContext context, WidgetRef ref, CalendarItem item) {
+    final id = item.task.id;
+    final hasSubtasks = !item.projected && (subtaskCounts[id] ?? 0) > 0;
+    final chip = CalendarChip(
+      item: item,
+      stacked: true,
+      dense: true,
+      onTap: () => handleTaskTap(
+        ref,
+        taskId: id,
+        hasSubtasks: hasSubtasks,
+        openDetails: () => onOpenItem(item),
+      ),
+    );
+    if (!hasSubtasks || !expandedIds.contains(id)) return chip;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        chip,
+        SubtaskTree(
+          taskId: id,
+          style: lapisSubtaskTreeStyle(context, lineInset: 8, compact: true),
+        ),
+      ],
     );
   }
 }

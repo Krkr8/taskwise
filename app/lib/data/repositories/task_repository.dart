@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
 
 import '../db/app_database.dart';
+import '../db/tables.dart' show SyncColumns;
 import 'reminder_repository.dart';
 import 'repository_base.dart';
 
@@ -127,14 +128,16 @@ class TaskRepository extends RepositoryBase {
     return getTask(task.id);
   }
 
-  /// Marks a task done (recording when) or not done.
+  /// Marks a task done (recording when) or not done. With [skipped], the
+  /// task is finished as skipped rather than done; reopening clears that.
   ///
-  /// Completing a repeating task keeps it as a done copy without the rule and
-  /// creates the next occurrence (see [_spawnNext]). The returned [Completion]
-  /// lets [undoCompletion] reverse exactly that.
+  /// Completing (or skipping) a repeating task keeps it as a done copy
+  /// without the rule and creates the next occurrence (see [_spawnNext]).
+  /// The returned [Completion] lets [undoCompletion] reverse exactly that.
   Future<Completion> setDone(
     String id, {
     required bool done,
+    bool skipped = false,
   }) => db.transaction(() async {
     final at = now();
     final task = await getTask(id);
@@ -142,6 +145,7 @@ class TaskRepository extends RepositoryBase {
     await (db.update(db.tasks)..where((t) => t.id.equals(id))).write(
       TasksCompanion(
         done: Value(done),
+        skipped: Value(done && skipped),
         completedAt: Value(done ? at : null),
         recurrenceRule: rule == null ? const Value.absent() : const Value(null),
         updatedAt: Value(at),
@@ -168,23 +172,116 @@ class TaskRepository extends RepositoryBase {
         if (completion.nextTaskId case final next?) await deleteTask(next);
       });
 
+  /// Gives every repeating task that wasn't done in time its next copy
+  /// (see [missedRepeatDate]): the old task stays where it is, open and
+  /// without the rule, and the copy takes the rule. Returns how many copies
+  /// were made; running it again makes none.
+  ///
+  /// Only the first missed one stays in Overdue: when the task rolling over
+  /// is itself a missed copy of an earlier missed one (the app was opened
+  /// every day while the task was ignored), it's removed, as if the days in
+  /// between had never been created.
+  ///
+  /// Every write is stamped just after the task's own `updatedAt` rather
+  /// than now, so a real change made on another device that this one hasn't
+  /// pulled yet (ticking the task, say) wins last-write-wins over this
+  /// automatic one.
+  Future<int> rollOverMissedRepeats(LocalDate today) =>
+      db.transaction(() async {
+        final rows = await (db.select(
+          db.tasks,
+        )..where((t) => t.dueDate.isNotNull())).get();
+        final dated = [for (final row in rows) toTask(row)];
+        var made = 0;
+        for (final task in dated) {
+          if (task.deleted || task.done || task.recurrenceRule == null) {
+            continue;
+          }
+          final date = missedRepeatDate(task, today);
+          if (date == null) continue;
+          final stamp = task.updatedAt.add(const Duration(milliseconds: 1));
+          await (db.update(db.tasks)..where((t) => t.id.equals(task.id))).write(
+            TasksCompanion(
+              recurrenceRule: const Value(null),
+              deleted: Value(_followsAMissedOne(task, dated)),
+              updatedAt: Value(stamp),
+              updatedByDevice: Value(deviceId),
+            ),
+          );
+          await _spawnNext(
+            task,
+            RecurrenceRule.parse(task.recurrenceRule!),
+            on: date,
+            stamp: stamp,
+          );
+          made++;
+        }
+        return made;
+      });
+
+  /// Whether an earlier occurrence of [task]'s series is still open in
+  /// Overdue: follows the chain of copies back ([derivedId] links each copy
+  /// to the task it was made from), through removed in-between copies, and
+  /// stops at a done one.
+  bool _followsAMissedOne(Task task, List<Task> dated) {
+    var current = task;
+    for (var hops = 0; hops < 400; hops++) {
+      final due = current.dueDate!;
+      final id = current.id;
+      final parent = dated
+          .where(
+            (p) =>
+                p.dueDate!.isBefore(due) &&
+                derivedId('${p.id}/${due.toIso()}') == id,
+          )
+          .firstOrNull;
+      if (parent == null || parent.done) return false;
+      if (!parent.deleted) return true;
+      current = parent;
+    }
+    return false;
+  }
+
   /// Creates the occurrence after [task] and returns its id, or null when
   /// the series has ended.
   ///
-  /// The next date is the first occurrence after the due date that is today
-  /// or later, so completing an overdue daily task doesn't spawn a pile of
-  /// past ones. The copy keeps the content, rule and tags, and gets the
-  /// subtasks back unticked.
-  Future<String?> _spawnNext(Task task, RecurrenceRule rule) async {
+  /// The next date is [on], or else the first occurrence after the due date
+  /// that is today or later, so completing an overdue daily task doesn't
+  /// spawn a pile of past ones. The copy keeps the content, rule and tags,
+  /// and gets the subtasks back unticked.
+  ///
+  /// Its ids are derived from [task] and the date ([derivedId]), so another
+  /// device making the same copy before they sync writes the same records,
+  /// and a copy removed by Undo comes back when the task is completed again.
+  ///
+  /// [stamp] is the `updatedAt` for every record written (default now); an
+  /// existing live copy (made by another device, say) is never overwritten,
+  /// only a removed one is brought back.
+  Future<String?> _spawnNext(
+    Task task,
+    RecurrenceRule rule, {
+    LocalDate? on,
+    DateTime? stamp,
+  }) async {
     final yesterday = today().addDays(-1);
     final due = task.dueDate;
     final after = due == null || due.isBefore(yesterday) ? yesterday : due;
-    final nextDate = rule.nextAfter(after);
+    final nextDate = on ?? rule.nextAfter(after);
     if (nextDate == null) return null;
 
-    final at = now();
+    final nextId = derivedId('${task.id}/${nextDate.toIso()}');
+    var at = stamp ?? now();
+    // Bringing back a removed copy (Undo, then completing again or a
+    // roll-over) must be newer than its removal, or the other devices,
+    // which have the removal, would keep theirs.
+    final existing = await getTask(nextId);
+    if (existing != null &&
+        existing.deleted &&
+        !at.isAfter(existing.updatedAt)) {
+      at = existing.updatedAt.add(const Duration(milliseconds: 1));
+    }
     final next = Task(
-      id: newId(),
+      id: nextId,
       title: task.title,
       notes: task.notes,
       dueDate: nextDate,
@@ -193,37 +290,68 @@ class TaskRepository extends RepositoryBase {
       categoryId: task.categoryId,
       recurrenceRule: task.recurrenceRule,
       notifyAllDevices: task.notifyAllDevices,
-      createdAt: at,
+      createdAt: now(),
       updatedAt: at,
       updatedByDevice: deviceId,
     );
-    await db.into(db.tasks).insert(toCompanion(next));
+    await _insertOrRevive(db.tasks, toCompanion(next));
 
     final subtasks = await (db.select(
       db.subtasks,
     )..where((s) => s.taskId.equals(task.id) & s.deleted.not())).get();
     for (final s in subtasks) {
-      await db
-          .into(db.subtasks)
-          .insert(
-            toSubtaskCompanion(
-              Subtask(
-                id: newId(),
-                taskId: next.id,
-                title: s.title,
-                sortOrder: s.sortOrder,
-                updatedAt: at,
-                updatedByDevice: deviceId,
-              ),
-            ),
-          );
+      await _insertOrRevive(
+        db.subtasks,
+        toSubtaskCompanion(
+          Subtask(
+            id: derivedId('$nextId/s/${s.id}'),
+            taskId: next.id,
+            title: s.title,
+            sortOrder: s.sortOrder,
+            updatedAt: at,
+            updatedByDevice: deviceId,
+          ),
+        ),
+      );
     }
     final tagIds =
         await (db.select(db.taskTags)
               ..where((l) => l.taskId.equals(task.id) & l.deleted.not()))
             .map((l) => l.tagId)
             .get();
-    await setTaskTags(next.id, tagIds.toSet());
+    for (final tagId in tagIds.toSet()) {
+      await _insertOrRevive(
+        db.taskTags,
+        TaskTagsCompanion.insert(
+          id: derivedId('$nextId/t/$tagId'),
+          taskId: nextId,
+          tagId: tagId,
+          updatedAt: at,
+          deleted: const Value(false),
+          updatedByDevice: Value(deviceId),
+        ),
+      );
+    }
+
+    // "Notify on" devices, when the task isn't set to all of them.
+    final targets =
+        await (db.select(db.taskTargetDevices)
+              ..where((t) => t.taskId.equals(task.id) & t.deleted.not()))
+            .map((t) => t.deviceId)
+            .get();
+    for (final target in targets.toSet()) {
+      await _insertOrRevive(
+        db.taskTargetDevices,
+        TaskTargetDevicesCompanion.insert(
+          id: derivedId('$nextId/d/$target'),
+          taskId: nextId,
+          deviceId: target,
+          updatedAt: at,
+          deleted: const Value(false),
+          updatedByDevice: Value(deviceId),
+        ),
+      );
+    }
 
     // Reminders follow the task: relative ones keep their offset, absolute
     // ones move by as many days as the due date did.
@@ -233,32 +361,43 @@ class TaskRepository extends RepositoryBase {
     )..where((r) => r.taskId.equals(task.id) & r.deleted.not())).get();
     for (final r in reminders) {
       final absolute = r.absoluteAt;
-      await db
-          .into(db.reminders)
-          .insert(
-            ReminderRepository.toCompanion(
-              Reminder(
-                id: newId(),
-                taskId: next.id,
-                kind: r.kind,
-                absoluteAt: absolute == null
-                    ? null
-                    : _shiftDays(absolute, shift),
-                minutesBeforeDue: r.minutesBeforeDue,
-                placeId: r.placeId,
-                latitude: r.latitude,
-                longitude: r.longitude,
-                radiusMeters: r.radiusMeters,
-                trigger: r.trigger,
-                label: r.label,
-                updatedAt: at,
-                updatedByDevice: deviceId,
-              ),
-            ),
-          );
+      await _insertOrRevive(
+        db.reminders,
+        ReminderRepository.toCompanion(
+          Reminder(
+            id: derivedId('$nextId/r/${r.id}'),
+            taskId: next.id,
+            kind: r.kind,
+            absoluteAt: absolute == null ? null : _shiftDays(absolute, shift),
+            minutesBeforeDue: r.minutesBeforeDue,
+            placeId: r.placeId,
+            latitude: r.latitude,
+            longitude: r.longitude,
+            radiusMeters: r.radiusMeters,
+            trigger: r.trigger,
+            label: r.label,
+            updatedAt: at,
+            updatedByDevice: deviceId,
+          ),
+        ),
+      );
     }
     return next.id;
   }
+
+  /// Inserts [row], or writes it over an existing row with the same id only
+  /// when that row is a tombstone (a copy removed by Undo coming back). A
+  /// live row is left as it is: it's the same copy, made on another device
+  /// or earlier, and may have been changed since.
+  Future<void> _insertOrRevive<T extends SyncColumns, D>(
+    TableInfo<T, D> table,
+    Insertable<D> row,
+  ) => db
+      .into(table)
+      .insert(
+        row,
+        onConflict: DoUpdate((_) => row, where: (old) => old.deleted),
+      );
 
   /// Soft-deletes a task (tombstone). Its subtasks and tag links are left as
   /// they are, so [restoreTask] brings everything back.
@@ -521,6 +660,7 @@ class TaskRepository extends RepositoryBase {
     priority: row.priority,
     categoryId: row.categoryId,
     done: row.done,
+    skipped: row.skipped,
     completedAt: row.completedAt,
     recurrenceRule: row.recurrenceRule,
     notifyAllDevices: row.notifyAllDevices,
@@ -539,6 +679,7 @@ class TaskRepository extends RepositoryBase {
     priority: Value(task.priority),
     categoryId: Value(task.categoryId),
     done: Value(task.done),
+    skipped: Value(task.skipped),
     completedAt: Value(task.completedAt),
     recurrenceRule: Value(task.recurrenceRule),
     notifyAllDevices: Value(task.notifyAllDevices),

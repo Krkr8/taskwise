@@ -98,3 +98,34 @@ const List<int> categoryPalette = [
   0xFF854D0E, // Warm Bronze
   0xFF475569, // Slate
 ];
+
+/// The amber of Skip: the Skip button, the skipped marker and its badge.
+class SkipColors {
+  const SkipColors._({
+    required this.container,
+    required this.accent,
+    required this.text,
+  });
+
+  /// Background of the button and the badge.
+  final Color container;
+
+  /// Border and marker icon.
+  final Color accent;
+
+  /// Text on [container].
+  final Color text;
+
+  static SkipColors of(ColorScheme scheme) =>
+      scheme.brightness == Brightness.dark
+      ? const SkipColors._(
+          container: Color(0xFF452B0E),
+          accent: Color(0xFFD97706),
+          text: Color(0xFFFBBF24),
+        )
+      : const SkipColors._(
+          container: Color(0xFFFEF3C7),
+          accent: Color(0xFFD97706),
+          text: Color(0xFFB45309),
+        );
+}

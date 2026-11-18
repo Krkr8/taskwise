@@ -10,6 +10,7 @@
       "priority": "high",
       "categoryId": "0199a3c0-0000-7000-8000-000000000002",
       "done": false,
+      "skipped": false,
       "completedAt": null,
       "recurrenceRule": "DTSTART=20261102;FREQ=WEEKLY;INTERVAL=1;BYDAY=MO",
       "notifyAllDevices": true,

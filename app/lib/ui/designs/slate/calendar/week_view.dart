@@ -5,6 +5,9 @@ import 'package:taskwise_shared/taskwise_shared.dart';
 
 import '../../../../state/providers.dart';
 import '../../../shared/tasks/labels.dart';
+import '../../../shared/tasks/subtask_tree.dart';
+import '../../../shared/tasks/task_actions.dart';
+import '../tasks/subtask_tree_style.dart';
 import '../theme/tokens.dart';
 import 'calendar_widgets.dart';
 
@@ -65,7 +68,7 @@ class WeekView extends ConsumerWidget {
   }
 }
 
-class _DayColumn extends StatelessWidget {
+class _DayColumn extends ConsumerWidget {
   const _DayColumn({
     required this.day,
     required this.items,
@@ -87,10 +90,12 @@ class _DayColumn extends StatelessWidget {
   final VoidCallback onAdd;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final subtaskCounts = ref.watch(subtaskCountsProvider);
+    final expandedIds = ref.watch(expandedTasksProvider);
 
     final header = Semantics(
       label: addLabel,
@@ -165,11 +170,12 @@ class _DayColumn extends StatelessWidget {
                   for (final item in items)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 4),
-                      child: CalendarChip(
-                        item: item,
-                        stacked: true,
-                        dense: true,
-                        onTap: () => onOpenItem(item),
+                      child: _chip(
+                        context,
+                        ref,
+                        item,
+                        subtaskCounts,
+                        expandedIds,
                       ),
                     ),
                 ],
@@ -178,6 +184,54 @@ class _DayColumn extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  /// A chip; a real task with subtasks unfolds them under itself.
+  Widget _chip(
+    BuildContext context,
+    WidgetRef ref,
+    CalendarItem item,
+    Map<String, int> subtaskCounts,
+    Set<String> expandedIds,
+  ) {
+    final id = item.task.id;
+    final hasSubtasks = !item.projected && subtaskCounts.containsKey(id);
+    if (!hasSubtasks) {
+      return CalendarChip(
+        item: item,
+        stacked: true,
+        dense: true,
+        onTap: () => onOpenItem(item),
+      );
+    }
+    final expanded = expandedIds.contains(id);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        CalendarChip(
+          item: item,
+          stacked: true,
+          dense: true,
+          onTap: () => handleTaskTap(
+            ref,
+            taskId: id,
+            hasSubtasks: true,
+            openDetails: () => onOpenItem(item),
+          ),
+        ),
+        if (expanded) ...[
+          if (showsDetailsArrow(ref, hasSubtasks: true))
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: ChipDetailsButton(onPressed: () => onOpenItem(item)),
+            ),
+          SubtaskTree(
+            taskId: id,
+            style: slateSubtaskTreeStyle(context, compact: true),
+          ),
+        ],
+      ],
     );
   }
 }

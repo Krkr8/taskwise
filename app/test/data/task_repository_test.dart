@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:taskwise/data/db/app_database.dart';
+import 'package:drift/drift.dart' show Variable;
+import 'package:taskwise/data/repositories/reminder_repository.dart';
 import 'package:taskwise/data/repositories/task_repository.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
 
@@ -202,6 +204,291 @@ void main() {
       final completion = await repo.setDone(task.id, done: true);
       expect(completion.nextTaskId, isNull);
       expect((await repo.getTask(task.id))!.recurrenceRule, 'nonsense');
+    });
+
+    test('complete, undo, complete again leaves one live copy', () async {
+      final task = await repeating('DTSTART=20261020;FREQ=DAILY');
+      await repo.addSubtask(task.id, 'Stretch');
+      final first = await repo.setDone(task.id, done: true);
+      await repo.undoCompletion(task.id, first);
+      final second = await repo.setDone(task.id, done: true);
+
+      expect(second.nextTaskId, first.nextTaskId);
+      final open = (await entries()).where((e) => !e.task.done).toList();
+      expect(open.single.task.id, second.nextTaskId);
+      expect(open.single.subtaskCount, 1);
+    });
+  });
+
+  group('skip', () {
+    test('a skipped task is done and marked skipped', () async {
+      final task = await repo.createTask(title: 'Call');
+      await repo.setDone(task.id, done: true, skipped: true);
+      final skipped = (await repo.getTask(task.id))!;
+      expect(skipped.done, isTrue);
+      expect(skipped.skipped, isTrue);
+      expect(skipped.completedAt, isNotNull);
+
+      await repo.setDone(task.id, done: false);
+      final reopened = (await repo.getTask(task.id))!;
+      expect(reopened.done, isFalse);
+      expect(reopened.skipped, isFalse);
+    });
+
+    test('completing never marks a task skipped', () async {
+      final task = await repo.createTask(title: 'Call');
+      await repo.setDone(task.id, done: true);
+      expect((await repo.getTask(task.id))!.skipped, isFalse);
+    });
+
+    test(
+      'skipping a repeating task makes the next one; undo reverses it',
+      () async {
+        final task = await repo.createTask(
+          title: 'Gym',
+          dueDate: LocalDate(2026, 10, 20),
+        );
+        await repo.saveTask(
+          task.copyWith(recurrenceRule: () => 'DTSTART=20261020;FREQ=DAILY'),
+        );
+        final completion = await repo.setDone(
+          task.id,
+          done: true,
+          skipped: true,
+        );
+        final next = (await repo.getTask(completion.nextTaskId!))!;
+        expect(next.dueDate, LocalDate(2026, 10, 21));
+        expect(next.skipped, isFalse);
+        expect(next.done, isFalse);
+
+        await repo.undoCompletion(task.id, completion);
+        final restored = (await repo.getTask(task.id))!;
+        expect(restored.done, isFalse);
+        expect(restored.skipped, isFalse);
+        expect(restored.recurrenceRule, 'DTSTART=20261020;FREQ=DAILY');
+        expect((await repo.getTask(next.id))!.deleted, isTrue);
+      },
+    );
+  });
+
+  group('missed repeats', () {
+    // The fake clock's "today" is Tuesday 2026-10-20.
+    final today = LocalDate(2026, 10, 20);
+    const daily = 'DTSTART=20261016;FREQ=DAILY';
+
+    Future<Task> overdueDaily(TaskRepository repo) async {
+      final task = await repo.createTask(
+        title: 'Water plants',
+        dueDate: LocalDate(2026, 10, 16),
+      );
+      return (await repo.saveTask(task.copyWith(recurrenceRule: () => daily)))!;
+    }
+
+    test(
+      'an unfinished repeat stays overdue and a copy appears today',
+      () async {
+        final task = await overdueDaily(repo);
+        final a = await repo.addSubtask(task.id, 'Kitchen');
+        await repo.addSubtask(task.id, 'Balcony');
+        await repo.setSubtaskDone(a.id, done: true);
+        final tag = await repo.findOrCreateTag('home');
+        await repo.setTaskTags(task.id, {tag.id});
+        final reminders = ReminderRepository(
+          db,
+          deviceId: 'dev-1',
+          clock: clock.call,
+        );
+        await reminders.addRelative(task.id, 30);
+
+        expect(await repo.rollOverMissedRepeats(today), 1);
+
+        final old = (await repo.getTask(task.id))!;
+        expect(old.done, isFalse);
+        expect(old.dueDate, LocalDate(2026, 10, 16));
+        expect(old.recurrenceRule, isNull);
+
+        final open = (await entries()).where((e) => e.task.id != task.id);
+        final copy = open.single;
+        expect(copy.task.dueDate, today);
+        expect(copy.task.recurrenceRule, daily);
+        expect(copy.task.done, isFalse);
+        expect(copy.subtaskCount, 2);
+        expect(copy.subtasksDone, 0);
+        expect(copy.tagIds, {tag.id});
+        expect(
+          (await reminders.watchForTask(copy.task.id).first)
+              .single
+              .minutesBeforeDue,
+          30,
+        );
+
+        expect(await repo.rollOverMissedRepeats(today), 0);
+        expect((await entries()).length, 2);
+      },
+    );
+
+    test('two devices rolling over make the same copy', () async {
+      final task = await overdueDaily(repo);
+      await repo.addSubtask(task.id, 'Kitchen');
+      final tag = await repo.findOrCreateTag('home');
+      await repo.setTaskTags(task.id, {tag.id});
+      await ReminderRepository(
+        db,
+        deviceId: 'dev-1',
+        clock: clock.call,
+      ).addRelative(task.id, 30);
+
+      // A second device with the same records (as after a sync).
+      final other = openTestDatabase();
+      addTearDown(other.close);
+      for (final table in [
+        'tasks',
+        'subtasks',
+        'tags',
+        'task_tags',
+        'reminders',
+      ]) {
+        final rows = await db.customSelect('SELECT * FROM $table').get();
+        for (final row in rows) {
+          final columns = row.data.keys.toList();
+          await other.customInsert(
+            'INSERT INTO $table (${columns.join(', ')}) '
+            'VALUES (${List.filled(columns.length, '?').join(', ')})',
+            variables: [for (final c in columns) Variable(row.data[c])],
+          );
+        }
+      }
+      final otherRepo = TaskRepository(
+        other,
+        deviceId: 'dev-2',
+        clock: clock.call,
+      );
+
+      await repo.rollOverMissedRepeats(today);
+      await otherRepo.rollOverMissedRepeats(today);
+
+      Future<List<String>> ids(AppDatabase d, String table) async => [
+        for (final row
+            in await d.customSelect('SELECT id FROM $table ORDER BY id').get())
+          row.read<String>('id'),
+      ];
+      for (final table in ['tasks', 'subtasks', 'task_tags', 'reminders']) {
+        expect(await ids(other, table), await ids(db, table), reason: table);
+      }
+    });
+
+    test('opened every day, only the first missed one stays', () async {
+      final task = await overdueDaily(repo); // due Oct 16
+      // The app runs on Oct 17, 18, 19 and 20 while the task is ignored.
+      for (var day = 17; day <= 20; day++) {
+        await repo.rollOverMissedRepeats(LocalDate(2026, 10, day));
+      }
+      final open = [
+        for (final e in await entries())
+          if (!e.task.done) e.task,
+      ]..sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
+      expect(
+        [for (final t in open) t.dueDate],
+        [LocalDate(2026, 10, 16), LocalDate(2026, 10, 20)],
+      );
+      expect(open.first.id, task.id);
+      expect(open.first.recurrenceRule, isNull);
+      expect(open.last.recurrenceRule, daily);
+    });
+
+    test('after the first missed one is deleted, the next one stays', () async {
+      final task = await overdueDaily(repo); // due Oct 16
+      await repo.rollOverMissedRepeats(LocalDate(2026, 10, 17));
+      await repo.deleteTask(task.id);
+      await repo.rollOverMissedRepeats(LocalDate(2026, 10, 18));
+      final open = [
+        for (final e in await entries())
+          if (!e.task.done) e.task.dueDate,
+      ]..sort();
+      expect(open, [LocalDate(2026, 10, 17), LocalDate(2026, 10, 18)]);
+    });
+
+    test('a ticked occurrence ends the chain', () async {
+      final task = await overdueDaily(repo); // due Oct 16
+      await repo.rollOverMissedRepeats(LocalDate(2026, 10, 17));
+      await repo.setDone(task.id, done: true);
+      await repo.rollOverMissedRepeats(LocalDate(2026, 10, 18));
+      final open = [
+        for (final e in await entries())
+          if (!e.task.done) e.task.dueDate,
+      ]..sort();
+      expect(open, [LocalDate(2026, 10, 17), LocalDate(2026, 10, 18)]);
+    });
+
+    test('roll-over writes lose to newer changes from other devices', () async {
+      final task = await overdueDaily(repo);
+      await repo.rollOverMissedRepeats(today);
+      final old = (await repo.getTask(task.id))!;
+      expect(
+        old.updatedAt,
+        task.updatedAt.add(const Duration(milliseconds: 1)),
+      );
+      final copy = (await entries())
+          .firstWhere((e) => e.task.id != task.id)
+          .task;
+      expect(copy.updatedAt, old.updatedAt);
+    });
+
+    test('a live copy is never overwritten', () async {
+      final task = await overdueDaily(repo);
+      await repo.addSubtask(task.id, 'Kitchen');
+      await repo.rollOverMissedRepeats(today);
+      final copy = (await entries())
+          .firstWhere((e) => e.task.id != task.id)
+          .task;
+      final step = (await repo.watchSubtasks(copy.id).first).single;
+      await repo.setSubtaskDone(step.id, done: true);
+      await repo.saveTask(copy.copyWith(title: 'Water the garden'));
+
+      // The old task gets its rule back (say, an older device's edit won).
+      final old = (await repo.getTask(task.id))!;
+      await repo.saveTask(old.copyWith(recurrenceRule: () => daily));
+      await repo.rollOverMissedRepeats(today);
+
+      expect((await repo.getTask(copy.id))!.title, 'Water the garden');
+      expect((await repo.watchSubtasks(copy.id).first).single.done, isTrue);
+    });
+
+    test('a copy removed by Undo comes back newer than its removal', () async {
+      final task = await overdueDaily(repo);
+      final completion = await repo.setDone(task.id, done: true);
+      clock.advance(const Duration(hours: 1));
+      await repo.undoCompletion(task.id, completion);
+      final removed = (await repo.getTask(completion.nextTaskId!))!;
+      expect(removed.deleted, isTrue);
+
+      await repo.rollOverMissedRepeats(today);
+      final back = (await repo.getTask(completion.nextTaskId!))!;
+      expect(back.deleted, isFalse);
+      expect(back.updatedAt.isAfter(removed.updatedAt), isTrue);
+    });
+
+    test('the copy notifies on the same devices', () async {
+      final task = await overdueDaily(repo);
+      await repo.setTaskTargets(task.id, all: false, deviceIds: {'phone'});
+      await repo.rollOverMissedRepeats(today);
+      final copy = (await entries())
+          .firstWhere((e) => e.task.id != task.id)
+          .task;
+      expect(copy.notifyAllDevices, isFalse);
+      expect((await repo.watchAllTaskTargets().first)[copy.id], {'phone'});
+    });
+
+    test('a series that has ended is left alone', () async {
+      final task = await repo.createTask(
+        title: 'Course',
+        dueDate: LocalDate(2026, 10, 16),
+      );
+      const ended = 'DTSTART=20261014;FREQ=DAILY;COUNT=3';
+      await repo.saveTask(task.copyWith(recurrenceRule: () => ended));
+
+      expect(await repo.rollOverMissedRepeats(today), 0);
+      expect((await repo.getTask(task.id))!.recurrenceRule, ended);
     });
   });
 

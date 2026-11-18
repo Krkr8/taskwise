@@ -102,6 +102,15 @@ class CalendarChip extends ConsumerWidget {
                   : Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        if (task.skipped)
+                          Padding(
+                            padding: const EdgeInsetsDirectional.only(end: 2),
+                            child: Icon(
+                              Icons.redo,
+                              size: dense ? 10 : 12,
+                              color: scheme.error,
+                            ),
+                          ),
                         if (item.projected || task.recurrenceRule != null)
                           Padding(
                             padding: const EdgeInsetsDirectional.only(end: 2),
@@ -148,7 +157,10 @@ class CalendarChip extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (item.timeMinutes != null || repeats || hasReminders)
+          if (item.timeMinutes != null ||
+              repeats ||
+              hasReminders ||
+              item.task.skipped)
             // Shrinks to fit narrow phone columns instead of cutting off.
             FittedBox(
               fit: BoxFit.scaleDown,
@@ -156,6 +168,15 @@ class CalendarChip extends ConsumerWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (item.task.skipped)
+                    Padding(
+                      padding: const EdgeInsetsDirectional.only(end: 2),
+                      child: Icon(
+                        Icons.redo,
+                        size: 10,
+                        color: theme.colorScheme.error,
+                      ),
+                    ),
                   if (hasReminders)
                     Padding(
                       padding: const EdgeInsetsDirectional.only(end: 2),

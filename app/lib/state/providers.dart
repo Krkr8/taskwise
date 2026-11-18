@@ -228,6 +228,38 @@ final taskSectionsProvider = Provider<AsyncValue<List<TaskSection>>>((ref) {
       );
 });
 
+/// Tasks whose subtasks are unfolded under them (list and calendar). In
+/// memory only: everything starts folded.
+class ExpandedTasksNotifier extends Notifier<Set<String>> {
+  @override
+  Set<String> build() => const {};
+
+  void toggle(String id) =>
+      state = state.contains(id) ? ({...state}..remove(id)) : {...state, id};
+
+  void expand(String id) {
+    if (!state.contains(id)) state = {...state, id};
+  }
+
+  void collapse(String id) {
+    if (state.contains(id)) state = {...state}..remove(id);
+  }
+}
+
+final expandedTasksProvider =
+    NotifierProvider<ExpandedTasksNotifier, Set<String>>(
+      ExpandedTasksNotifier.new,
+    );
+
+/// Live subtask counts by task id (only tasks that have subtasks), for
+/// views that get bare tasks, such as the calendar.
+final subtaskCountsProvider = Provider<Map<String, int>>(
+  (ref) => {
+    for (final e in ref.watch(taskEntriesProvider).value ?? const <TaskEntry>[])
+      if (e.subtaskCount > 0) e.task.id: e.subtaskCount,
+  },
+);
+
 /// The task open in the side panel (wide layouts).
 class SelectedTaskNotifier extends Notifier<String?> {
   @override

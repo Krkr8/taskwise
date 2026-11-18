@@ -54,6 +54,10 @@ void main() {
     test('defaults when nothing is stored', () async {
       final repo = SettingsRepository(db, deviceId: 'd');
       expect(await repo.loadSettings(), const AppSettings());
+      expect(
+        const AppSettings().taskTapAction,
+        TaskTapAction.detailsAndSubtasks,
+      );
     });
 
     test('stores values and marks only week start as synced', () async {
@@ -63,6 +67,7 @@ void main() {
       await repo.setTimeFormat(TimeFormat.h24);
       await repo.setWeekStart(WeekStart.saturday);
       await repo.setWeekStart(WeekStart.monday);
+      await repo.setTaskTapAction(TaskTapAction.subtasksOnly);
 
       expect(
         await repo.loadSettings(),
@@ -71,6 +76,7 @@ void main() {
           language: AppLanguage.ar,
           timeFormat: TimeFormat.h24,
           weekStart: WeekStart.monday,
+          taskTapAction: TaskTapAction.subtasksOnly,
         ),
       );
       final synced = await (db.select(

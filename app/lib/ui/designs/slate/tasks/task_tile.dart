@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
 
+import '../../../../data/app_settings.dart';
+
 import '../../../../state/providers.dart';
 import '../common/hover_surface.dart';
 import '../theme/tokens.dart';
 import '../../../shared/tasks/labels.dart';
+import '../../../shared/tasks/subtask_tree.dart';
 import '../../../shared/tasks/task_actions.dart';
+import 'subtask_tree_style.dart';
 
 /// One task row in the list with subtle hover elevation and tactile checkmark.
 class TaskTile extends ConsumerWidget {
@@ -24,9 +28,15 @@ class TaskTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final task = entry.task;
+    final skipped = task.done && task.skipped;
+    final hasSubtasks = entry.subtaskCount > 0;
+    final expanded =
+        hasSubtasks && ref.watch(expandedTasksProvider).contains(task.id);
+    final detailsArrow = showsDetailsArrow(ref, hasSubtasks: hasSubtasks);
     final l10n = context.l10n;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final skip = SkipColors.of(scheme);
     final today = ref.watch(todayProvider);
     final timeFormat = ref.watch(appSettingsProvider).timeFormat;
     final category = task.categoryId == null
@@ -56,6 +66,14 @@ class TaskTile extends ConsumerWidget {
     );
 
     final meta = <Widget>[
+      if (skipped)
+        _Badge(
+          icon: Icons.skip_next_rounded,
+          label: l10n.skippedLabel,
+          bgColor: skip.container,
+          fgColor: skip.text,
+          bold: true,
+        ),
       if (due != null)
         _Badge(
           icon: Icons.calendar_today_outlined,
@@ -108,84 +126,222 @@ class TaskTile extends ConsumerWidget {
         Icon(Icons.notes_rounded, size: 15, color: scheme.onSurfaceVariant),
     ];
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: HoverSurface(
-        selected: selected,
-        onTap: onOpen,
-        borderRadius: BorderRadius.circular(Radii.md),
-        padding: const EdgeInsetsDirectional.fromSTEB(
-          Spacing.sm,
-          Spacing.xs,
-          Spacing.md,
-          Spacing.xs,
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            CompleteButton(task: task),
-            const SizedBox(width: Spacing.sm),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: Spacing.xs + 2),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AnimatedDefaultTextStyle(
-                      duration: Motion.of(context, Motion.medium),
-                      curve: Curves.easeOutCubic,
-                      style: theme.textTheme.bodyMedium!.copyWith(
-                        color: task.done
-                            ? scheme.onSurfaceVariant.withValues(alpha: 0.6)
-                            : scheme.onSurface,
-                        fontWeight: task.done
-                            ? FontWeight.w400
-                            : FontWeight.w500,
-                        fontSize: 14.5,
-                        decoration: task.done
-                            ? TextDecoration.lineThrough
-                            : TextDecoration.none,
-                      ),
-                      child: Text(
-                        task.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+    final titleColor = skipped
+        ? _skippedGrey
+        : task.done
+        ? scheme.onSurfaceVariant.withValues(alpha: 0.6)
+        : scheme.onSurface;
+
+    final tile = HoverSurface(
+      selected: selected,
+      onTap: () => handleTaskTap(
+        ref,
+        taskId: task.id,
+        hasSubtasks: hasSubtasks,
+        openDetails: onOpen,
+      ),
+      borderRadius: BorderRadius.circular(Radii.md),
+      padding: const EdgeInsetsDirectional.fromSTEB(
+        Spacing.sm,
+        Spacing.xs,
+        Spacing.md,
+        Spacing.xs,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          CompleteButton(task: task),
+          const SizedBox(width: Spacing.sm),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: Spacing.xs + 2),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AnimatedDefaultTextStyle(
+                    duration: Motion.of(context, Motion.medium),
+                    curve: Curves.easeOutCubic,
+                    style: theme.textTheme.bodyMedium!.copyWith(
+                      color: titleColor,
+                      fontWeight: task.done ? FontWeight.w400 : FontWeight.w500,
+                      fontSize: 14.5,
+                      decoration: task.done
+                          ? TextDecoration.lineThrough
+                          : TextDecoration.none,
+                      decorationStyle: skipped
+                          ? TextDecorationStyle.dashed
+                          : TextDecorationStyle.solid,
                     ),
-                    if (meta.isNotEmpty) ...[
-                      const SizedBox(height: Spacing.xs + 2),
-                      Wrap(
-                        spacing: Spacing.sm + 2,
-                        runSpacing: Spacing.xs,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: meta,
-                      ),
-                    ],
+                    child: Text(
+                      task.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (meta.isNotEmpty) ...[
+                    const SizedBox(height: Spacing.xs + 2),
+                    Wrap(
+                      spacing: Spacing.sm + 2,
+                      runSpacing: Spacing.xs,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: meta,
+                    ),
                   ],
+                ],
+              ),
+            ),
+          ),
+          if (flag != null)
+            Padding(
+              padding: const EdgeInsetsDirectional.only(start: Spacing.sm),
+              child: Tooltip(
+                message:
+                    '${l10n.priority}: ${l10n.priorityName(task.priority)}',
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: priorityBackgroundColor(task.priority, scheme),
+                    borderRadius: BorderRadius.circular(Radii.sm),
+                  ),
+                  child: Icon(Icons.flag_rounded, size: 16, color: flag),
                 ),
               ),
             ),
-            if (flag != null)
-              Padding(
-                padding: const EdgeInsetsDirectional.only(start: Spacing.sm),
-                child: Tooltip(
-                  message:
-                      '${l10n.priority}: ${l10n.priorityName(task.priority)}',
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: priorityBackgroundColor(task.priority, scheme),
-                      borderRadius: BorderRadius.circular(Radii.sm),
-                    ),
-                    child: Icon(Icons.flag_rounded, size: 16, color: flag),
+          if (hasSubtasks &&
+              ref.watch(appSettingsProvider).taskTapAction !=
+                  TaskTapAction.detailsOnly)
+            _FoldButton(
+              expanded: expanded,
+              onPressed: () =>
+                  ref.read(expandedTasksProvider.notifier).toggle(task.id),
+            ),
+          if (detailsArrow) _DetailsButton(onPressed: onOpen),
+        ],
+      ),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          skipped
+              ? CustomPaint(
+                  foregroundPainter: _DashedBorder(
+                    color: scheme.outline.withValues(alpha: 0.6),
+                    radius: Radii.md,
                   ),
-                ),
-              ),
-          ],
+                  child: tile,
+                )
+              : tile,
+          if (expanded)
+            SubtaskTree(taskId: task.id, style: slateSubtaskTreeStyle(context)),
+        ],
+      ),
+    );
+  }
+}
+
+/// Muted grey of a skipped task's title (same in both themes).
+const _skippedGrey = Color(0xFF94A3B8);
+
+/// The chevron that unfolds and folds a task's subtasks.
+class _FoldButton extends StatelessWidget {
+  const _FoldButton({required this.expanded, required this.onPressed});
+
+  final bool expanded;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final l10n = context.l10n;
+    return IconButton(
+      tooltip: expanded ? l10n.hideSubtasks : l10n.showSubtasks,
+      onPressed: onPressed,
+      visualDensity: VisualDensity.compact,
+      iconSize: 20,
+      icon: AnimatedRotation(
+        turns: expanded ? 0.5 : 0,
+        duration: Motion.of(context, Motion.fast),
+        child: Icon(
+          Icons.expand_more_rounded,
+          color: expanded ? scheme.primary : scheme.onSurfaceVariant,
         ),
       ),
     );
   }
+}
+
+/// The small "open details" button of the "Show subtasks only" setting.
+class _DetailsButton extends StatelessWidget {
+  const _DetailsButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(start: Spacing.xs),
+      child: Tooltip(
+        message: context.l10n.openDetails,
+        child: Material(
+          color: scheme.primaryContainer,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(Radii.sm),
+            side: BorderSide(color: scheme.primary.withValues(alpha: 0.3)),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onPressed,
+            child: Padding(
+              padding: const EdgeInsets.all(Spacing.xs + 2),
+              child: Icon(
+                Directionality.of(context) == TextDirection.rtl
+                    ? Icons.chevron_left_rounded
+                    : Icons.chevron_right_rounded,
+                size: 18,
+                color: scheme.primary,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A dashed rounded border, drawn over a skipped task's tile.
+class _DashedBorder extends CustomPainter {
+  _DashedBorder({required this.color, required this.radius});
+
+  final Color color;
+  final double radius;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    final path = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Offset.zero & size,
+          Radius.circular(radius),
+        ).deflate(0.5),
+      );
+    for (final metric in path.computeMetrics()) {
+      for (var at = 0.0; at < metric.length; at += 7) {
+        canvas.drawPath(metric.extractPath(at, at + 4), paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedBorder old) =>
+      old.color != color || old.radius != radius;
 }
 
 /// Round check button that animates with elastic scale before the task moves.
@@ -223,6 +379,7 @@ class _CompleteButtonState extends ConsumerState<CompleteButton> {
     final scheme = Theme.of(context).colorScheme;
     final l10n = context.l10n;
     final pColor = priorityColor(widget.task.priority, scheme);
+    final skip = SkipColors.of(scheme);
 
     return IconButton(
       tooltip: done
@@ -237,7 +394,23 @@ class _CompleteButtonState extends ConsumerState<CompleteButton> {
           scale: CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
           child: child,
         ),
-        child: done
+        child: done && widget.task.skipped && _pending == null
+            ? Container(
+                key: const ValueKey('skipped'),
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: skip.container,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: skip.accent, width: 1.8),
+                ),
+                child: Icon(
+                  Icons.skip_next_rounded,
+                  size: 14,
+                  color: skip.text,
+                ),
+              )
+            : done
             ? Container(
                 key: const ValueKey(true),
                 width: 22,
@@ -282,12 +455,14 @@ class _Badge extends StatelessWidget {
     required this.bgColor,
     required this.fgColor,
     this.icon,
+    this.bold = false,
   });
 
   final String label;
   final Color bgColor;
   final Color fgColor;
   final IconData? icon;
+  final bool bold;
 
   @override
   Widget build(BuildContext context) {
@@ -308,7 +483,7 @@ class _Badge extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 11,
-              fontWeight: FontWeight.w600,
+              fontWeight: bold ? FontWeight.w700 : FontWeight.w600,
               color: fgColor,
             ),
           ),

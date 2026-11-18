@@ -6,6 +6,17 @@ When a version is released, its section becomes the text of the draft GitHub rel
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-18
+
+### Added
+
+- **Subtasks under their task.** Tap a task that has subtasks and they unfold right under it on a tree line, in the task list and in the calendar. Tick them there without opening the task. **Settings → Tasks → Tapping a task with subtasks** chooses what a tap does: open the details and show the subtasks (the default), show the subtasks only (an arrow on the row opens the details), or open the details only.
+- **Skip a task.** The task details have a **Skip** button next to Done, for when a task isn't needed any more. A skipped task leaves the list and shows in Completed as "Skipped", not as done. Skipping a repeating task brings up the next one. **Undo** is offered right away.
+
+### Changed
+
+- **Repeating tasks don't wait for you any more.** If a repeating task isn't done by the time its next one is due, the missed one stays in **Overdue** and the next one appears on its own (today, or on its next date). Only the first missed one stays in Overdue, so a daily task left for a week doesn't pile up. When you use sync, Taskwise first fetches your other devices' changes, so a task you ticked on your phone isn't copied again on your computer.
+
 ## [1.1.0] - 2026-11-12
 
 ### Added

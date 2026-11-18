@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
 
+import '../../../../data/app_settings.dart';
+
 import '../../../../state/providers.dart';
 import '../common/brutal_widgets.dart';
 import '../theme/brutal.dart';
 import '../theme/tokens.dart';
 import '../../../shared/tasks/labels.dart';
 import '../../../shared/tasks/task_actions.dart';
+import '../../../shared/tasks/subtask_tree.dart';
+import 'subtask_tree_style.dart';
 
 /// One task row in the list.
 class TaskTile extends ConsumerWidget {
@@ -29,6 +33,7 @@ class TaskTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final task = entry.task;
+    final expanded = ref.watch(expandedTasksProvider).contains(task.id);
     final l10n = context.l10n;
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
@@ -45,6 +50,7 @@ class TaskTile extends ConsumerWidget {
       color: scheme.onSurfaceVariant,
     );
     final flag = priorityColor(task.priority, scheme);
+    final hasSubtasks = entry.subtaskCount > 0;
     final hasReminders = ref
         .watch(taskIdsWithRemindersProvider)
         .contains(task.id);
@@ -108,6 +114,7 @@ class TaskTile extends ConsumerWidget {
         ),
       if (task.notes.trim().isNotEmpty)
         Icon(Icons.notes, size: 16, color: scheme.onSurfaceVariant),
+      if (task.skipped) const SkippedSticker(),
     ];
 
     final rtl = Directionality.of(context) == TextDirection.rtl;
@@ -115,7 +122,12 @@ class TaskTile extends ConsumerWidget {
     return Material(
       type: MaterialType.transparency,
       child: InkWell(
-        onTap: onOpen,
+        onTap: () => handleTaskTap(
+          ref,
+          taskId: task.id,
+          hasSubtasks: hasSubtasks,
+          openDetails: onOpen,
+        ),
         child: AnimatedContainer(
           duration: Motion.of(context, Motion.fast),
           decoration: BoxDecoration(
@@ -141,55 +153,106 @@ class TaskTile extends ConsumerWidget {
             Spacing.md,
             Spacing.xs,
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              CompleteButton(task: task),
-              const SizedBox(width: Spacing.xs),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      AnimatedDefaultTextStyle(
-                        duration: Motion.of(context, Motion.medium),
-                        style: theme.textTheme.bodyLarge!.copyWith(
-                          fontWeight: FontWeight.w500,
-                          color: task.done
-                              ? scheme.onSurfaceVariant
-                              : scheme.onSurface,
-                          decoration: task.done
-                              ? TextDecoration.lineThrough
-                              : TextDecoration.none,
-                          decorationThickness: 2,
-                        ),
-                        child: Text(
-                          task.title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+              Row(
+                children: [
+                  CompleteButton(task: task),
+                  const SizedBox(width: Spacing.xs),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: AnimatedDefaultTextStyle(
+                                  duration: Motion.of(context, Motion.medium),
+                                  style: theme.textTheme.bodyLarge!.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                    color: task.done
+                                        ? scheme.onSurfaceVariant
+                                        : scheme.onSurface,
+                                    decoration: task.done
+                                        ? TextDecoration.lineThrough
+                                        : TextDecoration.none,
+                                    // A skipped task is struck with a
+                                    // dashed line, a done one with a solid
+                                    // line.
+                                    decorationStyle: task.skipped
+                                        ? TextDecorationStyle.dashed
+                                        : TextDecorationStyle.solid,
+                                    decorationThickness: 2,
+                                  ),
+                                  child: Text(
+                                    task.title,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                              if (hasSubtasks &&
+                                  ref
+                                          .watch(appSettingsProvider)
+                                          .taskTapAction !=
+                                      TaskTapAction.detailsOnly)
+                                ExcludeSemantics(
+                                  child: Icon(
+                                    expanded
+                                        ? Icons.expand_more
+                                        : Icons.chevron_right,
+                                    size: 20,
+                                    color: scheme.onSurfaceVariant,
+                                  ),
+                                ),
+                            ],
+                          ),
+                          if (meta.isNotEmpty) ...[
+                            const SizedBox(height: Spacing.xs),
+                            Wrap(
+                              spacing: Spacing.md,
+                              runSpacing: Spacing.xs,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: meta,
+                            ),
+                          ],
+                        ],
                       ),
-                      if (meta.isNotEmpty) ...[
-                        const SizedBox(height: Spacing.xs),
-                        Wrap(
-                          spacing: Spacing.md,
-                          runSpacing: Spacing.xs,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: meta,
-                        ),
-                      ],
-                    ],
+                    ),
                   ),
-                ),
+                  if (flag != null)
+                    Padding(
+                      padding: const EdgeInsetsDirectional.only(
+                        start: Spacing.sm,
+                      ),
+                      child: Tooltip(
+                        message:
+                            '${l10n.priority}: ${l10n.priorityName(task.priority)}',
+                        child: PriorityFlag(color: flag, size: 24),
+                      ),
+                    ),
+                  if (showsDetailsArrow(ref, hasSubtasks: hasSubtasks))
+                    Padding(
+                      padding: const EdgeInsetsDirectional.only(
+                        start: Spacing.sm,
+                      ),
+                      child: BrutalIconButton(
+                        flat: true,
+                        size: 34,
+                        tooltip: l10n.openDetails,
+                        onPressed: onOpen,
+                        icon: const Icon(Icons.arrow_forward),
+                      ),
+                    ),
+                ],
               ),
-              if (flag != null)
-                Padding(
-                  padding: const EdgeInsetsDirectional.only(start: Spacing.sm),
-                  child: Tooltip(
-                    message:
-                        '${l10n.priority}: ${l10n.priorityName(task.priority)}',
-                    child: PriorityFlag(color: flag, size: 24),
-                  ),
+              if (expanded && hasSubtasks)
+                SubtaskTree(
+                  taskId: task.id,
+                  style: brutalSubtaskTreeStyle(context),
                 ),
             ],
           ),
@@ -218,6 +281,24 @@ class PriorityFlag extends StatelessWidget {
         border: Border.all(color: b.ink, width: 1.5),
       ),
       child: Icon(Icons.flag, size: size * 0.6, color: b.onAccent),
+    );
+  }
+}
+
+/// The "⊘ SKIPPED" tag of a skipped task: neutral hairline colour, unlike
+/// the mint of a done one.
+class SkippedSticker extends StatelessWidget {
+  const SkippedSticker({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final b = BrutalTheme.of(context);
+    return Sticker(
+      label: context.l10n.skippedLabel,
+      color: b.hairline,
+      foreground: b.ink,
+      dense: true,
+      leading: const Icon(Icons.not_interested, size: 12),
     );
   }
 }
@@ -254,6 +335,7 @@ class _CompleteButtonState extends ConsumerState<CompleteButton> {
   @override
   Widget build(BuildContext context) {
     final done = _pending ?? widget.task.done;
+    final skipped = done && widget.task.skipped && _pending == null;
     final b = BrutalTheme.of(context);
     final l10n = context.l10n;
     final duration = Motion.of(context, Motion.medium);
@@ -268,7 +350,11 @@ class _CompleteButtonState extends ConsumerState<CompleteButton> {
         width: 24,
         height: 24,
         decoration: BoxDecoration(
-          color: done ? b.mint : b.card,
+          color: skipped
+              ? b.hairline
+              : done
+              ? b.mint
+              : b.card,
           borderRadius: BorderRadius.circular(Radii.sm),
           border: Border.all(color: b.ink, width: BrutalTheme.line),
         ),
@@ -276,7 +362,12 @@ class _CompleteButtonState extends ConsumerState<CompleteButton> {
           scale: done ? 1 : 0,
           duration: duration,
           curve: Curves.easeOutBack,
-          child: Icon(Icons.check, size: 18, color: b.onAccent, weight: 700),
+          child: Icon(
+            skipped ? Icons.not_interested : Icons.check,
+            size: 18,
+            color: skipped ? b.ink : b.onAccent,
+            weight: 700,
+          ),
         ),
       ),
     );

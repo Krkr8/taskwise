@@ -3,8 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:taskwise_shared/taskwise_shared.dart';
 
+import '../../../../data/app_settings.dart' show TimeFormat;
 import '../../../../state/providers.dart';
 import '../../../shared/tasks/labels.dart';
+import '../../../shared/tasks/subtask_tree.dart';
+import '../../../shared/tasks/task_actions.dart';
+import '../tasks/subtask_tree_style.dart';
 import '../tasks/task_detail.dart';
 import '../tasks/task_tile.dart';
 import '../theme/tokens.dart';
@@ -317,6 +321,8 @@ class DayAgenda extends ConsumerWidget {
     final items =
         ref.watch(calendarItemsProvider((from: day, to: day))).value?[day] ??
         const <CalendarItem>[];
+    final subtaskCounts = ref.watch(subtaskCountsProvider);
+    final expandedIds = ref.watch(expandedTasksProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -381,58 +387,107 @@ class DayAgenda extends ConsumerWidget {
                   ),
                   children: [
                     for (final item in items)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 2),
-                        child: Material(
-                          color: scheme.surface,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(Radii.md),
-                            side: BorderSide(
-                              color: scheme.outlineVariant.withValues(
-                                alpha: 0.7,
-                              ),
-                              width: 1,
-                            ),
-                          ),
-                          child: ListTile(
-                            leading: item.projected
-                                ? const Padding(
-                                    padding: EdgeInsets.all(Spacing.sm),
-                                    child: Icon(Icons.repeat_rounded),
-                                  )
-                                : CompleteButton(task: item.task),
-                            title: Text(
-                              item.task.title,
-                              style: item.task.done
-                                  ? const TextStyle(
-                                      decoration: TextDecoration.lineThrough,
-                                    )
-                                  : const TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                            ),
-                            subtitle: Text(
-                              [
-                                item.timeMinutes == null
-                                    ? l10n.allDay
-                                    : l10n.clockTime(
-                                        item.timeMinutes!,
-                                        timeFormat,
-                                      ),
-                                if (item.projected) l10n.repeatingTask,
-                              ].join(' · '),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: scheme.onSurfaceVariant,
-                              ),
-                            ),
-                            onTap: () => onOpen(item.task.id),
-                          ),
-                        ),
+                      _agendaItem(
+                        context,
+                        ref,
+                        item: item,
+                        hasSubtasks:
+                            !item.projected &&
+                            subtaskCounts.containsKey(item.task.id),
+                        expanded: expandedIds.contains(item.task.id),
+                        timeFormat: timeFormat,
                       ),
                   ],
                 ),
         ),
       ],
+    );
+  }
+
+  Widget _agendaItem(
+    BuildContext context,
+    WidgetRef ref, {
+    required CalendarItem item,
+    required bool hasSubtasks,
+    required bool expanded,
+    required TimeFormat timeFormat,
+  }) {
+    final l10n = context.l10n;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final task = item.task;
+    final skipped = task.done && task.skipped;
+    final detailsArrow =
+        hasSubtasks && showsDetailsArrow(ref, hasSubtasks: true);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Material(
+            color: scheme.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(Radii.md),
+              side: BorderSide(
+                color: scheme.outlineVariant.withValues(alpha: 0.7),
+                width: 1,
+              ),
+            ),
+            child: ListTile(
+              leading: item.projected
+                  ? const Padding(
+                      padding: EdgeInsets.all(Spacing.sm),
+                      child: Icon(Icons.repeat_rounded),
+                    )
+                  : CompleteButton(task: task),
+              title: Text(
+                task.title,
+                style: task.done
+                    ? TextStyle(
+                        decoration: TextDecoration.lineThrough,
+                        decorationStyle: skipped
+                            ? TextDecorationStyle.dashed
+                            : null,
+                        color: skipped ? const Color(0xFF94A3B8) : null,
+                      )
+                    : const TextStyle(fontWeight: FontWeight.w500),
+              ),
+              subtitle: Text(
+                [
+                  if (skipped) l10n.skippedLabel,
+                  item.timeMinutes == null
+                      ? l10n.allDay
+                      : l10n.clockTime(item.timeMinutes!, timeFormat),
+                  if (item.projected) l10n.repeatingTask,
+                ].join(' · '),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: skipped
+                      ? SkipColors.of(scheme).text
+                      : scheme.onSurfaceVariant,
+                ),
+              ),
+              trailing: detailsArrow
+                  ? IconButton(
+                      tooltip: l10n.openDetails,
+                      icon: const Icon(Icons.chevron_right_rounded),
+                      color: scheme.primary,
+                      onPressed: () => onOpen(task.id),
+                    )
+                  : null,
+              onTap: hasSubtasks
+                  ? () => handleTaskTap(
+                      ref,
+                      taskId: task.id,
+                      hasSubtasks: true,
+                      openDetails: () => onOpen(task.id),
+                    )
+                  : () => onOpen(task.id),
+            ),
+          ),
+          if (hasSubtasks && expanded)
+            SubtaskTree(taskId: task.id, style: slateSubtaskTreeStyle(context)),
+        ],
+      ),
     );
   }
 }

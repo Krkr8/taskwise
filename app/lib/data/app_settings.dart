@@ -22,6 +22,18 @@ enum AppLanguage { en, ar }
 /// Clock style for displayed times.
 enum TimeFormat { h12, h24 }
 
+/// What tapping a task that has subtasks does (device-only).
+enum TaskTapAction {
+  /// Opens the details and unfolds the subtasks under the task (default).
+  detailsAndSubtasks,
+
+  /// Unfolds or folds the subtasks; an arrow on the row opens the details.
+  subtasksOnly,
+
+  /// Opens the details only (as before 1.2.0).
+  detailsOnly,
+}
+
 /// Reminder added when a task first gets a due time (SPEC.md section 3.5).
 enum DefaultReminder {
   none(null),
@@ -53,6 +65,7 @@ final class AppSettings {
     this.allDayReminderMinutes = 9 * 60,
     this.keepRunningInBackground = true,
     this.startOnLogin = false,
+    this.taskTapAction = TaskTapAction.detailsAndSubtasks,
   });
 
   static const defaultSnoozeMinutes = [5, 15, 60];
@@ -87,6 +100,9 @@ final class AppSettings {
   /// Desktop: start (hidden in the tray) when the user logs in.
   final bool startOnLogin;
 
+  /// What tapping a task with subtasks does (device-only).
+  final TaskTapAction taskTapAction;
+
   AppSettings copyWith({
     ThemePreference? theme,
     AppDesign? design,
@@ -99,6 +115,7 @@ final class AppSettings {
     int? allDayReminderMinutes,
     bool? keepRunningInBackground,
     bool? startOnLogin,
+    TaskTapAction? taskTapAction,
   }) => AppSettings(
     theme: theme ?? this.theme,
     design: design ?? this.design,
@@ -112,6 +129,7 @@ final class AppSettings {
     keepRunningInBackground:
         keepRunningInBackground ?? this.keepRunningInBackground,
     startOnLogin: startOnLogin ?? this.startOnLogin,
+    taskTapAction: taskTapAction ?? this.taskTapAction,
   );
 
   @override
@@ -127,7 +145,8 @@ final class AppSettings {
       other.snoozeMinutes.join(',') == snoozeMinutes.join(',') &&
       other.allDayReminderMinutes == allDayReminderMinutes &&
       other.keepRunningInBackground == keepRunningInBackground &&
-      other.startOnLogin == startOnLogin;
+      other.startOnLogin == startOnLogin &&
+      other.taskTapAction == taskTapAction;
 
   @override
   int get hashCode => Object.hash(
@@ -142,6 +161,7 @@ final class AppSettings {
     allDayReminderMinutes,
     keepRunningInBackground,
     startOnLogin,
+    taskTapAction,
   );
 }
 

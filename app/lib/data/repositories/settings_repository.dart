@@ -19,6 +19,7 @@ abstract final class SettingKeys {
   static const allDayReminderMinutes = 'all_day_reminder_minutes';
   static const keepRunningInBackground = 'keep_running_in_background';
   static const startOnLogin = 'start_on_login';
+  static const taskTapAction = 'task_tap';
 
   /// Active snoozes (JSON list of [Snooze]); device-only.
   static const snoozes = 'snoozes';
@@ -74,6 +75,9 @@ class SettingsRepository extends RepositoryBase {
 
   Future<void> setWeekStart(WeekStart value) =>
       _put(SettingKeys.weekStart, value.name, synced: true);
+
+  Future<void> setTaskTapAction(TaskTapAction value) =>
+      _put(SettingKeys.taskTapAction, value.name, synced: false);
 
   Future<void> setDefaultReminder(DefaultReminder value) =>
       _put(SettingKeys.defaultReminder, value.name, synced: true);
@@ -272,6 +276,9 @@ class SettingsRepository extends RepositoryBase {
       keepRunningInBackground:
           values[SettingKeys.keepRunningInBackground] != 'false',
       startOnLogin: values[SettingKeys.startOnLogin] == 'true',
+      taskTapAction:
+          TaskTapAction.values.asNameMap()[values[SettingKeys.taskTapAction]] ??
+          TaskTapAction.detailsAndSubtasks,
     );
   }
 

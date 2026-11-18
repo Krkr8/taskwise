@@ -34,7 +34,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -55,6 +55,9 @@ class AppDatabase extends _$AppDatabase {
       },
       from3To4: (m, schema) async {
         await m.addColumn(schema.reminders, schema.reminders.label);
+      },
+      from4To5: (m, schema) async {
+        await m.addColumn(schema.tasks, schema.tasks.skipped);
       },
     ),
   );

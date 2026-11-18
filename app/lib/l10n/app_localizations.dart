@@ -914,6 +914,84 @@ abstract class AppLocalizations {
   /// **'Done. That was the last one.'**
   String get doneSeriesEnded;
 
+  /// No description provided for @skip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get skip;
+
+  /// No description provided for @skippedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped'**
+  String get skippedLabel;
+
+  /// No description provided for @taskSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped “{title}”'**
+  String taskSkipped(String title);
+
+  /// No description provided for @skippedNextOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped. Next: {date}'**
+  String skippedNextOn(String date);
+
+  /// No description provided for @skippedSeriesEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped. That was the last one.'**
+  String get skippedSeriesEnded;
+
+  /// No description provided for @openDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Open details'**
+  String get openDetails;
+
+  /// No description provided for @showSubtasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Show subtasks'**
+  String get showSubtasks;
+
+  /// No description provided for @hideSubtasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide subtasks'**
+  String get hideSubtasks;
+
+  /// No description provided for @settingsTasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Tasks'**
+  String get settingsTasks;
+
+  /// No description provided for @taskTapAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Tapping a task with subtasks'**
+  String get taskTapAction;
+
+  /// No description provided for @taskTapDetailsAndSubtasks.
+  ///
+  /// In en, this message translates to:
+  /// **'Open details and show subtasks'**
+  String get taskTapDetailsAndSubtasks;
+
+  /// No description provided for @taskTapSubtasksOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Show subtasks only'**
+  String get taskTapSubtasksOnly;
+
+  /// No description provided for @taskTapDetailsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Open details only'**
+  String get taskTapDetailsOnly;
+
   /// No description provided for @navCalendar.
   ///
   /// In en, this message translates to:

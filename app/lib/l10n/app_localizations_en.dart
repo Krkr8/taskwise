@@ -548,6 +548,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get doneSeriesEnded => 'Done. That was the last one.';
 
   @override
+  String get skip => 'Skip';
+
+  @override
+  String get skippedLabel => 'Skipped';
+
+  @override
+  String taskSkipped(String title) {
+    return 'Skipped “$title”';
+  }
+
+  @override
+  String skippedNextOn(String date) {
+    return 'Skipped. Next: $date';
+  }
+
+  @override
+  String get skippedSeriesEnded => 'Skipped. That was the last one.';
+
+  @override
+  String get openDetails => 'Open details';
+
+  @override
+  String get showSubtasks => 'Show subtasks';
+
+  @override
+  String get hideSubtasks => 'Hide subtasks';
+
+  @override
+  String get settingsTasks => 'Tasks';
+
+  @override
+  String get taskTapAction => 'Tapping a task with subtasks';
+
+  @override
+  String get taskTapDetailsAndSubtasks => 'Open details and show subtasks';
+
+  @override
+  String get taskTapSubtasksOnly => 'Show subtasks only';
+
+  @override
+  String get taskTapDetailsOnly => 'Open details only';
+
+  @override
   String get navCalendar => 'Calendar';
 
   @override

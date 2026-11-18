@@ -234,6 +234,17 @@ class _TaskEditorState extends ConsumerState<_TaskEditor> {
                   color: task.done ? theme.colorScheme.primary : null,
                 ),
               ),
+              if (!task.done)
+                IconButton(
+                  tooltip: l10n.skip,
+                  onPressed: () async {
+                    // Like Delete: the task leaves the list, so close it.
+                    final skipping = skipTask(context, ref, task);
+                    widget.onClose();
+                    await skipping;
+                  },
+                  icon: Icon(Icons.redo, color: theme.colorScheme.error),
+                ),
               IconButton(
                 tooltip: l10n.deleteTask,
                 onPressed: () async {

@@ -31,6 +31,9 @@ class CalendarChip extends ConsumerWidget {
     this.showTime = false,
     this.dense = false,
     this.stacked = false,
+    this.subtaskCount = 0,
+    this.expanded = false,
+    this.onOpenDetails,
   });
 
   final CalendarItem item;
@@ -43,6 +46,15 @@ class CalendarChip extends ConsumerWidget {
 
   /// Smaller text, for month cells and narrow week columns.
   final bool dense;
+
+  /// How many subtasks the task has. A task with subtasks shows a fold
+  /// marker ([expanded] says which way) instead of opening on every tap.
+  final int subtaskCount;
+  final bool expanded;
+
+  /// Set when a tap folds the subtasks instead of opening the task: a small
+  /// arrow on the chip opens the details.
+  final VoidCallback? onOpenDetails;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -58,15 +70,48 @@ class CalendarChip extends ConsumerWidget {
               color: scheme.onSurface,
               fontWeight: FontWeight.w500,
               decoration: task.done ? TextDecoration.lineThrough : null,
+              // Skipped tasks are struck with a dashed line.
+              decorationStyle: task.skipped
+                  ? TextDecorationStyle.dashed
+                  : TextDecorationStyle.solid,
               height: 1.2,
             );
     final label = showTime && item.timeMinutes != null
         ? '${l10n.clockTime(item.timeMinutes!, timeFormat)} ${task.title}'
         : task.title;
 
+    final trailing = <Widget>[
+      if (subtaskCount > 0)
+        ExcludeSemantics(
+          child: Icon(
+            expanded ? Icons.expand_more : Icons.chevron_right,
+            size: dense ? 12 : 14,
+            color: scheme.onSurfaceVariant,
+          ),
+        ),
+      if (onOpenDetails != null)
+        Tooltip(
+          message: l10n.openDetails,
+          child: InkWell(
+            onTap: onOpenDetails,
+            child: Padding(
+              padding: const EdgeInsets.all(2),
+              child: Icon(
+                Icons.arrow_forward,
+                size: dense ? 12 : 14,
+                color: scheme.onSurface,
+              ),
+            ),
+          ),
+        ),
+    ];
     return Semantics(
       button: true,
-      label: item.projected ? l10n.upcomingOccurrence(task.title) : label,
+      label: item.projected
+          ? l10n.upcomingOccurrence(task.title)
+          : task.skipped
+          ? '$label, ${l10n.skippedLabel}'
+          : label,
       excludeSemantics: true,
       child: Opacity(
         opacity: item.projected || task.done ? 0.55 : 1,
@@ -102,18 +147,35 @@ class CalendarChip extends ConsumerWidget {
                 bottom: 1,
               ),
               child: stacked
-                  ? _stackedContent(
-                      context,
-                      l10n.clockTime,
-                      timeFormat,
-                      style,
-                      hasReminders: ref
-                          .watch(taskIdsWithRemindersProvider)
-                          .contains(task.id),
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: _stackedContent(
+                            context,
+                            l10n.clockTime,
+                            timeFormat,
+                            style,
+                            hasReminders: ref
+                                .watch(taskIdsWithRemindersProvider)
+                                .contains(task.id),
+                          ),
+                        ),
+                        ...trailing,
+                      ],
                     )
                   : Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        if (task.skipped)
+                          Padding(
+                            padding: const EdgeInsetsDirectional.only(end: 2),
+                            child: Icon(
+                              Icons.not_interested,
+                              size: dense ? 10 : 12,
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
                         if (item.projected || task.recurrenceRule != null)
                           Padding(
                             padding: const EdgeInsetsDirectional.only(end: 2),
@@ -132,6 +194,7 @@ class CalendarChip extends ConsumerWidget {
                             softWrap: !dense,
                           ),
                         ),
+                        ...trailing,
                       ],
                     ),
             ),
@@ -160,7 +223,10 @@ class CalendarChip extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (item.timeMinutes != null || repeats || hasReminders)
+          if (item.timeMinutes != null ||
+              repeats ||
+              hasReminders ||
+              item.task.skipped)
             // Shrinks to fit narrow phone columns instead of cutting off.
             FittedBox(
               fit: BoxFit.scaleDown,
@@ -182,6 +248,15 @@ class CalendarChip extends ConsumerWidget {
                       padding: const EdgeInsetsDirectional.only(end: 2),
                       child: Icon(
                         Icons.repeat,
+                        size: 10,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  if (item.task.skipped)
+                    Padding(
+                      padding: const EdgeInsetsDirectional.only(end: 2),
+                      child: Icon(
+                        Icons.not_interested,
                         size: 10,
                         color: theme.colorScheme.onSurfaceVariant,
                       ),

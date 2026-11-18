@@ -244,6 +244,17 @@ class _TaskEditorState extends ConsumerState<_TaskEditor> {
                   color: task.done ? scheme.primary : scheme.outline,
                 ),
               ),
+              if (!task.done)
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(end: Spacing.xs),
+                  child: _SkipButton(
+                    onPressed: () async {
+                      final skipping = skipTask(context, ref, task);
+                      widget.onClose();
+                      await skipping;
+                    },
+                  ),
+                ),
               IconButton(
                 tooltip: l10n.deleteTask,
                 onPressed: () async {
@@ -656,4 +667,52 @@ Future<String?> _showAddTagDialog(BuildContext context, List<Tag> existing) {
       );
     },
   ).whenComplete(controller.dispose);
+}
+
+/// The amber Skip button of the details header.
+class _SkipButton extends StatelessWidget {
+  const _SkipButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final skip = SkipColors.of(Theme.of(context).colorScheme);
+    return Tooltip(
+      message: l10n.skip,
+      child: Material(
+        color: skip.container,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Radii.sm),
+          side: BorderSide(color: skip.accent),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onPressed,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.md,
+              vertical: Spacing.sm - 1,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.skip_next_rounded, size: 16, color: skip.text),
+                const SizedBox(width: Spacing.xs + 2),
+                Text(
+                  l10n.skip,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: skip.text,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

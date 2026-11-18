@@ -59,8 +59,9 @@ void main() {
     final db = AppDatabase(schema.newConnection());
     await verifier.migrateAndValidate(db, 3);
 
-    final task = await db.select(db.tasks).getSingle();
-    expect(task.title, 'Old task');
+    // Raw SQL: the current table class has columns v3 doesn't (v5 skipped).
+    final task = await db.customSelect('SELECT title FROM tasks').getSingle();
+    expect(task.read<String>('title'), 'Old task');
     Future<List<String>> outbox() async => [
       for (final row in await db.select(db.syncOutbox).get())
         '${row.recordType}:${row.recordId}@${row.updatedAt}',
@@ -73,8 +74,9 @@ void main() {
 
     // From now on the triggers queue every write.
     await db.customStatement('DELETE FROM sync_outbox');
-    await (db.update(db.tasks)..where((t) => t.id.equals('t1'))).write(
-      TasksCompanion(updatedAt: Value(DateTime.utc(2026, 11, 2))),
+    await db.customStatement(
+      'UPDATE tasks SET updated_at = '
+      "${DateTime.utc(2026, 11, 2).millisecondsSinceEpoch} WHERE id = 't1'",
     );
     await db.customStatement(
       "UPDATE settings SET value = 'light', updated_at = 4000 WHERE id = 'theme'",
@@ -97,6 +99,20 @@ void main() {
     final row = await db.select(db.reminders).getSingle();
     expect(row.latitude, 33.3);
     expect(row.label, equals(null));
+    await db.close();
+  });
+
+  test('v4 to v5 keeps tasks and marks none skipped', () async {
+    final schema = await verifier.schemaAt(4);
+    schema.rawDatabase.execute(
+      'INSERT INTO tasks (id, title, done, created_at, updated_at, deleted) '
+      "VALUES ('t1', 'Old', 1, 1000, 1000, 0)",
+    );
+    final db = AppDatabase(schema.newConnection());
+    await verifier.migrateAndValidate(db, 5);
+    final row = await db.select(db.tasks).getSingle();
+    expect(row.done, isTrue);
+    expect(row.skipped, isFalse);
     await db.close();
   });
 }

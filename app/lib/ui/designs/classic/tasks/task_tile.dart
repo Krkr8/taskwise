@@ -7,6 +7,8 @@ import '../common/hover_surface.dart';
 import '../../../shared/theme/tokens.dart';
 import '../../../shared/tasks/labels.dart';
 import '../../../shared/tasks/task_actions.dart';
+import '../../../shared/tasks/subtask_tree.dart';
+import 'subtask_tree_style.dart';
 
 /// One task row in the list.
 class TaskTile extends ConsumerWidget {
@@ -97,11 +99,18 @@ class TaskTile extends ConsumerWidget {
         ),
       if (task.notes.trim().isNotEmpty)
         Icon(Icons.notes, size: 16, color: scheme.onSurfaceVariant),
+      if (task.skipped) const SkippedBadge(),
     ];
 
+    final expanded = ref.watch(expandedTasksProvider).contains(task.id);
     return HoverSurface(
       selected: selected,
-      onTap: onOpen,
+      onTap: () => handleTaskTap(
+        ref,
+        taskId: task.id,
+        hasSubtasks: entry.subtaskCount > 0,
+        openDetails: onOpen,
+      ),
       child: Padding(
         padding: const EdgeInsetsDirectional.fromSTEB(
           Spacing.xs,
@@ -109,53 +118,71 @@ class TaskTile extends ConsumerWidget {
           Spacing.md,
           Spacing.xs,
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            CompleteButton(task: task),
-            const SizedBox(width: Spacing.xs),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    AnimatedDefaultTextStyle(
-                      duration: Motion.of(context, Motion.medium),
-                      style: theme.textTheme.bodyLarge!.copyWith(
-                        color: task.done
-                            ? scheme.onSurfaceVariant
-                            : scheme.onSurface,
-                        decoration: task.done
-                            ? TextDecoration.lineThrough
-                            : TextDecoration.none,
-                      ),
-                      child: Text(
-                        task.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+            Row(
+              children: [
+                CompleteButton(task: task),
+                const SizedBox(width: Spacing.xs),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AnimatedDefaultTextStyle(
+                          duration: Motion.of(context, Motion.medium),
+                          style: theme.textTheme.bodyLarge!.copyWith(
+                            color: task.done
+                                ? scheme.onSurfaceVariant
+                                : scheme.onSurface,
+                            decoration: task.done
+                                ? TextDecoration.lineThrough
+                                : TextDecoration.none,
+                          ),
+                          child: Text(
+                            task.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (meta.isNotEmpty) ...[
+                          const SizedBox(height: Spacing.xs),
+                          Wrap(
+                            spacing: Spacing.md,
+                            runSpacing: Spacing.xs,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: meta,
+                          ),
+                        ],
+                      ],
                     ),
-                    if (meta.isNotEmpty) ...[
-                      const SizedBox(height: Spacing.xs),
-                      Wrap(
-                        spacing: Spacing.md,
-                        runSpacing: Spacing.xs,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: meta,
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
-              ),
+                if (flag != null)
+                  Padding(
+                    padding: const EdgeInsetsDirectional.only(
+                      start: Spacing.sm,
+                    ),
+                    child: Tooltip(
+                      message:
+                          '${l10n.priority}: ${l10n.priorityName(task.priority)}',
+                      child: Icon(Icons.flag, size: 20, color: flag),
+                    ),
+                  ),
+                if (showsDetailsArrow(ref, hasSubtasks: entry.subtaskCount > 0))
+                  IconButton(
+                    tooltip: l10n.openDetails,
+                    onPressed: onOpen,
+                    icon: const Icon(Icons.chevron_right),
+                  ),
+              ],
             ),
-            if (flag != null)
-              Padding(
-                padding: const EdgeInsetsDirectional.only(start: Spacing.sm),
-                child: Tooltip(
-                  message:
-                      '${l10n.priority}: ${l10n.priorityName(task.priority)}',
-                  child: Icon(Icons.flag, size: 20, color: flag),
-                ),
+            if (expanded)
+              SubtaskTree(
+                taskId: task.id,
+                style: classicSubtaskTreeStyle(context),
               ),
           ],
         ),
@@ -210,7 +237,13 @@ class _CompleteButtonState extends ConsumerState<CompleteButton> {
           scale: CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
           child: child,
         ),
-        child: done
+        child: widget.task.skipped && done
+            ? Icon(
+                Icons.redo,
+                key: const ValueKey('skipped'),
+                color: scheme.error.withValues(alpha: 0.7),
+              )
+            : done
             ? Icon(
                 Icons.check_circle,
                 key: const ValueKey(true),
@@ -221,6 +254,35 @@ class _CompleteButtonState extends ConsumerState<CompleteButton> {
                 key: const ValueKey(false),
                 color: color,
               ),
+      ),
+    );
+  }
+}
+
+/// The warm "Skipped" badge that tells a skipped task from a done one.
+class SkippedBadge extends StatelessWidget {
+  const SkippedBadge({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final style = Theme.of(context).textTheme.labelSmall
+        ?.copyWith(color: scheme.onErrorContainer);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: scheme.errorContainer.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(5),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.redo, size: 12, color: scheme.onErrorContainer),
+            const SizedBox(width: Spacing.xs),
+            Text(context.l10n.skippedLabel, style: style),
+          ],
+        ),
       ),
     );
   }

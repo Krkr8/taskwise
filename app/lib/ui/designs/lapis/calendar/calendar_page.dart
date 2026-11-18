@@ -3,8 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:taskwise_shared/taskwise_shared.dart';
 
+import '../../../../data/app_settings.dart';
 import '../../../../state/providers.dart';
 import '../../../shared/tasks/labels.dart';
+import '../../../shared/tasks/subtask_tree.dart';
+import '../../../shared/tasks/task_actions.dart';
+import '../tasks/subtask_tree_style.dart';
 import '../tasks/task_detail.dart';
 import '../tasks/task_tile.dart';
 import '../theme/tokens.dart';
@@ -370,6 +374,8 @@ class DayAgenda extends ConsumerWidget {
     final items =
         ref.watch(calendarItemsProvider((from: day, to: day))).value?[day] ??
         const <CalendarItem>[];
+    final subtaskCounts = ref.watch(subtaskCountsProvider);
+    final expandedIds = ref.watch(expandedTasksProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -414,34 +420,96 @@ class DayAgenda extends ConsumerWidget {
                   padding: const EdgeInsets.only(bottom: Spacing.xl),
                   children: [
                     for (final item in items)
-                      ListTile(
-                        leading: item.projected
-                            ? const Padding(
-                                padding: EdgeInsets.all(Spacing.sm),
-                                child: Icon(Icons.repeat),
-                              )
-                            : CompleteButton(task: item.task),
-                        title: Text(
-                          item.task.title,
-                          style: item.task.done
-                              ? const TextStyle(
-                                  decoration: TextDecoration.lineThrough,
-                                )
-                              : null,
-                        ),
-                        subtitle: Text(
-                          [
-                            item.timeMinutes == null
-                                ? l10n.allDay
-                                : l10n.clockTime(item.timeMinutes!, timeFormat),
-                            if (item.projected) l10n.repeatingTask,
-                          ].join(' · '),
-                        ),
-                        onTap: () => onOpen(item.task.id),
+                      _AgendaRow(
+                        item: item,
+                        subtitle: [
+                          item.timeMinutes == null
+                              ? l10n.allDay
+                              : l10n.clockTime(item.timeMinutes!, timeFormat),
+                          if (item.projected) l10n.repeatingTask,
+                        ].join(' · '),
+                        // Projected repeats never unfold.
+                        hasSubtasks:
+                            !item.projected &&
+                            (subtaskCounts[item.task.id] ?? 0) > 0,
+                        expanded: expandedIds.contains(item.task.id),
+                        onOpen: () => onOpen(item.task.id),
                       ),
                   ],
                 ),
         ),
+      ],
+    );
+  }
+}
+
+/// One task in the day agenda; a task with subtasks unfolds them under it.
+class _AgendaRow extends ConsumerWidget {
+  const _AgendaRow({
+    required this.item,
+    required this.subtitle,
+    required this.hasSubtasks,
+    required this.expanded,
+    required this.onOpen,
+  });
+
+  final CalendarItem item;
+  final String subtitle;
+  final bool hasSubtasks;
+  final bool expanded;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final task = item.task;
+    final skipped = task.done && task.skipped;
+    final arrow = showsDetailsArrow(ref, hasSubtasks: hasSubtasks);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ListTile(
+          leading: item.projected
+              ? const Padding(
+                  padding: EdgeInsets.all(Spacing.sm),
+                  child: Icon(Icons.repeat),
+                )
+              : CompleteButton(task: task),
+          title: Text(
+            task.title,
+            style: task.done
+                ? const TextStyle(decoration: TextDecoration.lineThrough)
+                : null,
+          ),
+          subtitle: skipped
+              ? Wrap(
+                  spacing: Spacing.sm,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [Text(subtitle), const SkippedBadge()],
+                )
+              : Text(subtitle),
+          trailing: arrow
+              ? DetailsArrowButton(onPressed: onOpen)
+              : hasSubtasks &&
+                    ref.watch(appSettingsProvider).taskTapAction !=
+                        TaskTapAction.detailsOnly
+              ? FoldChevron(expanded: expanded)
+              : null,
+          onTap: () => handleTaskTap(
+            ref,
+            taskId: task.id,
+            hasSubtasks: hasSubtasks,
+            openDetails: onOpen,
+          ),
+        ),
+        if (expanded && hasSubtasks)
+          Padding(
+            padding: const EdgeInsetsDirectional.only(end: Spacing.lg),
+            // The line runs down the middle of the check ring above.
+            child: SubtaskTree(
+              taskId: task.id,
+              style: lapisSubtaskTreeStyle(context, lineInset: 40),
+            ),
+          ),
       ],
     );
   }

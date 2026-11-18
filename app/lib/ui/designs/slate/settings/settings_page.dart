@@ -130,6 +130,31 @@ class SettingsPage extends ConsumerWidget {
                 onSelectionChanged: (s) => repo.setTimeFormat(s.single),
               ),
             ),
+            _Section(l10n.settingsTasks),
+            _Setting(
+              label: l10n.taskTapAction,
+              // Stacked: the three labels are too long side by side.
+              child: SegmentedButton<TaskTapAction>(
+                direction: Axis.vertical,
+                showSelectedIcon: false,
+                segments: [
+                  ButtonSegment(
+                    value: TaskTapAction.detailsAndSubtasks,
+                    label: Text(l10n.taskTapDetailsAndSubtasks),
+                  ),
+                  ButtonSegment(
+                    value: TaskTapAction.subtasksOnly,
+                    label: Text(l10n.taskTapSubtasksOnly),
+                  ),
+                  ButtonSegment(
+                    value: TaskTapAction.detailsOnly,
+                    label: Text(l10n.taskTapDetailsOnly),
+                  ),
+                ],
+                selected: {settings.taskTapAction},
+                onSelectionChanged: (s) => repo.setTaskTapAction(s.single),
+              ),
+            ),
             _Section(l10n.settingsNotifications),
             _Setting(
               label: l10n.defaultReminder,

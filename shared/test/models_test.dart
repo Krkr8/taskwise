@@ -25,6 +25,7 @@ void main() {
           priority: Priority.high,
           categoryId: 'cat-1',
           done: true,
+          skipped: true,
           completedAt: _t1,
           recurrenceRule: 'FREQ=WEEKLY',
           notifyAllDevices: false,
@@ -48,6 +49,18 @@ void main() {
       roundTrip(task, (v) => v.toJson(), Task.fromJson);
       expect(task.notifyAllDevices, isTrue);
       expect(task.priority, Priority.none);
+    });
+
+    test('Task.skipped: always written, false when missing', () {
+      final task = Task(id: 't', title: 'T', createdAt: _t0, updatedAt: _t0);
+      expect(task.skipped, isFalse);
+      expect(task.toJson()['skipped'], isFalse);
+      // A record from a 1.1.0 device has no "skipped" key.
+      final old = task.toJson()..remove('skipped');
+      expect(Task.fromJson(old).skipped, isFalse);
+      final skipped = task.copyWith(done: true, skipped: true);
+      expect(Task.fromJson(skipped.toJson()).skipped, isTrue);
+      expect(skipped == task.copyWith(done: true), isFalse);
     });
 
     test('Subtask, Category, Tag, TaskTag', () {

@@ -1,0 +1,1847 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Taskwise Slate &amp; Royal Indigo · M13 Specification</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Typography & Base */
+      --font-family: 'Noto Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+      /* Slate & Royal Indigo - Light Theme */
+      --scaffold-light: #F8FAFC;
+      --surface-light: #FFFFFF;
+      --surface-container-low-light: #F8FAFC;
+      --surface-container-light: #F1F5F9;
+      --surface-container-high-light: #E2E8F0;
+      --surface-container-highest-light: #CBD5E1;
+      --primary-light: #4F46E5;
+      --primary-hover-light: #4338CA;
+      --primary-container-light: #EEF2FF;
+      --on-primary-container-light: #312E81;
+      --secondary-light: #0284C7;
+      --secondary-container-light: #E0F2FE;
+      --on-surface-light: #0F172A;
+      --on-surface-variant-light: #64748B;
+      --outline-light: #94A3B8;
+      --outline-variant-light: #E2E8F0;
+      --error-light: #DC2626;
+      --error-container-light: #FEE2E2;
+      --on-error-container-light: #991B1B;
+      --success-light: #10B981;
+      --amber-light: #D97706;
+      --amber-container-light: #FEF3C7;
+      --amber-text-light: #B45309;
+
+      /* Tree line colors */
+      --tree-line-light: #C7D2FE;
+      --tree-line-dark: #39446D;
+
+      /* Slate & Royal Indigo - Dark Theme */
+      --scaffold-dark: #0A0E17;
+      --surface-dark: #111827;
+      --surface-container-low-dark: #0E1524;
+      --surface-container-dark: #162032;
+      --surface-container-high-dark: #1E293B;
+      --surface-container-highest-dark: #283548;
+      --primary-dark: #818CF8;
+      --primary-container-dark: #312E81;
+      --on-primary-container-dark: #E0E7FF;
+      --secondary-dark: #38BDF8;
+      --on-surface-dark: #F8FAFC;
+      --on-surface-variant-dark: #94A3B8;
+      --outline-dark: #64748B;
+      --outline-variant-dark: #1E293B;
+      --error-dark: #F87171;
+      --error-container-dark: #7F1D1D;
+      --amber-dark: #FBBF24;
+      --amber-container-dark: #452B0E;
+
+      /* Geometry tokens */
+      --radius-xs: 4px;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 20px;
+      --radius-full: 999px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background: #0B101B;
+      color: #E2E8F0;
+      line-height: 1.4;
+      padding: 32px 24px 64px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 1320px;
+      margin: 0 auto;
+    }
+
+    /* Page Header */
+    .header {
+      margin-bottom: 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-bottom: 1px solid #1E293B;
+      padding-bottom: 20px;
+    }
+    .header-titles h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      color: #F8FAFC;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header-titles h1 .brand-badge {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: linear-gradient(135deg, #4F46E5, #6366F1);
+      color: #FFFFFF;
+      padding: 4px 9px;
+      border-radius: var(--radius-full);
+      font-weight: 600;
+    }
+    .header-titles p {
+      font-size: 14px;
+      color: #94A3B8;
+      margin-top: 4px;
+    }
+    .header-meta {
+      font-size: 12px;
+      color: #64748B;
+      text-align: right;
+    }
+
+    /* Layout Grid */
+    .spec-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 32px;
+      align-items: start;
+    }
+    .spec-card {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .spec-card.span-2 {
+      grid-column: span 2;
+    }
+    .spec-card.span-full {
+      grid-column: 1 / -1;
+    }
+    .spec-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #818CF8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .spec-label::before {
+      content: '';
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #818CF8;
+    }
+
+    /* Common Components & SVGs */
+    .icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* Phone Mockup Frame */
+    .phone-frame {
+      width: 100%;
+      max-width: 392px;
+      margin: 0 auto;
+      min-height: 720px;
+      background: var(--scaffold-light);
+      color: var(--on-surface-light);
+      border: 8px solid #1E293B;
+      border-radius: 36px;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .phone-frame.compact {
+      min-height: 480px;
+    }
+    .phone-status {
+      height: 32px;
+      padding: 6px 20px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--on-surface-light);
+      background: transparent;
+      z-index: 10;
+    }
+
+    /* Phone Header & Progress */
+    .app-header {
+      padding: 8px 18px 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .app-header h2 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: var(--on-surface-light);
+    }
+    .app-header .header-date {
+      font-size: 12px;
+      color: var(--on-surface-variant-light);
+      font-weight: 500;
+      margin-top: 2px;
+    }
+    .sync-pill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--primary-light);
+      background: var(--primary-container-light);
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      font-weight: 600;
+    }
+
+    /* Daily Progress Card */
+    .progress-card {
+      margin: 6px 18px 10px;
+      padding: 10px 14px;
+      background: var(--surface-light);
+      border: 1px solid var(--outline-variant-light);
+      border-radius: var(--radius-md);
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    }
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .progress-meta .summary {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--primary-light);
+    }
+    .progress-meta .percentage {
+      color: var(--on-surface-variant-light);
+    }
+    .progress-bar-track {
+      height: 5px;
+      background: var(--surface-container-highest-light);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--primary-light);
+      border-radius: var(--radius-full);
+    }
+
+    /* Quick Add Bar */
+    .quick-add {
+      margin: 0 18px 12px;
+      background: var(--surface-light);
+      border: 1px solid var(--outline-variant-light);
+      border-radius: var(--radius-md);
+      padding: 9px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+    }
+    .quick-add-input {
+      flex: 1;
+      font-size: 13px;
+      color: var(--on-surface-variant-light);
+    }
+    .quick-add-submit {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--primary-container-light);
+      color: var(--primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Task Groups & Lists */
+    .task-scroll-area {
+      flex: 1;
+      padding: 0 14px 60px;
+      overflow-y: auto;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 4px 6px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: -0.1px;
+      cursor: pointer;
+    }
+    .section-header.overdue {
+      color: var(--error-light);
+    }
+    .section-header.today {
+      color: var(--primary-light);
+    }
+    .section-header.completed {
+      color: var(--on-surface-light);
+    }
+    .count-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: var(--radius-full);
+    }
+    .count-badge.overdue {
+      background: var(--error-container-light);
+      color: var(--on-error-container-light);
+    }
+    .count-badge.today {
+      background: var(--primary-container-light);
+      color: var(--on-primary-container-light);
+    }
+    .count-badge.completed {
+      background: var(--surface-container-highest-light);
+      color: var(--on-surface-variant-light);
+    }
+
+    /* Task Tile */
+    .task-tile {
+      background: var(--surface-light);
+      border-radius: var(--radius-md);
+      padding: 10px 10px 10px 8px;
+      margin: 3px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      border: 1px solid transparent;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+      transition: all 0.15s ease;
+      position: relative;
+    }
+    .task-tile.selected {
+      background: var(--surface-light);
+      border-color: #C7D2FE;
+      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.08);
+    }
+    .task-tile:hover {
+      border-color: var(--outline-variant-light);
+    }
+
+    /* Checkbox - Tactile Circular (Slate Signature) */
+    .task-checkbox {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1.8px solid var(--outline-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+      transition: all 0.15s ease;
+      background: var(--surface-light);
+    }
+    .task-checkbox.done {
+      background: var(--primary-light);
+      border-color: var(--primary-light);
+      color: #FFFFFF;
+      box-shadow: 0 2px 5px rgba(79, 70, 229, 0.3);
+    }
+    .task-checkbox.skipped {
+      background: var(--amber-container-light);
+      border-color: var(--amber-light);
+      color: var(--amber-text-light);
+    }
+
+    /* Task Content */
+    .task-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .task-title {
+      font-size: 14.5px;
+      font-weight: 500;
+      color: var(--on-surface-light);
+      line-height: 1.35;
+    }
+    .task-title.done {
+      color: var(--on-surface-variant-light);
+      text-decoration: line-through;
+      opacity: 0.75;
+    }
+    .task-title.skipped {
+      color: var(--on-surface-variant-light);
+      text-decoration: line-through;
+      text-decoration-style: dashed;
+      opacity: 0.8;
+    }
+
+    /* Task Meta Row */
+    .task-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+      font-size: 11.5px;
+      color: var(--on-surface-variant-light);
+    }
+    .meta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3.5px;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+    .meta-badge.overdue {
+      background: var(--error-container-light);
+      color: var(--error-light);
+    }
+    .meta-badge.today {
+      background: var(--primary-container-light);
+      color: var(--primary-light);
+    }
+    .meta-badge.neutral {
+      background: var(--surface-container-highest-light);
+      color: var(--on-surface-variant-light);
+    }
+    .meta-badge.skipped {
+      background: var(--amber-container-light);
+      color: var(--amber-text-light);
+      font-weight: 700;
+    }
+    .meta-badge.done {
+      background: var(--primary-container-light);
+      color: var(--primary-light);
+      font-weight: 700;
+    }
+
+    .meta-category {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 500;
+    }
+    .category-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .meta-subtask-chip {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      color: var(--on-surface-variant-light);
+    }
+
+    .priority-flag {
+      padding: 3px 4px;
+      border-radius: var(--radius-xs);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .priority-flag.high {
+      background: #FEF2F2;
+      color: #DC2626;
+    }
+
+    /* Subtasks Tree Structure */
+    .subtask-tree-wrapper {
+      margin-left: 19px;
+      padding-left: 16px;
+      border-left: 2px solid var(--tree-line-light);
+      position: relative;
+      margin-top: 1px;
+      margin-bottom: 6px;
+    }
+    .subtask-row {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 8px;
+      margin: 3px 0;
+      background: var(--surface-light);
+      border: 1px solid var(--outline-variant-light);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+    }
+    .subtask-row::before {
+      content: '';
+      position: absolute;
+      left: -18px;
+      top: 50%;
+      width: 14px;
+      border-top: 2px solid var(--tree-line-light);
+    }
+    .subtask-checkbox {
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      border: 1.6px solid var(--outline-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: var(--surface-light);
+    }
+    .subtask-checkbox.done {
+      background: var(--primary-light);
+      border-color: var(--primary-light);
+      color: #FFFFFF;
+    }
+    .subtask-title {
+      flex: 1;
+      color: var(--on-surface-light);
+      font-size: 13px;
+    }
+    .subtask-title.done {
+      color: var(--on-surface-variant-light);
+      text-decoration: line-through;
+    }
+
+    /* Chevron & Details Arrow */
+    .chevron-toggle {
+      color: var(--on-surface-variant-light);
+      padding: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s ease;
+    }
+    .chevron-toggle.unfolded {
+      transform: rotate(180deg);
+      color: var(--primary-light);
+    }
+
+    .details-action-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--primary-light);
+      background: var(--primary-container-light);
+      border: 1px solid #C7D2FE;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      margin-left: auto;
+    }
+
+    /* Undo SnackBar (Floating Slate) */
+    .undo-snackbar {
+      position: absolute;
+      bottom: 64px;
+      left: 14px;
+      right: 14px;
+      background: #0F172A;
+      color: #FFFFFF;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12.5px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+      border: 1px solid #1E293B;
+      z-index: 20;
+    }
+    .undo-snackbar .undo-action {
+      color: #818CF8;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+    }
+
+    /* Phone Bottom Navigation */
+    .phone-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: var(--surface-light);
+      border-top: 1px solid var(--outline-variant-light);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 10;
+    }
+    .phone-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      font-size: 11px;
+      color: var(--on-surface-variant-light);
+      font-weight: 500;
+    }
+    .phone-nav-item.active {
+      color: var(--primary-light);
+      font-weight: 600;
+    }
+    .phone-nav-item.active .nav-icon-pill {
+      background: var(--primary-container-light);
+      padding: 2px 14px;
+      border-radius: var(--radius-full);
+    }
+
+    /* Desktop Dark Studio Window */
+    .desktop-window {
+      background: var(--scaffold-dark);
+      color: var(--on-surface-dark);
+      border: 1px solid var(--outline-variant-dark);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+      min-height: 680px;
+      display: grid;
+      grid-template-columns: 200px 1fr 390px;
+      overflow: hidden;
+    }
+
+    /* Desktop Sidebar */
+    .desktop-sidebar {
+      background: var(--surface-dark);
+      border-right: 1px solid var(--outline-variant-dark);
+      padding: 18px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .desktop-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 10px 18px;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--on-surface-dark);
+    }
+    .desktop-brand .brand-glyph {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, #4F46E5, #818CF8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFFFFF;
+      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+    }
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--on-surface-variant-dark);
+      cursor: pointer;
+    }
+    .sidebar-item.active {
+      background: var(--primary-container-dark);
+      color: var(--on-primary-container-dark);
+      font-weight: 600;
+    }
+    .sidebar-sync-card {
+      margin-top: auto;
+      padding: 10px;
+      border-radius: var(--radius-md);
+      background: var(--surface-container-low-dark);
+      border: 1px solid var(--outline-variant-dark);
+      font-size: 11px;
+      color: var(--on-surface-variant-dark);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sync-status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10B981;
+    }
+
+    /* Desktop Task List Pane */
+    .desktop-list-pane {
+      padding: 20px 24px;
+      overflow-y: auto;
+      background: var(--scaffold-dark);
+    }
+    .desktop-pane-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .desktop-pane-head h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--on-surface-dark);
+    }
+    .desktop-window .task-tile {
+      background: var(--surface-dark);
+      border: 1px solid var(--outline-variant-dark);
+      color: var(--on-surface-dark);
+    }
+    .desktop-window .task-tile.selected {
+      background: var(--surface-container-high-dark);
+      border-color: #4F46E5;
+      box-shadow: 0 0 0 1px #4F46E5;
+    }
+    .desktop-window .task-title {
+      color: var(--on-surface-dark);
+    }
+    .desktop-window .task-checkbox {
+      background: var(--surface-dark);
+      border-color: var(--outline-dark);
+    }
+    .desktop-window .task-checkbox.done {
+      background: var(--primary-dark);
+      border-color: var(--primary-dark);
+      color: #0F172A;
+    }
+    .desktop-window .subtask-tree-wrapper {
+      border-left-color: var(--tree-line-dark);
+    }
+    .desktop-window .subtask-row {
+      background: var(--surface-dark);
+      border-color: var(--outline-variant-dark);
+    }
+    .desktop-window .subtask-row::before {
+      border-top-color: var(--tree-line-dark);
+    }
+    .desktop-window .subtask-title {
+      color: var(--on-surface-dark);
+    }
+    .desktop-window .subtask-title.done {
+      color: var(--on-surface-variant-dark);
+    }
+    .desktop-window .subtask-checkbox {
+      background: var(--surface-dark);
+      border-color: var(--outline-dark);
+    }
+    .desktop-window .subtask-checkbox.done {
+      background: var(--primary-dark);
+      border-color: var(--primary-dark);
+      color: #0F172A;
+    }
+
+    /* Desktop Task Details Side Panel */
+    .desktop-details-pane {
+      background: var(--surface-dark);
+      border-left: 1px solid var(--outline-variant-dark);
+      display: flex;
+      flex-direction: column;
+    }
+    .details-appbar {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--outline-variant-dark);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .details-appbar .close-btn {
+      color: var(--on-surface-variant-dark);
+      cursor: pointer;
+    }
+    .details-appbar .appbar-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Primary & Skip Buttons in Details Header */
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-action.done {
+      background: var(--primary-container-dark);
+      color: var(--on-primary-container-dark);
+      border-color: #4F46E5;
+    }
+    .btn-action.skip {
+      background: var(--amber-container-dark);
+      color: var(--amber-dark);
+      border-color: #D97706;
+    }
+    .btn-action.skip:hover {
+      background: #5A3814;
+    }
+    .btn-icon-only {
+      padding: 6px;
+      border-radius: var(--radius-sm);
+      color: var(--error-dark);
+      background: transparent;
+      border: 1px solid transparent;
+      cursor: pointer;
+    }
+
+    .details-scroll-body {
+      padding: 20px 20px 32px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .details-title-input {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--on-surface-dark);
+      line-height: 1.3;
+      margin-bottom: 2px;
+    }
+    .details-card {
+      background: var(--surface-container-dark);
+      border: 1px solid var(--outline-variant-dark);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+    }
+    .details-card-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--primary-dark);
+      margin-bottom: 8px;
+    }
+    .details-row-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 0;
+      font-size: 13px;
+    }
+    .details-row-item .val {
+      font-weight: 600;
+      color: var(--on-surface-dark);
+    }
+    .details-row-item .lbl {
+      color: var(--on-surface-variant-dark);
+    }
+    .skip-callout {
+      background: var(--amber-container-dark);
+      border: 1px solid #78350F;
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      font-size: 11.5px;
+      color: #FDE68A;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      line-height: 1.35;
+    }
+
+    /* Calendar Spec Card */
+    .calendar-mockup {
+      background: var(--surface-light);
+      border: 1px solid var(--outline-variant-light);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      color: var(--on-surface-light);
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+    }
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .calendar-header h3 {
+      font-size: 17px;
+      font-weight: 700;
+    }
+    .calendar-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pill-btn {
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      background: var(--primary-container-light);
+      color: var(--primary-light);
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      text-align: center;
+      font-size: 12px;
+      margin-bottom: 16px;
+    }
+    .cal-grid .weekday {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--on-surface-variant-light);
+      padding-bottom: 4px;
+    }
+    .cal-cell {
+      height: 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      cursor: pointer;
+      position: relative;
+    }
+    .cal-cell.today {
+      background: var(--primary-light);
+      color: #FFFFFF;
+      font-weight: 700;
+    }
+    .cal-cell .dot-row {
+      display: flex;
+      gap: 2px;
+      position: absolute;
+      bottom: 2px;
+    }
+    .cal-cell .dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #FFFFFF;
+    }
+    .day-agenda-pane {
+      border-top: 1px solid var(--outline-variant-light);
+      padding-top: 14px;
+    }
+    .day-agenda-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--primary-light);
+    }
+
+    /* Settings Spec Card */
+    .settings-mockup {
+      background: var(--surface-light);
+      border: 1px solid var(--outline-variant-light);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      color: var(--on-surface-light);
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+    }
+    .settings-head {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      letter-spacing: -0.2px;
+    }
+    .settings-section-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--primary-light);
+      margin-bottom: 10px;
+    }
+    .settings-card-item {
+      background: var(--surface-container-low-light);
+      border: 1px solid var(--outline-variant-light);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+    }
+    .settings-title {
+      font-size: 14.5px;
+      font-weight: 600;
+      color: var(--on-surface-light);
+      margin-bottom: 2px;
+    }
+    .settings-subtitle {
+      font-size: 12px;
+      color: var(--on-surface-variant-light);
+      margin-bottom: 12px;
+    }
+    .segmented-button {
+      display: flex;
+      border: 1px solid var(--outline-variant-light);
+      border-radius: var(--radius-md);
+      background: var(--surface-light);
+      overflow: hidden;
+    }
+    .segmented-option {
+      flex: 1;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      text-align: center;
+      color: var(--on-surface-light);
+      border-right: 1px solid var(--outline-variant-light);
+      cursor: pointer;
+      line-height: 1.25;
+    }
+    .segmented-option:last-child {
+      border-right: none;
+    }
+    .segmented-option.selected {
+      background: var(--primary-light);
+      color: #FFFFFF;
+      font-weight: 600;
+    }
+
+    /* Completed Group Mockup */
+    .completed-mockup {
+      background: var(--surface-light);
+      border: 1px solid var(--outline-variant-light);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      color: var(--on-surface-light);
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+    }
+
+    /* Build Notes Section (Strict max 15 lines) */
+    .build-notes-card {
+      background: #0E1524;
+      border: 1px solid #1E293B;
+      border-radius: var(--radius-lg);
+      padding: 24px 28px;
+      color: #CBD5E1;
+      margin-top: 12px;
+    }
+    .build-notes-card h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #F8FAFC;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .build-notes-list {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      font-size: 12.5px;
+      line-height: 1.5;
+    }
+    .build-notes-list li {
+      position: relative;
+      padding-left: 18px;
+    }
+    .build-notes-list li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: #818CF8;
+      font-weight: 700;
+    }
+    .build-notes-list code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11.5px;
+      background: #162032;
+      color: #A5B4FC;
+      padding: 1px 5px;
+      border-radius: 4px;
+      border: 1px solid #1E293B;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .spec-card.span-2 {
+        grid-column: span 1;
+      }
+      .desktop-window {
+        grid-template-columns: 1fr;
+      }
+      .desktop-sidebar, .desktop-details-pane {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-titles">
+      <h1>
+        Slate &amp; Royal Indigo
+        <span class="brand-badge">M13 Specification</span>
+      </h1>
+      <p>Precision-crafted tactile studio aesthetic for subtasks unfolding, skip action, and missed repeats</p>
+    </div>
+    <div class="header-meta">
+      Taskwise UI System · Theme Tokens &amp; Interaction States
+    </div>
+  </header>
+
+  <div class="spec-grid">
+
+    <!-- 1. Phone, light: task list with Overdue + Today, unfolded/folded, missed-repeat pair, and Undo bar -->
+    <section class="spec-card">
+      <div class="spec-label">Phone, light · Task list, unfolded subtasks &amp; skip undo</div>
+      <div class="phone-frame">
+        <div class="phone-status">
+          <span>9:41</span>
+          <span style="display:flex;gap:4px;align-items:center;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 18.5a1 1 0 0 0 1.41 1.41l.89-.89C8.16 20.17 9.99 21 12 21c4.97 0 9-4.03 9-9s-4.03-9-9-9z"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="7" width="18" height="11" rx="2" ry="2"/><line x1="22" y1="11" x2="22" y2="14"/></svg>
+          </span>
+        </div>
+
+        <div class="app-header">
+          <div>
+            <h2>Tasks</h2>
+            <div class="header-date">Tuesday, November 18</div>
+          </div>
+          <div class="sync-pill">
+            <span class="sync-status-dot"></span> Synced
+          </div>
+        </div>
+
+        <!-- Today Progress Card -->
+        <div class="progress-card">
+          <div class="progress-meta">
+            <span class="summary">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
+              3 of 5 completed
+            </span>
+            <span class="percentage">60%</span>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" style="width: 60%;"></div>
+          </div>
+        </div>
+
+        <!-- Quick Add Bar -->
+        <div class="quick-add">
+          <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          <span class="quick-add-input">Add a task...</span>
+          <div class="quick-add-submit">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+          </div>
+        </div>
+
+        <!-- Scrollable Task List -->
+        <div class="task-scroll-area">
+
+          <!-- Overdue Group -->
+          <div class="section-header overdue">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            <span>Overdue</span>
+            <span class="count-badge overdue">1</span>
+          </div>
+
+          <!-- Missed repeat task in Overdue (Pair 1 of 2) -->
+          <div class="task-tile">
+            <div class="task-checkbox"></div>
+            <div class="task-body">
+              <div class="task-title">Submit weekly metrics report</div>
+              <div class="task-meta">
+                <span class="meta-badge overdue">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  Yesterday
+                </span>
+                <span class="meta-subtask-chip" title="Repeating task">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>
+                  Weekly
+                </span>
+              </div>
+            </div>
+            <div class="priority-flag high">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M4 2v20M4 4h12l-2 5 2 5H4"/></svg>
+            </div>
+          </div>
+
+          <!-- Today Group -->
+          <div class="section-header today">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            <span>Today</span>
+            <span class="count-badge today">3</span>
+          </div>
+
+          <!-- Missed repeat task in Today (Pair 2 of 2) -->
+          <div class="task-tile">
+            <div class="task-checkbox"></div>
+            <div class="task-body">
+              <div class="task-title">Submit weekly metrics report</div>
+              <div class="task-meta">
+                <span class="meta-badge today">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  Today · 10:00 AM
+                </span>
+                <span class="meta-subtask-chip">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>
+                  Weekly
+                </span>
+              </div>
+            </div>
+            <div class="priority-flag high">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M4 2v20M4 4h12l-2 5 2 5H4"/></svg>
+            </div>
+          </div>
+
+          <!-- Unfolded Task with 3 subtasks (1 done) -->
+          <div class="task-tile selected">
+            <div class="task-checkbox"></div>
+            <div class="task-body">
+              <div class="task-title">Launch Q4 marketing campaign</div>
+              <div class="task-meta">
+                <span class="meta-badge today">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  Today · 2:30 PM
+                </span>
+                <span class="meta-category">
+                  <span class="category-dot" style="background:#4F46E5;"></span>
+                  Marketing
+                </span>
+                <span class="meta-subtask-chip">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 6h9M11 12h9M11 18h9M4 6l1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17"/></svg>
+                  1/3
+                </span>
+              </div>
+            </div>
+            <div class="chevron-toggle unfolded">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+
+          <!-- Unfolded Subtasks Tree -->
+          <div class="subtask-tree-wrapper">
+            <div class="subtask-row">
+              <div class="subtask-checkbox done">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <span class="subtask-title done">Finalize ad creative copy</span>
+            </div>
+            <div class="subtask-row">
+              <div class="subtask-checkbox"></div>
+              <span class="subtask-title">Confirm budget allocation</span>
+            </div>
+            <div class="subtask-row">
+              <div class="subtask-checkbox"></div>
+              <span class="subtask-title">Configure tracking analytics</span>
+            </div>
+          </div>
+
+          <!-- Folded Task with "2/5" chip -->
+          <div class="task-tile">
+            <div class="task-checkbox"></div>
+            <div class="task-body">
+              <div class="task-title">Client onboarding review</div>
+              <div class="task-meta">
+                <span class="meta-badge today">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  Today · 5:00 PM
+                </span>
+                <span class="meta-category">
+                  <span class="category-dot" style="background:#E11D48;"></span>
+                  Clients
+                </span>
+                <span class="meta-subtask-chip">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 6h9M11 12h9M11 18h9M4 6l1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17"/></svg>
+                  2/5
+                </span>
+              </div>
+            </div>
+            <div class="chevron-toggle">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Floating Undo Snackbar after a Skip -->
+        <div class="undo-snackbar">
+          <span>Skipped &ldquo;Audit vendor invoices&rdquo;</span>
+          <span class="undo-action">Undo</span>
+        </div>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="phone-nav">
+          <div class="phone-nav-item active">
+            <div class="nav-icon-pill">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </div>
+            <span>Tasks</span>
+          </div>
+          <div class="phone-nav-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>Calendar</span>
+          </div>
+          <div class="phone-nav-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+            <span>Settings</span>
+          </div>
+        </nav>
+      </div>
+    </section>
+
+    <!-- 2. Phone, light: "Show subtasks only" mode row with details arrow -->
+    <section class="spec-card">
+      <div class="spec-label">Phone, light · &ldquo;Show subtasks only&rdquo; mode with details arrow</div>
+      <div class="phone-frame compact">
+        <div class="phone-status">
+          <span>9:41</span>
+          <span style="display:flex;gap:4px;align-items:center;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 18.5a1 1 0 0 0 1.41 1.41l.89-.89C8.16 20.17 9.99 21 12 21c4.97 0 9-4.03 9-9s-4.03-9-9-9z"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="7" width="18" height="11" rx="2" ry="2"/><line x1="22" y1="11" x2="22" y2="14"/></svg>
+          </span>
+        </div>
+
+        <div class="app-header">
+          <div>
+            <h2>Tasks</h2>
+            <div class="header-date">Subtasks-only mode preview</div>
+          </div>
+        </div>
+
+        <div class="task-scroll-area">
+          <div style="font-size:11.5px;color:var(--on-surface-variant-light);background:var(--surface-container-light);padding:8px 12px;border-radius:var(--radius-sm);margin-bottom:12px;border:1px solid var(--outline-variant-light);">
+            Tap row toggles subtasks inline · Trailing arrow opens full task details
+          </div>
+
+          <div class="section-header today">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            <span>Today</span>
+            <span class="count-badge today">2</span>
+          </div>
+
+          <!-- Unfolded Row in Subtasks-Only mode -->
+          <div class="task-tile selected">
+            <div class="task-checkbox"></div>
+            <div class="task-body">
+              <div class="task-title">Sprint retrospective &amp; planning</div>
+              <div class="task-meta">
+                <span class="meta-badge today">Today · 3:00 PM</span>
+                <span class="meta-subtask-chip">2/4</span>
+              </div>
+            </div>
+            <!-- Dedicated Details Button -->
+            <button class="details-action-btn" title="Open task details">
+              <span>Details</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+
+          <!-- Tree below unfolded row -->
+          <div class="subtask-tree-wrapper">
+            <div class="subtask-row">
+              <div class="subtask-checkbox done">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <span class="subtask-title done">Gather asynchronous feedback</span>
+            </div>
+            <div class="subtask-row">
+              <div class="subtask-checkbox done">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <span class="subtask-title done">Group team insights by theme</span>
+            </div>
+            <div class="subtask-row">
+              <div class="subtask-checkbox"></div>
+              <span class="subtask-title">Vote on action items</span>
+            </div>
+            <div class="subtask-row">
+              <div class="subtask-checkbox"></div>
+              <span class="subtask-title">Assign owners for next sprint</span>
+            </div>
+          </div>
+
+          <!-- Folded Row with Details Arrow -->
+          <div class="task-tile">
+            <div class="task-checkbox"></div>
+            <div class="task-body">
+              <div class="task-title">Review quarterly budget forecast</div>
+              <div class="task-meta">
+                <span class="meta-badge neutral">Tomorrow</span>
+                <span class="meta-subtask-chip">1/3</span>
+              </div>
+            </div>
+            <button class="details-action-btn" title="Open task details">
+              <span>Details</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+
+        </div>
+
+        <nav class="phone-nav">
+          <div class="phone-nav-item active">
+            <div class="nav-icon-pill">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            </div>
+            <span>Tasks</span>
+          </div>
+          <div class="phone-nav-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>Calendar</span>
+          </div>
+          <div class="phone-nav-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+            <span>Settings</span>
+          </div>
+        </nav>
+      </div>
+    </section>
+
+    <!-- 3. Desktop, dark: list + details side panel showing the Skip action -->
+    <section class="spec-card span-full">
+      <div class="spec-label">Desktop, dark · List + details side panel showing the Skip action</div>
+      <div class="desktop-window">
+
+        <!-- Navigation Rail / Sidebar -->
+        <aside class="desktop-sidebar">
+          <div class="desktop-brand">
+            <div class="brand-glyph">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <span>Taskwise</span>
+          </div>
+          <div class="sidebar-item active">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <span>Tasks</span>
+          </div>
+          <div class="sidebar-item">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>Calendar</span>
+          </div>
+          <div class="sidebar-item">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+            <span>Settings</span>
+          </div>
+          <div class="sidebar-sync-card">
+            <span class="sync-status-dot"></span>
+            <span>Connected · Fast Sync</span>
+          </div>
+        </aside>
+
+        <!-- Center Task List Pane -->
+        <main class="desktop-list-pane">
+          <div class="desktop-pane-head">
+            <div>
+              <h2>Tasks</h2>
+              <span style="font-size:12px;color:var(--on-surface-variant-dark);">Tuesday, November 18 · Desktop Studio</span>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <span style="font-size:12px;background:var(--surface-dark);border:1px solid var(--outline-variant-dark);padding:6px 12px;border-radius:var(--radius-sm);color:var(--on-surface-variant-dark);">
+                Search (Ctrl+F)
+              </span>
+            </div>
+          </div>
+
+          <!-- Overdue Group -->
+          <div class="section-header overdue">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            <span>Overdue</span>
+            <span class="count-badge overdue">1</span>
+          </div>
+          <div class="task-tile">
+            <div class="task-checkbox"></div>
+            <div class="task-body">
+              <div class="task-title">Submit weekly metrics report</div>
+              <div class="task-meta">
+                <span class="meta-badge overdue">Yesterday</span>
+                <span class="meta-subtask-chip">Weekly</span>
+              </div>
+            </div>
+            <div class="priority-flag high">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M4 2v20M4 4h12l-2 5 2 5H4"/></svg>
+            </div>
+          </div>
+
+          <!-- Today Group -->
+          <div class="section-header today" style="margin-top:14px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            <span>Today</span>
+            <span class="count-badge today">3</span>
+          </div>
+
+          <!-- Selected Task with Unfolded Tree -->
+          <div class="task-tile selected">
+            <div class="task-checkbox"></div>
+            <div class="task-body">
+              <div class="task-title">Launch Q4 marketing campaign</div>
+              <div class="task-meta">
+                <span class="meta-badge today">Today · 2:30 PM</span>
+                <span class="meta-category"><span class="category-dot" style="background:#818CF8;"></span>Marketing</span>
+                <span class="meta-subtask-chip">1/3 done</span>
+              </div>
+            </div>
+            <div class="chevron-toggle unfolded">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+
+          <div class="subtask-tree-wrapper">
+            <div class="subtask-row">
+              <div class="subtask-checkbox done">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <span class="subtask-title done">Finalize ad creative copy</span>
+            </div>
+            <div class="subtask-row">
+              <div class="subtask-checkbox"></div>
+              <span class="subtask-title">Confirm budget allocation</span>
+            </div>
+            <div class="subtask-row">
+              <div class="subtask-checkbox"></div>
+              <span class="subtask-title">Configure tracking analytics</span>
+            </div>
+          </div>
+
+          <div class="task-tile">
+            <div class="task-checkbox"></div>
+            <div class="task-body">
+              <div class="task-title">Client onboarding review</div>
+              <div class="task-meta">
+                <span class="meta-badge today">Today · 5:00 PM</span>
+                <span class="meta-subtask-chip">2/5</span>
+              </div>
+            </div>
+          </div>
+
+        </main>
+
+        <!-- Right Side Details Panel (Width 390px) -->
+        <aside class="desktop-details-pane">
+          <div class="details-appbar">
+            <span class="close-btn" title="Close panel">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </span>
+            <div class="appbar-actions">
+              <!-- Mark Done Button -->
+              <button class="btn-action done" title="Mark complete">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>Done</span>
+              </button>
+              <!-- Skip Button (Distinct Look) -->
+              <button class="btn-action skip" title="Skip this occurrence without completing">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+                <span>Skip</span>
+              </button>
+              <!-- Delete Button -->
+              <button class="btn-icon-only" title="Delete task">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="details-scroll-body">
+            <div class="details-title-input">Launch Q4 marketing campaign</div>
+
+            <!-- Schedule Card -->
+            <div class="details-card">
+              <div class="details-card-label">Schedule &amp; Recurrence</div>
+              <div class="details-row-item">
+                <span class="lbl">Due Date</span>
+                <span class="val" style="color:var(--primary-dark);">Today (Nov 18)</span>
+              </div>
+              <div class="details-row-item">
+                <span class="lbl">Due Time</span>
+                <span class="val">2:30 PM</span>
+              </div>
+              <div class="details-row-item">
+                <span class="lbl">Repeats</span>
+                <span class="val">Weekly on Tuesday</span>
+              </div>
+            </div>
+
+            <!-- Skip Informational Callout -->
+            <div class="skip-callout">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <div>
+                <strong>Repeating Task:</strong> Clicking <strong>Skip</strong> moves this instance to Completed marked as &ldquo;Skipped&rdquo; and immediately schedules the next recurrence on Nov 25.
+              </div>
+            </div>
+
+            <!-- Subtasks Card -->
+            <div class="details-card">
+              <div class="details-card-label">Subtasks · 1 of 3 complete</div>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+                  <span class="task-checkbox done" style="width:16px;height:16px;">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                  </span>
+                  <span style="text-decoration:line-through;color:var(--on-surface-variant-dark);">Finalize ad creative copy</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+                  <span class="task-checkbox" style="width:16px;height:16px;"></span>
+                  <span>Confirm budget allocation</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:13px;">
+                  <span class="task-checkbox" style="width:16px;height:16px;"></span>
+                  <span>Configure tracking analytics</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Notes Card -->
+            <div class="details-card">
+              <div class="details-card-label">Notes</div>
+              <div style="font-size:12.5px;color:var(--on-surface-variant-dark);line-height:1.4;">
+                Ensure UTM tracking parameters are verified across all digital ad channels before launch.
+              </div>
+            </div>
+
+          </div>
+        </aside>
+
+      </div>
+    </section>
+
+    <!-- 4. Completed group with one done and one skipped task -->
+    <section class="spec-card">
+      <div class="spec-label">Completed group · Done vs. Skipped distinct styling</div>
+      <div class="completed-mockup">
+        <div class="section-header completed" style="padding-top:0;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          <span>Completed</span>
+          <span class="count-badge completed">2</span>
+        </div>
+
+        <!-- 1. Done Task -->
+        <div class="task-tile" style="margin-top:8px;">
+          <div class="task-checkbox done">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="task-body">
+            <div class="task-title done">Publish release v1.4 notes</div>
+            <div class="task-meta">
+              <span class="meta-badge done">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                Done
+              </span>
+              <span>Today · 11:15 AM</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Skipped Task (Distinct Style) -->
+        <div class="task-tile" style="margin-top:6px;border:1px dashed var(--outline-variant-light);">
+          <div class="task-checkbox skipped" title="Skipped occurrence">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+          </div>
+          <div class="task-body">
+            <div class="task-title skipped">Audit vendor invoices</div>
+            <div class="task-meta">
+              <span class="meta-badge skipped">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+                Skipped
+              </span>
+              <span>Skipped today · Next occurrence scheduled</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 5. Calendar month day agenda with an unfolded task -->
+    <section class="spec-card">
+      <div class="spec-label">Calendar · Month day agenda with unfolded subtasks</div>
+      <div class="calendar-mockup">
+        <div class="calendar-header">
+          <h3>November 2026</h3>
+          <div class="calendar-controls">
+            <span class="pill-btn">Today</span>
+            <div style="display:flex;gap:4px;color:var(--on-surface-variant-light);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Month Grid Snippet -->
+        <div class="cal-grid">
+          <div class="weekday">M</div><div class="weekday">T</div><div class="weekday">W</div><div class="weekday">T</div><div class="weekday">F</div><div class="weekday">S</div><div class="weekday">S</div>
+          <div class="cal-cell">16</div>
+          <div class="cal-cell">17</div>
+          <div class="cal-cell today">
+            18
+            <div class="dot-row"><span class="dot"></span><span class="dot"></span></div>
+          </div>
+          <div class="cal-cell">19</div>
+          <div class="cal-cell">20</div>
+          <div class="cal-cell">21</div>
+          <div class="cal-cell">22</div>
+        </div>
+
+        <!-- Day Agenda for Selected Day -->
+        <div class="day-agenda-pane">
+          <div class="day-agenda-head">
+            <span>Wednesday, Nov 18 · Day Agenda</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+
+          <!-- Unfolded Task in Day Agenda -->
+          <div class="task-tile selected" style="box-shadow:none;border-color:var(--outline-variant-light);">
+            <div class="task-checkbox"></div>
+            <div class="task-body">
+              <div class="task-title" style="font-size:13.5px;">Launch Q4 marketing campaign</div>
+              <div class="task-meta">
+                <span class="meta-badge today">2:30 PM</span>
+                <span class="meta-subtask-chip">1/3 done</span>
+              </div>
+            </div>
+            <div class="chevron-toggle unfolded">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </div>
+
+          <div class="subtask-tree-wrapper" style="margin-bottom:8px;">
+            <div class="subtask-row" style="padding:4px 6px;">
+              <div class="subtask-checkbox done" style="width:15px;height:15px;">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <span class="subtask-title done" style="font-size:12px;">Finalize ad creative copy</span>
+            </div>
+            <div class="subtask-row" style="padding:4px 6px;">
+              <div class="subtask-checkbox" style="width:15px;height:15px;"></div>
+              <span class="subtask-title" style="font-size:12px;">Confirm budget allocation</span>
+            </div>
+            <div class="subtask-row" style="padding:4px 6px;">
+              <div class="subtask-checkbox" style="width:15px;height:15px;"></div>
+              <span class="subtask-title" style="font-size:12px;">Configure tracking analytics</span>
+            </div>
+          </div>
+
+          <!-- Second task in Day Agenda -->
+          <div class="task-tile" style="box-shadow:none;border-color:var(--outline-variant-light);">
+            <div class="task-checkbox"></div>
+            <div class="task-body">
+              <div class="task-title" style="font-size:13.5px;">Client onboarding review</div>
+              <div class="task-meta">
+                <span class="meta-badge neutral">5:00 PM</span>
+                <span class="meta-subtask-chip">2/5</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 6. The Settings row -->
+    <section class="spec-card">
+      <div class="spec-label">Settings · Per-device tap behavior setting</div>
+      <div class="settings-mockup">
+        <div class="settings-head">Settings</div>
+
+        <div class="settings-section-title">Tasks</div>
+        <div class="settings-card-item">
+          <div class="settings-title">When a task with subtasks is tapped</div>
+          <div class="settings-subtitle">Choose how subtask trees and task details open from list rows.</div>
+
+          <!-- Segmented Button in Slate Style -->
+          <div class="segmented-button">
+            <div class="segmented-option selected">
+              Open details &amp;<br>show subtasks
+            </div>
+            <div class="segmented-option">
+              Show subtasks<br>only
+            </div>
+            <div class="segmented-option">
+              Open details<br>only
+            </div>
+          </div>
+
+          <div style="margin-top:10px;font-size:11.5px;color:var(--on-surface-variant-light);display:flex;align-items:center;gap:5px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            Saved on this device · &ldquo;Open details &amp; show subtasks&rdquo; is default.
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- 7. Build notes (Strictly max 15 lines) -->
+  <section class="build-notes-card">
+    <h2>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#818CF8" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Build notes
+    </h2>
+    <ul class="build-notes-list">
+      <li><strong>Affected Dart files:</strong> <code>tasks/task_tile.dart</code> (subtask tree &amp; tap modes), <code>tasks/task_detail.dart</code> (details action bar Skip button), <code>tasks/task_list_page.dart</code> (unfold state &amp; missed repeats), <code>calendar/calendar_page.dart</code> / <code>calendar_widgets.dart</code> (agenda subtasks), <code>settings/settings_page.dart</code> (Tasks section segmented button).</li>
+      <li><strong>Data &amp; Settings model:</strong> Add <code>enum SubtaskTapAction { detailsAndSubtasks, subtasksOnly, detailsOnly }</code> to shared settings stored per device in <code>app_settings.dart</code>; default is <code>detailsAndSubtasks</code>.</li>
+      <li><strong>Tree line tokens:</strong> Light 2px stroke in Royal Indigo 200 (<code>#C7D2FE</code>) connecting 19px left-offset checkmark center to child branches; Dark 2px stroke in Indigo 900 (<code>#39446D</code>). Child checkboxes are 17px circular rings with <code>Radii.sm</code> cards.</li>
+      <li><strong>Skip action &amp; button:</strong> Placed in <code>task_detail.dart</code> header bar between Done and Delete. Styled as amber container (<code>#FEF3C7</code> light / <code>#452B0E</code> dark) with <code>Icons.skip_next_rounded</code>.</li>
+      <li><strong>Skipped appearance in Completed:</strong> Muted dashed strikethrough in <code>#94A3B8</code>, dashed/muted border, circular skip icon in amber, and an explicit <code>[⇥ Skipped]</code> pill badge (<code>#FEF3C7</code> / <code>#B45309</code> light, <code>#452B0E</code> / <code>#FBBF24</code> dark).</li>
+      <li><strong>Skip recurrence &amp; Undo:</strong> Skipping a recurring task increments its anchor date to generate the next period's copy while moving the current instance to Completed. Triggers Slate's floating dark snackbar (<code>#0F172A</code>, <code>Radii.md</code>) with bold Royal Indigo (<code>#818CF8</code>) Undo.</li>
+      <li><strong>Missed repeats:</strong> Uncompleted recurring task remains in Overdue (Yesterday/prior badge); the scheduled recurrence automatically populates Today with matching title and recurrence badge.</li>
+      <li><strong>&ldquo;Show subtasks only&rdquo; mode:</strong> Tapping the row expands the tree in place; a dedicated trailing button (<code>details-action-btn</code>, <code>Icons.chevron_right_rounded</code>) triggers full task details navigation.</li>
+    </ul>
+  </section>
+
+</div>
+
+</body>
+</html>

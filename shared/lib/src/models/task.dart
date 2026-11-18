@@ -17,6 +17,7 @@ final class Task implements SyncRecord {
     this.priority = Priority.none,
     this.categoryId,
     this.done = false,
+    this.skipped = false,
     this.completedAt,
     this.recurrenceRule,
     this.notifyAllDevices = true,
@@ -42,6 +43,7 @@ final class Task implements SyncRecord {
     priority: Priority.fromName(json['priority'] as String?),
     categoryId: json['categoryId'] as String?,
     done: json['done'] as bool? ?? false,
+    skipped: json['skipped'] as bool? ?? false,
     completedAt: JsonFields.parseDateTime(json['completedAt']),
     recurrenceRule: json['recurrenceRule'] as String?,
     notifyAllDevices: json['notifyAllDevices'] as bool? ?? true,
@@ -64,6 +66,11 @@ final class Task implements SyncRecord {
   final Priority priority;
   final String? categoryId;
   final bool done;
+
+  /// Finished without being done: set together with [done], so everything
+  /// that treats done tasks as finished (and devices on 1.1.0, which don't
+  /// know this field) handles a skipped task the same way.
+  final bool skipped;
   final DateTime? completedAt;
 
   /// RRULE-style recurrence rule (used from M3).
@@ -108,6 +115,7 @@ final class Task implements SyncRecord {
     Priority? priority,
     String? Function()? categoryId,
     bool? done,
+    bool? skipped,
     DateTime? Function()? completedAt,
     String? Function()? recurrenceRule,
     bool? notifyAllDevices,
@@ -125,6 +133,7 @@ final class Task implements SyncRecord {
     priority: priority ?? this.priority,
     categoryId: categoryId != null ? categoryId() : this.categoryId,
     done: done ?? this.done,
+    skipped: skipped ?? this.skipped,
     completedAt: completedAt != null ? completedAt() : this.completedAt,
     recurrenceRule: recurrenceRule != null
         ? recurrenceRule()
@@ -147,6 +156,7 @@ final class Task implements SyncRecord {
     'priority': priority.name,
     'categoryId': categoryId,
     'done': done,
+    'skipped': skipped,
     'completedAt': JsonFields.dateTime(completedAt),
     'recurrenceRule': recurrenceRule,
     'notifyAllDevices': notifyAllDevices,
@@ -167,6 +177,7 @@ final class Task implements SyncRecord {
       other.priority == priority &&
       other.categoryId == categoryId &&
       other.done == done &&
+      other.skipped == skipped &&
       other.completedAt == completedAt &&
       other.recurrenceRule == recurrenceRule &&
       other.notifyAllDevices == notifyAllDevices &&
@@ -185,6 +196,7 @@ final class Task implements SyncRecord {
     priority,
     categoryId,
     done,
+    skipped,
     completedAt,
     recurrenceRule,
     notifyAllDevices,
