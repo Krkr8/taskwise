@@ -9,6 +9,7 @@ import 'background/background_sync.dart';
 import 'bootstrap.dart';
 import 'desktop/desktop_shell.dart';
 import 'logging/app_log.dart';
+import 'platform/app_target.dart';
 import 'version.dart';
 
 export 'bootstrap.dart' show configureIntl;
@@ -29,7 +30,7 @@ Future<void> main(List<String> args) async {
   appLog.info(
     'app',
     'Taskwise $appVersion started on ${boot.deviceType.name} '
-        '(${Platform.operatingSystemVersion})',
+        '(${platformDescription()})',
   );
   await DesktopShell.instance?.apply(boot.settings);
   // iPhone: let iOS sync in the background now and then.

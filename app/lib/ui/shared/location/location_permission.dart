@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -8,6 +6,7 @@ import '../../../location/location_reminder_sync.dart';
 import '../../../state/providers.dart';
 import '../tasks/labels.dart';
 import '../theme/tokens.dart';
+import '../../../platform/app_target.dart';
 
 /// Before the first location reminder on a phone: explains why Taskwise
 /// needs location "Always" ("All the time" on Android), then lets the
@@ -33,7 +32,7 @@ Future<void> ensureLocationPermission(
       title: Text(l10n.locPermDialogTitle),
       content: SingleChildScrollView(
         child: Text(
-          Platform.isAndroid
+          appTarget == AppTarget.android
               ? l10n.locPermDialogBodyAndroid
               : l10n.locPermDialogBody,
         ),
@@ -58,7 +57,9 @@ String locationPermissionLabel(BuildContext context, LocationPermission p) {
   final l10n = context.l10n;
   return switch (p) {
     LocationPermission.always =>
-      Platform.isAndroid ? l10n.locPermAlwaysAndroid : l10n.locPermAlways,
+      appTarget == AppTarget.android
+          ? l10n.locPermAlwaysAndroid
+          : l10n.locPermAlways,
     LocationPermission.whenInUse => l10n.locPermWhenInUse,
     LocationPermission.denied => l10n.locPermDenied,
     LocationPermission.restricted => l10n.locPermRestricted,
@@ -116,7 +117,7 @@ class LocationPermissionBanner extends ConsumerWidget {
                     child: Text(
                       off
                           ? l10n.locBannerDenied
-                          : Platform.isAndroid
+                          : appTarget == AppTarget.android
                           ? l10n.locBannerNotAlwaysAndroid
                           : l10n.locBannerNotAlways,
                     ),
@@ -149,7 +150,7 @@ class AndroidBatteryHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!Platform.isAndroid) return const SizedBox.shrink();
+    if (appTarget != AppTarget.android) return const SizedBox.shrink();
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: const Icon(Icons.battery_alert_outlined),

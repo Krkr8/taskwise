@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workmanager/workmanager.dart';
@@ -13,6 +11,7 @@ import '../sync/sync_api.dart';
 import '../sync/sync_controller.dart';
 import '../sync/sync_engine.dart';
 import '../logging/app_log.dart';
+import '../platform/app_target.dart';
 
 /// The phones' background sync task. On iOS the same id is listed under
 /// `BGTaskSchedulerPermittedIdentifiers` in `ios/Runner/Info.plist` and
@@ -24,7 +23,7 @@ const backgroundSyncTask = 'io.github.krkr8.taskwise.sync';
 /// never while Taskwise is open); Android runs it about every 30 minutes
 /// (WorkManager). Does nothing on desktop.
 Future<void> registerBackgroundSync() async {
-  if (!Platform.isIOS && !Platform.isAndroid) return;
+  if (!appTarget.isMobile) return;
   try {
     await Workmanager().initialize(backgroundDispatcher);
     await Workmanager().registerPeriodicTask(

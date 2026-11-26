@@ -9,6 +9,7 @@ import '../logging/app_log.dart';
 import 'windows_update.dart';
 
 export 'windows_update.dart';
+import '../platform/app_target.dart';
 
 /// Installs a verified update for one way of installing Taskwise. Tasks and
 /// settings live in the app-support folder, apart from the program, so they
@@ -41,15 +42,20 @@ enum InstallOutcome {
 /// itself: the iPhone, a build run from the source tree, or an unknown
 /// install. Those still see that an update is out, with a link to it.
 Future<UpdateInstaller?> detectUpdateInstaller() async {
+  // The browser has nothing to install, and `dart:io` Platform throws there.
+  if (appTarget.isWeb ||
+      !(appTarget.isDesktop || appTarget == AppTarget.android)) {
+    return null;
+  }
   try {
-    if (Platform.isAndroid) return AndroidUpdateInstaller();
+    if (appTarget == AppTarget.android) return AndroidUpdateInstaller();
     final exe = File(Platform.resolvedExecutable);
     final path = exe.path.replaceAll(r'\', '/');
     // `flutter run` / `flutter build` output: updating it makes no sense.
     if (path.contains('/build/linux/') || path.contains('/build/windows/')) {
       return null;
     }
-    if (Platform.isLinux) {
+    if (appTarget == AppTarget.linux) {
       final appImage = Platform.environment['APPIMAGE'];
       if (appImage != null && appImage.isNotEmpty) {
         return AppImageInstaller(File(appImage));
@@ -63,7 +69,7 @@ Future<UpdateInstaller?> detectUpdateInstaller() async {
       }
       return null;
     }
-    if (Platform.isWindows && await _writable(exe.parent)) {
+    if (appTarget == AppTarget.windows && await _writable(exe.parent)) {
       return WindowsUpdateInstaller(exe.parent);
     }
   } on Object catch (e) {

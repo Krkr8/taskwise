@@ -21,6 +21,7 @@ import 'state/providers.dart';
 import 'sync/sync_controller.dart';
 import 'update/update_controller.dart';
 import 'update/update_installer.dart';
+import 'platform/app_target.dart';
 
 /// What every start of Taskwise needs before the providers run: the open
 /// database, this device's id and settings, and the platform services.
@@ -46,17 +47,17 @@ final class AppBootstrap {
   final AssistantPlatform assistant;
   final UpdateConfig update;
 
-  static bool get isDesktop => Platform.isWindows || Platform.isLinux;
+  static bool get isDesktop => appTarget.isDesktop;
 
   /// Phones: the system schedules reminders, and location reminders fire.
-  static bool get isMobile => Platform.isIOS || Platform.isAndroid;
+  static bool get isMobile => appTarget.isMobile;
 
   static Future<AppBootstrap> start() async {
     configureIntl();
     await appLog.open(
       Directory('${(await getApplicationSupportDirectory()).path}/logs'),
     );
-    if (Platform.isWindows) {
+    if (appTarget == AppTarget.windows) {
       // What the update helper did after the last "Update and restart".
       await importWindowsUpdateLog(
         '${(await getTemporaryDirectory()).path}\\$windowsUpdateLogName',
@@ -86,12 +87,12 @@ final class AppBootstrap {
       location: isMobile ? NativeLocationPlatform() : NoLocationPlatform(),
       // Siri's inbox is on the iPhone; Android only sends actions.
       assistant: isMobile
-          ? NativeAssistantPlatform(hasInbox: Platform.isIOS)
+          ? NativeAssistantPlatform(hasInbox: appTarget == AppTarget.ios)
           : NoAssistantPlatform(),
       update: UpdateConfig(
         enabled: isDesktop || isMobile,
         installer: await detectUpdateInstaller(),
-        isIos: Platform.isIOS,
+        isIos: appTarget == AppTarget.ios,
       ),
     );
   }
@@ -115,10 +116,11 @@ void configureIntl() {
 }
 
 DeviceType _detectDeviceType() {
-  if (Platform.isWindows) return DeviceType.windows;
-  if (Platform.isLinux) return DeviceType.linux;
-  if (Platform.isIOS) return DeviceType.ios;
-  if (Platform.isAndroid) return DeviceType.android;
+  if (appTarget == AppTarget.windows) return DeviceType.windows;
+  if (appTarget == AppTarget.linux) return DeviceType.linux;
+  if (appTarget == AppTarget.ios) return DeviceType.ios;
+  if (appTarget == AppTarget.android) return DeviceType.android;
+  // Task 2 adds DeviceType.web.
   return DeviceType.other;
 }
 

@@ -2,8 +2,6 @@ import '../../../shared/settings/about_section.dart';
 import '../../../shared/settings/backup_section.dart';
 import '../../../shared/settings/design_picker.dart';
 
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
@@ -19,6 +17,7 @@ import '../../../shared/settings/categories_page.dart';
 import '../../../shared/settings/location_debug_page.dart';
 import 'places_page.dart';
 import '../../../shared/settings/sync_section.dart';
+import '../../../../platform/app_target.dart';
 
 /// Settings destination: appearance, date & time, notifications,
 /// background (desktop) and categories.
@@ -30,7 +29,7 @@ class SettingsPage extends ConsumerWidget {
     final l10n = context.l10n;
     final settings = ref.watch(appSettingsProvider);
     final repo = ref.read(settingsRepositoryProvider);
-    final isDesktop = Platform.isLinux || Platform.isWindows;
+    final isDesktop = appTarget.isDesktop;
     // The Settings tab shows the effective language even before one is saved.
     final language =
         settings.language ??
@@ -319,7 +318,7 @@ class SettingsPage extends ConsumerWidget {
                 value: settings.startOnLogin,
                 onChanged: repo.setStartOnLogin,
               ),
-              if (Platform.isLinux)
+              if (appTarget == AppTarget.linux)
                 Padding(
                   padding: const EdgeInsets.only(bottom: Spacing.sm),
                   child: Text(

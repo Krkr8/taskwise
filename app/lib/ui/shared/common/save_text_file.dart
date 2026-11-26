@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../platform/app_target.dart';
 
 /// Saves [text] as a file named [name] the way each platform expects, and
 /// returns the message to show, or null when the user cancelled.
@@ -22,7 +23,7 @@ Future<String?> saveTextFile(
   required String mimeType,
   List<XTypeGroup> typeGroups = const [],
 }) async {
-  if (Platform.isAndroid) {
+  if (appTarget == AppTarget.android) {
     final saved = await _files.invokeMethod<bool>('saveFile', {
       'name': name,
       'mimeType': mimeType,
@@ -31,7 +32,7 @@ Future<String?> saveTextFile(
     return saved == true ? l10n.fileSaved(name) : null;
   }
   final String path;
-  if (Platform.isIOS) {
+  if (appTarget == AppTarget.ios) {
     path = '${(await getApplicationDocumentsDirectory()).path}/$name';
   } else {
     final location = await getSaveLocation(
@@ -42,7 +43,9 @@ Future<String?> saveTextFile(
     path = location.path;
   }
   await File(path).writeAsString(text, flush: true);
-  return Platform.isIOS ? l10n.backupSavedIos(name) : l10n.backupSaved(path);
+  return appTarget == AppTarget.ios
+      ? l10n.backupSavedIos(name)
+      : l10n.backupSaved(path);
 }
 
 const _files = MethodChannel('taskwise/files');

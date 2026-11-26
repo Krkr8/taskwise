@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
 
 import 'notifier.dart';
+import '../platform/app_target.dart';
 
 /// Windows and Linux: the app shows reminders itself while it runs (in the
 /// tray when the window is closed). Linux notifications can't be scheduled,
@@ -113,7 +113,7 @@ class DesktopNotifier extends ReminderNotifier {
               ),
           ],
         ),
-        windows: Platform.isWindows
+        windows: appTarget == AppTarget.windows
             ? WindowsNotificationDetails(
                 actions: [
                   if (!p.projected)

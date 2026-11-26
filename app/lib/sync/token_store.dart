@@ -1,6 +1,6 @@
-import 'dart:io' show Platform;
-
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+import '../platform/app_target.dart';
 
 /// Where the device token lives: the system keychain (Windows Credential
 /// Manager, the GNOME keyring through libsecret, the iOS Keychain).
@@ -31,7 +31,7 @@ class SecureTokenStore implements TokenStore {
   @override
   Future<String?> read() async {
     final token = await _storage.read(key: _key, iOptions: _ios);
-    if (token != null || !Platform.isIOS) return token;
+    if (token != null || appTarget != AppTarget.ios) return token;
     final old = await _storage.read(key: _key, iOptions: _iosBefore);
     if (old != null) {
       await _storage.write(key: _key, value: old, iOptions: _ios);
@@ -47,7 +47,7 @@ class SecureTokenStore implements TokenStore {
   @override
   Future<void> delete() async {
     await _storage.delete(key: _key, iOptions: _ios);
-    if (Platform.isIOS) {
+    if (appTarget == AppTarget.ios) {
       await _storage.delete(key: _key, iOptions: _iosBefore);
     }
   }

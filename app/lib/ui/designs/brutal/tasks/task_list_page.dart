@@ -1,5 +1,3 @@
-import 'dart:io' show Platform;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,9 +16,10 @@ import '../../../shared/tasks/task_rows.dart';
 import 'task_detail.dart';
 import 'task_filters.dart';
 import 'task_tile.dart';
+import '../../../../platform/app_target.dart';
 
 /// True on Linux and Windows, where keyboard shortcuts are shown.
-bool get _isDesktop => Platform.isLinux || Platform.isWindows;
+bool get _isDesktop => appTarget.isDesktop;
 
 /// The Tasks destination: list on the left, detail panel on the right when
 /// there's room; otherwise details open full-screen.

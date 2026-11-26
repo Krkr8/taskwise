@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:taskwise_shared/taskwise_shared.dart' hide Priority;
@@ -8,6 +6,7 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../logging/app_log.dart';
 import 'notifier.dart';
+import '../platform/app_target.dart';
 
 /// iPhone and Android: the system schedules the notifications, so they fire
 /// with the app closed. Only local notifications (no push server), at most
@@ -121,7 +120,7 @@ class MobileNotifier extends ReminderNotifier {
 
   @override
   Future<bool> requestPermission() async {
-    if (Platform.isAndroid) {
+    if (appTarget == AppTarget.android) {
       return await _android?.requestNotificationsPermission() ?? false;
     }
     return await _plugin
@@ -184,7 +183,9 @@ class MobileNotifier extends ReminderNotifier {
   /// Android: exact alarms when allowed (`USE_EXACT_ALARM`), otherwise
   /// Android may deliver a few minutes late.
   Future<AndroidScheduleMode> _scheduleMode() async {
-    if (!Platform.isAndroid) return AndroidScheduleMode.inexactAllowWhileIdle;
+    if (appTarget != AppTarget.android) {
+      return AndroidScheduleMode.inexactAllowWhileIdle;
+    }
     try {
       if (await _android?.canScheduleExactNotifications() ?? false) {
         return AndroidScheduleMode.exactAllowWhileIdle;
