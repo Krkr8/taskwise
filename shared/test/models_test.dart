@@ -216,6 +216,8 @@ void main() {
       expect(WeekStart.fromName(null), WeekStart.sunday);
       expect(DeviceType.fromName('linux'), DeviceType.linux);
       expect(DeviceType.fromName('android'), DeviceType.android);
+      expect(DeviceType.fromName('web'), DeviceType.web);
+      expect(DeviceType.values.last, DeviceType.web);
       // A type from a newer app version.
       expect(DeviceType.fromName('tv'), DeviceType.other);
     });

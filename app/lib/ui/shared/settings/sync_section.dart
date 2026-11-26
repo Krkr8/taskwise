@@ -192,4 +192,5 @@ IconData deviceTypeIcon(DeviceType type) => switch (type) {
   DeviceType.ios => Icons.phone_iphone,
   DeviceType.android => Icons.phone_android,
   DeviceType.other => Icons.devices_other_outlined,
+  DeviceType.web => Icons.public,
 };

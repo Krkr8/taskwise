@@ -80,6 +80,18 @@ describe('login', () => {
     expect(response.body.device.type).toBe('android');
   });
 
+  it('accepts a web device and lists it', async () => {
+    const { request, setup } = await testApp();
+    await setup();
+    const login = await request('POST', '/auth/login', {
+      body: { ...loginBody(password), device: { id: 'w', name: 'Chrome on Linux', type: 'web' } },
+    });
+    expect(login.status).toBe(200);
+    expect(login.body.device.type).toBe('web');
+    const list = await request('GET', '/devices', { token: login.body.token });
+    expect(list.body.devices.find((d: { id: string }) => d.id === 'w').type).toBe('web');
+  });
+
   it('is rate limited after 5 failures per username, until the window ends', async () => {
     const { request, setup, clock } = await testApp();
     await setup();

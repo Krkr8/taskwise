@@ -38,7 +38,8 @@ enum DeviceType {
   linux,
   ios,
   android,
-  other;
+  other,
+  web;
 
   /// Parses [DeviceType.name], falling back to [DeviceType.other].
   static DeviceType fromName(String? name) =>

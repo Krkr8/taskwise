@@ -22,6 +22,7 @@ import 'sync/sync_controller.dart';
 import 'update/update_controller.dart';
 import 'update/update_installer.dart';
 import 'platform/app_target.dart';
+import 'platform/web_device_name.dart';
 
 /// What every start of Taskwise needs before the providers run: the open
 /// database, this device's id and settings, and the platform services.
@@ -120,7 +121,7 @@ DeviceType _detectDeviceType() {
   if (appTarget == AppTarget.linux) return DeviceType.linux;
   if (appTarget == AppTarget.ios) return DeviceType.ios;
   if (appTarget == AppTarget.android) return DeviceType.android;
-  // Task 2 adds DeviceType.web.
+  if (appTarget == AppTarget.web) return DeviceType.web;
   return DeviceType.other;
 }
 
@@ -132,6 +133,7 @@ String _defaultDeviceName(DeviceType type) => switch (type) {
   DeviceType.android => 'Android phone',
   DeviceType.linux => _isFedora() ? 'Fedora Laptop' : 'Linux PC',
   DeviceType.other => 'Device',
+  DeviceType.web => webDeviceName(browserUserAgent()),
 };
 
 bool _isFedora() {
