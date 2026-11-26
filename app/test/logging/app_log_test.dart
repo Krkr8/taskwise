@@ -48,6 +48,60 @@ void main() {
     expect(await log.readAll(), isEmpty);
   });
 
+  group('browser storage', () {
+    test('keeps the newest lines and loads them at the next start', () async {
+      final store = MemoryKeyValueStore();
+      final log = AppLog(memoryLines: 3)..info('test', 'before');
+      log.useStore(store);
+      for (var i = 0; i < 4; i++) {
+        log.warning('sync', 'line $i');
+      }
+      await pumpEventQueue();
+      expect(store.values.keys, [AppLog.storeKey]);
+
+      // A reload: a new log reads what the last one kept.
+      final next = AppLog(memoryLines: 3)..info('app', 'started');
+      next.useStore(store);
+      expect(next.entries.map((e) => e.message), [
+        'line 2',
+        'line 3',
+        'started',
+      ]);
+      final loaded = next.entries.first;
+      final original = log.entries[1];
+      expect(loaded.level, LogLevel.warning);
+      expect(loaded.tag, 'sync');
+      expect(loaded.time, original.time);
+      expect(await next.readAll(), contains('WARNING [sync] line 2'));
+    });
+
+    test('clear empties the stored lines too', () async {
+      final store = MemoryKeyValueStore();
+      final log = AppLog()..useStore(store);
+      log.info('test', 'something');
+      await pumpEventQueue();
+      await log.clear();
+      await pumpEventQueue();
+      expect((AppLog()..useStore(store)).entries, isEmpty);
+    });
+
+    test('ignores stored lines it cannot read', () {
+      final store = MemoryKeyValueStore()
+        ..values[AppLog.storeKey] = '{not json';
+      final log = AppLog()..useStore(store);
+      expect(log.entries, isEmpty);
+      log.info('test', 'still logs');
+      expect(log.entries.single.message, 'still logs');
+    });
+
+    test('a store that fails does not stop the log', () async {
+      final log = AppLog()..useStore(_FailingStore());
+      log.info('test', 'still logs');
+      await pumpEventQueue();
+      expect(log.entries.single.message, 'still logs');
+    });
+  });
+
   test('errors nobody caught are logged', () {
     final log = AppLog();
     final savedFlutter = FlutterError.onError;
@@ -74,4 +128,15 @@ void main() {
     ).firstMatch(pubspec)!.group(1);
     expect(appVersion, version);
   });
+}
+
+class _FailingStore implements KeyValueStore {
+  @override
+  String? read(String key) => throw StateError('no storage');
+
+  @override
+  void write(String key, String value) => throw StateError('quota');
+
+  @override
+  void remove(String key) => throw StateError('no storage');
 }

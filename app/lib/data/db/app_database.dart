@@ -3,6 +3,7 @@ import 'package:drift_flutter/drift_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
 
+import '../../logging/app_log.dart';
 import 'app_database.steps.dart';
 import 'converters.dart';
 import 'tables.dart';
@@ -30,8 +31,9 @@ part 'app_database.g.dart';
   ],
 )
 class AppDatabase extends _$AppDatabase {
-  /// Opens the database file, or uses [executor] (e.g. in-memory for tests).
-  AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
+  /// Opens the database file, or uses [executor] (e.g. in-memory for tests,
+  /// or [openConnection] with its web callback).
+  AppDatabase([QueryExecutor? executor]) : super(executor ?? openConnection());
 
   @override
   int get schemaVersion => 5;
@@ -113,7 +115,14 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
-  static QueryExecutor _openConnection() => driftDatabase(
+  /// This device's database: a file in the app-support folder, or in the
+  /// browser the best storage it offers (drift's WebAssembly build of
+  /// SQLite, `web/sqlite3.wasm` and `web/drift_worker.js`). The browser's
+  /// choice is logged and passed to [onWebStorage] when the database is
+  /// first used, before any query runs.
+  static QueryExecutor openConnection({
+    void Function(WasmStorageImplementation storage)? onWebStorage,
+  }) => driftDatabase(
     name: 'taskwise',
     native: const DriftNativeOptions(
       // App-support dir (e.g. ~/.local/share/<app id> on Linux) rather than
@@ -123,6 +132,19 @@ class AppDatabase extends _$AppDatabase {
       // same process: it then shares the app's database isolate instead of
       // opening the file a second time.
       shareAcrossIsolates: true,
+    ),
+    web: DriftWebOptions(
+      sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+      driftWorker: Uri.parse('drift_worker.js'),
+      onResult: (result) {
+        final missing = result.missingFeatures.map((f) => f.name).join(', ');
+        appLog.info(
+          'database',
+          'Browser storage: ${result.chosenImplementation.name}'
+              '${missing.isEmpty ? '' : ' (missing: $missing)'}',
+        );
+        onWebStorage?.call(result.chosenImplementation);
+      },
     ),
   );
 }

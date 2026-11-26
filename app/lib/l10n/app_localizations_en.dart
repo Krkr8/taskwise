@@ -1530,4 +1530,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateTryAgain => 'Try again';
+
+  @override
+  String get storageTemporaryWarning =>
+      'This browser can\'t save your tasks. They\'re gone when you close or reload the page, unless you sync them.';
 }

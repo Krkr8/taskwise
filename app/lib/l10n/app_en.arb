@@ -497,5 +497,6 @@
   "updateErrorVerification": "The download didn't pass the safety check, so nothing was installed.",
   "updateErrorInstall": "The update couldn't be installed.",
   "updateErrorPermission": "Allow Taskwise to install apps (\"Allow from this source\"), then tap Update again.",
-  "updateTryAgain": "Try again"
+  "updateTryAgain": "Try again",
+  "storageTemporaryWarning": "This browser can't save your tasks. They're gone when you close or reload the page, unless you sync them."
 }

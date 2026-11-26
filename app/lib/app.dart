@@ -13,6 +13,7 @@ import 'state/providers.dart';
 import 'sync/sync_controller.dart';
 import 'ui/designs/design.dart';
 import 'ui/shared/assistant/assistant_action_listener.dart';
+import 'ui/shared/common/storage_warning_bar.dart';
 import 'ui/shared/update/update_listener.dart';
 import 'update/update_controller.dart';
 
@@ -82,7 +83,11 @@ class TaskwiseApp extends ConsumerWidget {
           child: child!,
         ),
       ),
-      home: UpdateListener(child: AssistantActionListener(child: spec.shell())),
+      home: UpdateListener(
+        child: AssistantActionListener(
+          child: StorageWarningBar(child: spec.shell()),
+        ),
+      ),
     );
   }
 }

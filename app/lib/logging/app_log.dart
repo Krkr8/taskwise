@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -25,8 +26,31 @@ final class LogEntry {
       '[$tag] $message';
 }
 
+/// A small text store (the browser's `localStorage` on the web).
+abstract interface class KeyValueStore {
+  String? read(String key);
+  void write(String key, String value);
+  void remove(String key);
+}
+
+/// A [KeyValueStore] in memory, for tests.
+final class MemoryKeyValueStore implements KeyValueStore {
+  final values = <String, String>{};
+
+  @override
+  String? read(String key) => values[key];
+
+  @override
+  void write(String key, String value) => values[key] = value;
+
+  @override
+  void remove(String key) => values.remove(key);
+}
+
 /// The app's log: the newest lines in memory (for Settings → About → Logs)
-/// and, once [open] is called, a file that is rotated when it grows.
+/// and, once [open] is called, a file that is rotated when it grows. The
+/// web app has no files: it also keeps the lines in a [KeyValueStore]
+/// (the browser's storage, [useStore]).
 ///
 /// Never log personal data (task titles, notes, places, passwords, tokens):
 /// only ids, counts and error types, so a log can be shared safely.
@@ -36,8 +60,13 @@ class AppLog extends ChangeNotifier {
   final int memoryLines;
   final int maxFileBytes;
 
+  /// The [KeyValueStore] key of the lines kept by [useStore].
+  static const storeKey = 'taskwise.log';
+
   final _entries = ListQueue<LogEntry>();
   File? _file;
+  KeyValueStore? _store;
+  bool _saveScheduled = false;
 
   /// The log file, once [open] was called.
   File? get file => _file;
@@ -60,6 +89,21 @@ class AppLog extends ChangeNotifier {
     }
   }
 
+  /// Keeps the newest lines (up to [memoryLines]) in [store], and adds the
+  /// ones it kept before, e.g. before the browser page was reloaded. Lines
+  /// it can't read are dropped.
+  void useStore(KeyValueStore store) {
+    _store = store;
+    final current = _entries.toList();
+    _entries
+      ..clear()
+      ..addAll(_readStore(store))
+      ..addAll(current);
+    _trim();
+    _scheduleSave();
+    notifyListeners();
+  }
+
   void info(String tag, String message) => add(LogLevel.info, tag, message);
 
   void warning(String tag, String message) =>
@@ -80,11 +124,10 @@ class AppLog extends ChangeNotifier {
   void add(LogLevel level, String tag, String message, {DateTime? time}) {
     final entry = LogEntry(time ?? DateTime.now(), level, tag, message);
     _entries.addLast(entry);
-    while (_entries.length > memoryLines) {
-      _entries.removeFirst();
-    }
+    _trim();
     if (kDebugMode) debugPrint('$entry');
     if (_file != null) _append('$entry\n');
+    _scheduleSave();
     notifyListeners();
   }
 
@@ -100,9 +143,14 @@ class AppLog extends ChangeNotifier {
     ].join();
   }
 
-  /// Empties the log, in memory and on disk.
+  /// Empties the log, in memory, on disk and in the store.
   Future<void> clear() async {
     _entries.clear();
+    try {
+      _store?.remove(storeKey);
+    } on Object catch (e) {
+      debugPrint('Log store unavailable: $e');
+    }
     final file = _file;
     if (file != null) {
       for (final f in [file, _rotated(file)]) {
@@ -110,6 +158,63 @@ class AppLog extends ChangeNotifier {
       }
     }
     notifyListeners();
+  }
+
+  void _trim() {
+    while (_entries.length > memoryLines) {
+      _entries.removeFirst();
+    }
+  }
+
+  /// Saves once after a burst of lines (each save writes them all).
+  void _scheduleSave() {
+    final store = _store;
+    if (store == null || _saveScheduled) return;
+    _saveScheduled = true;
+    scheduleMicrotask(() {
+      _saveScheduled = false;
+      try {
+        store.write(
+          storeKey,
+          jsonEncode([for (final e in _entries) _toJson(e)]),
+        );
+      } on Object catch (e) {
+        // Storage full or blocked: the lines stay in memory.
+        debugPrint('Log store write failed: $e');
+      }
+    });
+  }
+
+  static List<Object> _toJson(LogEntry e) => [
+    e.time.microsecondsSinceEpoch,
+    e.level.name,
+    e.tag,
+    e.message,
+  ];
+
+  static List<LogEntry> _readStore(KeyValueStore store) {
+    try {
+      final text = store.read(storeKey);
+      if (text == null) return const [];
+      return [
+        for (final item in jsonDecode(text) as List)
+          if (item case [
+            final int time,
+            final String level,
+            final String tag,
+            final String message,
+          ])
+            LogEntry(
+              DateTime.fromMicrosecondsSinceEpoch(time),
+              LogLevel.values.byName(level),
+              tag,
+              message,
+            ),
+      ];
+    } on Object catch (e) {
+      debugPrint('Stored log unreadable: $e');
+      return const [];
+    }
   }
 
   void _append(String text) {

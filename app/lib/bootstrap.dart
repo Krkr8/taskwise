@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:drift/drift.dart' show QueryExecutor;
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
@@ -10,8 +12,10 @@ import 'assistant/assistant_sync.dart';
 import 'data/app_settings.dart';
 import 'data/db/app_database.dart';
 import 'data/repositories/settings_repository.dart';
+import 'data/storage_status.dart';
 import 'location/location_platform.dart';
 import 'logging/app_log.dart';
+import 'logging/browser_log_store.dart';
 import 'location/location_reminder_sync.dart';
 import 'notifications/desktop_notifier.dart';
 import 'notifications/mobile_notifier.dart';
@@ -22,6 +26,7 @@ import 'sync/sync_controller.dart';
 import 'update/update_controller.dart';
 import 'update/update_installer.dart';
 import 'platform/app_target.dart';
+import 'platform/persistent_storage.dart';
 import 'platform/web_device_name.dart';
 
 /// What every start of Taskwise needs before the providers run: the open
@@ -37,6 +42,7 @@ final class AppBootstrap {
     required this.location,
     required this.assistant,
     required this.update,
+    required this.storageStatus,
   });
 
   final AppDatabase db;
@@ -48,23 +54,44 @@ final class AppBootstrap {
   final AssistantPlatform assistant;
   final UpdateConfig update;
 
+  /// Whether the tasks survive a restart (only the browser may say no).
+  final StorageStatus storageStatus;
+
   static bool get isDesktop => appTarget.isDesktop;
 
   /// Phones: the system schedules reminders, and location reminders fire.
   static bool get isMobile => appTarget.isMobile;
 
-  static Future<AppBootstrap> start() async {
+  /// Opens everything. [executor] replaces this device's database (tests).
+  ///
+  /// In the browser there are no files, tray, updates, Siri or background
+  /// sync: the log is kept in the browser's storage, and the services are
+  /// the ones that do nothing.
+  static Future<AppBootstrap> start({QueryExecutor? executor}) async {
     configureIntl();
-    await appLog.open(
-      Directory('${(await getApplicationSupportDirectory()).path}/logs'),
-    );
+    if (appTarget.isWeb) {
+      final store = browserLogStore();
+      if (store != null) appLog.useStore(store);
+    } else {
+      await appLog.open(
+        Directory('${(await getApplicationSupportDirectory()).path}/logs'),
+      );
+    }
     if (appTarget == AppTarget.windows) {
       // What the update helper did after the last "Update and restart".
       await importWindowsUpdateLog(
         '${(await getTemporaryDirectory()).path}\\$windowsUpdateLogName',
       );
     }
-    final db = AppDatabase();
+    var storageStatus = StorageStatus.persistent;
+    // The browser picks its storage when the first query below runs.
+    final db = AppDatabase(
+      executor ??
+          AppDatabase.openConnection(
+            onWebStorage: (storage) =>
+                storageStatus = storageStatusFor(storage),
+          ),
+    );
     final type = _detectDeviceType();
     final deviceId = await ensureThisDevice(
       db,
@@ -75,6 +102,7 @@ final class AppBootstrap {
       db,
       deviceId: deviceId,
     ).loadSettings();
+    if (appTarget.isWeb) unawaited(_keepBrowserStorage());
     return AppBootstrap._(
       db: db,
       deviceId: deviceId,
@@ -95,6 +123,7 @@ final class AppBootstrap {
         installer: await detectUpdateInstaller(),
         isIos: appTarget == AppTarget.ios,
       ),
+      storageStatus: storageStatus,
     );
   }
 
@@ -108,7 +137,15 @@ final class AppBootstrap {
     assistantPlatformProvider.overrideWithValue(assistant),
     updateConfigProvider.overrideWithValue(update),
     deviceTypeProvider.overrideWithValue(deviceType),
+    storageStatusProvider.overrideWithValue(storageStatus),
   ];
+}
+
+/// Asks the browser not to clear the tasks when the disk gets full. Not
+/// awaited: Firefox asks the user first.
+Future<void> _keepBrowserStorage() async {
+  final kept = await requestPersistentStorage();
+  appLog.info('database', 'Persistent browser storage: ${kept ?? 'unknown'}');
 }
 
 /// Global intl setup. Arabic uses Western digits (0-9), per the owner.

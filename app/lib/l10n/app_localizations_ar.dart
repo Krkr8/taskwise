@@ -1567,4 +1567,8 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get updateTryAgain => 'حاول مرة أخرى';
+
+  @override
+  String get storageTemporaryWarning =>
+      'لا يستطيع هذا المتصفح حفظ مهامك. ستضيع عند إغلاق الصفحة أو إعادة تحميلها، إلا إذا زامنتها.';
 }

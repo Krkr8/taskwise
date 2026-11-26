@@ -2503,6 +2503,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Try again'**
   String get updateTryAgain;
+
+  /// No description provided for @storageTemporaryWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This browser can\'t save your tasks. They\'re gone when you close or reload the page, unless you sync them.'**
+  String get storageTemporaryWarning;
 }
 
 class _AppLocalizationsDelegate

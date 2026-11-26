@@ -32,9 +32,9 @@ Future<void> main(List<String> args) async {
     'Taskwise $appVersion started on ${boot.deviceType.name} '
         '(${platformDescription()})',
   );
-  await DesktopShell.instance?.apply(boot.settings);
-  // iPhone: let iOS sync in the background now and then.
-  unawaited(registerBackgroundSync());
+  if (AppBootstrap.isDesktop) await DesktopShell.instance?.apply(boot.settings);
+  // Phones: let the system sync in the background now and then.
+  if (AppBootstrap.isMobile) unawaited(registerBackgroundSync());
 
   runApp(ProviderScope(overrides: boot.overrides, child: const TaskwiseApp()));
 }
