@@ -56,6 +56,12 @@ final class AppBootstrap {
     await appLog.open(
       Directory('${(await getApplicationSupportDirectory()).path}/logs'),
     );
+    if (Platform.isWindows) {
+      // What the update helper did after the last "Update and restart".
+      await importWindowsUpdateLog(
+        '${(await getTemporaryDirectory()).path}\\$windowsUpdateLogName',
+      );
+    }
     final db = AppDatabase();
     final type = _detectDeviceType();
     final deviceId = await ensureThisDevice(

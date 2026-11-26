@@ -140,3 +140,146 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  # The Windows self-updater on real Windows: Taskwise 1.1.0, installed like
+  # the docs say, is updated to 1.2.0 by the helper in
+  # app/lib/update/windows_update.dart, started the way the app starts it.
+  # pwsh's PSModulePath (with PowerShell 7's modules) is inherited, as on the
+  # PCs where the old Expand-Archive failed.
+  windows-updater:
+    runs-on: windows-2025
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Install Taskwise 1.1.0, get the 1.2.0 zip
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $dl = Join-Path $env:RUNNER_TEMP 'releases'
+          gh release download v1.1.0 --repo $env:GITHUB_REPOSITORY -p '*windows-x64.zip' -D "$dl\old"
+          if ($LASTEXITCODE) { throw 'download of 1.1.0 failed' }
+          gh release download v1.2.0 --repo $env:GITHUB_REPOSITORY -p '*windows-x64.zip' -D "$dl\new"
+          if ($LASTEXITCODE) { throw 'download of 1.2.0 failed' }
+          $oldZip = (Get-ChildItem "$dl\old\*.zip").FullName
+          $newZip = (Get-ChildItem "$dl\new\*.zip").FullName
+          $programs = Join-Path $env:LOCALAPPDATA 'Programs'
+          New-Item -ItemType Directory -Force $programs | Out-Null
+          Expand-Archive -LiteralPath $oldZip -DestinationPath $programs -Force
+          Expand-Archive -LiteralPath $newZip -DestinationPath "$dl\new\unpacked" -Force
+          Copy-Item -LiteralPath $newZip -Destination (Join-Path $env:TEMP 'taskwise-update.zip')
+          Get-ChildItem (Join-Path $programs 'Taskwise') | Format-Table Name, Length, LastWriteTime
+
+      - name: Update 1.1.0 to 1.2.0 with the helper
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installed = Join-Path $env:LOCALAPPDATA 'Programs\Taskwise'
+          $new = Join-Path $env:RUNNER_TEMP 'releases\new\unpacked\Taskwise'
+          $exe = Join-Path $installed 'taskwise.exe'
+          $oldHash = (Get-FileHash -LiteralPath $exe).Hash
+          if ($oldHash -eq (Get-FileHash -LiteralPath (Join-Path $new 'taskwise.exe')).Hash) {
+            throw '1.1.0 and 1.2.0 have the same taskwise.exe, so this test would prove nothing'
+          }
+          Write-Host "PSModulePath: $env:PSModulePath"
+
+          # The driver and the helper file live outside the repo: dart run
+          # inside it would resolve the pub workspace, which needs Flutter.
+          $driverDir = Join-Path $env:RUNNER_TEMP 'updater'
+          New-Item -ItemType Directory -Force $driverDir | Out-Null
+          Copy-Item app/lib/update/windows_update.dart $driverDir
+          @'
+          import 'dart:io';
+
+          import 'windows_update.dart';
+
+          // Starts the helper like WindowsUpdateInstaller.install, then exits.
+          Future<void> main() async {
+            final env = Platform.environment;
+            await startWindowsUpdateHelper(
+              processId: int.parse(env['TW_PID']!),
+              zip: env['TW_ZIP']!,
+              target: env['TW_TARGET']!,
+              exe: env['TW_EXE']!,
+              scriptPath: env['TW_SCRIPT']!,
+              logPath: env['TW_LOG']!,
+            );
+            print('hand-off done');
+          }
+          '@ | Set-Content -LiteralPath (Join-Path $driverDir 'driver.dart')
+
+          # The script and its log go in a folder named like an awkward user name.
+          $odd = Join-Path $env:RUNNER_TEMP 'it''s a $test & (folder)'
+          New-Item -ItemType Directory -Force -Path $odd | Out-Null
+          $log = Join-Path $odd 'taskwise-update.log'
+          $zip = Join-Path $env:TEMP 'taskwise-update.zip'
+
+          # The "running Taskwise" that the helper waits for.
+          $app = Start-Process -FilePath ping.exe -ArgumentList '-n 300 127.0.0.1' -WindowStyle Hidden -PassThru
+          # Paths reach the driver in the environment, so no quoting is involved.
+          $env:TW_PID = "$($app.Id)"
+          $env:TW_ZIP = $zip
+          $env:TW_TARGET = $installed
+          $env:TW_EXE = $exe
+          $env:TW_SCRIPT = Join-Path $odd 'taskwise-update.ps1'
+          $env:TW_LOG = $log
+          Push-Location $driverDir
+          dart run driver.dart
+          $driverExit = $LASTEXITCODE
+          Pop-Location
+          if ($driverExit) { throw "the driver failed with exit code $driverExit" }
+
+          # The helper starts, then waits while the "app" still runs.
+          $deadline = (Get-Date).AddSeconds(60)
+          while (-not (Test-Path -LiteralPath $log) -and (Get-Date) -lt $deadline) { Start-Sleep -Seconds 1 }
+          if (-not (Test-Path -LiteralPath $log)) { throw 'the helper never started (no log after 60 s)' }
+          Start-Sleep -Seconds 3
+          if ((Get-FileHash -LiteralPath $exe).Hash -ne $oldHash) { throw 'the helper copied while Taskwise still ran' }
+          Stop-Process -Id $app.Id -Force
+
+          # Wait for the helper to finish.
+          $deadline = (Get-Date).AddSeconds(150)
+          $seen = $false
+          $helper = @()
+          while ((Get-Date) -lt $deadline) {
+            $helper = @(Get-CimInstance Win32_Process -Filter "Name = 'powershell.exe'" |
+              Where-Object { $_.CommandLine -like '*taskwise-update.ps1*' })
+            if ($helper.Count -gt 0) { $seen = $true } elseif ($seen) { break }
+            Start-Sleep -Seconds 1
+          }
+          Write-Host "helper process seen: $seen"
+          Write-Host '----- helper log'
+          Get-Content -LiteralPath $log | Write-Host
+          Write-Host '-----'
+          # The helper starts the (new) Taskwise at the end; stop it before comparing.
+          Start-Sleep -Seconds 3
+          Stop-Process -Name taskwise -Force -ErrorAction SilentlyContinue
+          Start-Sleep -Seconds 1
+
+          $failed = @()
+          if ($helper.Count -gt 0) { $failed += 'the helper still runs after 150 s' }
+          $lines = @(Get-Content -LiteralPath $log)
+          if (-not ($lines | Where-Object { $_ -match ' updated$' })) { $failed += 'the log does not say updated' }
+          if ($lines | Where-Object { $_ -match 'FAILED' }) { $failed += 'the log has a FAILED line' }
+          if (-not ($lines | Where-Object { $_ -match ' starting Taskwise$' })) { $failed += 'the helper did not start Taskwise' }
+          if (Test-Path -LiteralPath $zip) { $failed += 'the zip was not deleted' }
+          $files = @(Get-ChildItem -LiteralPath $new -Recurse -File)
+          foreach ($f in $files) {
+            $rel = $f.FullName.Substring($new.Length + 1)
+            $other = Join-Path $installed $rel
+            if (-not (Test-Path -LiteralPath $other)) {
+              $failed += "missing: $rel"
+            } elseif ((Get-FileHash -LiteralPath $other).Hash -ne (Get-FileHash -LiteralPath $f.FullName).Hash) {
+              $failed += "not updated: $rel"
+            }
+          }
+          Write-Host "$($files.Count) files of 1.2.0 checked"
+          if ($failed.Count) {
+            $failed | ForEach-Object { Write-Host "::error::$_" }
+            exit 1
+          }
+          Write-Host 'Taskwise 1.1.0 was updated to 1.2.0'

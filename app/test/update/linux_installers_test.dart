@@ -96,11 +96,4 @@ void main() {
     }
     expect(marker.existsSync(), isTrue);
   });
-
-  test('the Windows helper script copies, cleans up and restarts', () {
-    expect(windowsUpdateScript, contains('Wait-Process -Id \$ProcessId'));
-    expect(windowsUpdateScript, contains('robocopy \$src \$Target /E'));
-    expect(windowsUpdateScript, isNot(contains('/MIR')));
-    expect(windowsUpdateScript, contains('Start-Process -FilePath \$Exe'));
-  });
 }

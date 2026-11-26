@@ -10,7 +10,7 @@ From version 1.1.0 on, Taskwise updates itself on Windows, Linux and Android. Th
 
 | Device | What the button does |
 |---|---|
-| Windows (the portable folder) | **Update and restart**: downloads the zip, checks it, quits Taskwise, copies the new files over the folder (adding and replacing, never deleting) and starts Taskwise again. |
+| Windows (the portable folder) | **Update and restart**: downloads the zip to `%TEMP%`, checks it and starts a hidden helper (a PowerShell script, `app/lib/update/windows_update.dart`). Taskwise quits; the helper waits for it, unzips the update, copies the new files over the folder (adding and replacing, never deleting) and starts Taskwise again. It writes each step to `%TEMP%\taskwise-update.log`, which the next start moves into Taskwise's own log. If copying fails, the old version starts again. Updates work from 1.2.1 on; 1.1.0 and 1.2.0 have to be updated by hand once. |
 | Linux AppImage | **Update and restart**: downloads the new AppImage next to the old one, checks it, replaces the file (same name and place) and starts it. |
 | Linux tar.gz (installed with `install.sh`) | **Update and restart**: downloads the tar.gz, checks it, swaps `~/.local/share/taskwise` for the new version and starts it. |
 | Android | **Update now**: downloads the APK, checks it and hands it to Android. The first time, Android asks to **Allow from this source** for Taskwise; then it shows **Do you want to update this app?**. Taskwise closes after updating; open it again. |
@@ -18,6 +18,8 @@ From version 1.1.0 on, Taskwise updates itself on Windows, Linux and Android. Th
 | Run from the source (`flutter run`), or an unknown install | A notice and **Open download page**. |
 
 Tasks, settings and the sync sign-in are stored apart from the program (in the app's data folder), so an update keeps them.
+
+**If an update didn't install** (Taskwise came back as the old version): **Settings → About → View logs** shows the update helper's steps, as lines starting with `Update helper:` under `update`. A line with `FAILED` says which step went wrong, for example `Taskwise was still running after 60 s` or a robocopy exit code of 8 or more (a file couldn't be copied).
 
 ## Why it's safe
 
@@ -45,7 +47,8 @@ So a changed file, or a release someone else made, is never installed, even if t
 
 ## Testing an update without a real release
 
-- **Unit tests:** `app/test/update/` (checking, signatures, tampered files, the Linux installers on real files, the restart helper, the openssl/Dart signature format).
+- **Unit tests:** `app/test/update/` (checking, signatures, tampered files, the Linux installers on real files, the restart helper, the openssl/Dart signature format, the Windows helper's script, start command and log).
+- **Windows, for real:** CI's `windows-updater` job (`.github/workflows/ci.yml`) installs 1.1.0 on a Windows runner, runs the helper from `windows_update.dart` the way the app starts it, and checks that every file is then the 1.2.0 one and the helper's log says `updated`.
 - **Against a local fake release** (what was done for M12 on the Android emulator):
   1. Build the app with `--dart-define=TASKWISE_UPDATE_URL=http://10.0.2.2:8765/latest` (the emulator's address for the laptop; on the laptop itself use `127.0.0.1`). Debug builds on Android allow plain HTTP for this; release builds don't.
   2. Build a "newer" one with `--build-name=1.2.0 --build-number=<higher>` and put it in a folder `download/`.

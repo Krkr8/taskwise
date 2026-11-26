@@ -6,6 +6,13 @@ When a version is released, its section becomes the text of the draft GitHub rel
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-11-27
+
+### Fixed
+
+- **Windows: updates now install.** Before, the update helper never ran (or, on PCs with PowerShell 7, couldn't unzip the update) and Taskwise restarted the old version. The helper now starts reliably, unzips with Windows' own zip support, checks that every file was copied, and writes its steps to the log (**Settings → About → View logs**). If something goes wrong, Taskwise stays open and says the install failed, or the old version starts again.
+  - **Update from 1.1.0 or 1.2.0 by hand once**: download `taskwise-1.2.1-windows-x64.zip`, quit Taskwise, and unzip it over your Taskwise folder. Your tasks and settings are kept. Later versions install from the banner.
+
 ## [1.2.0] - 2026-11-18
 
 ### Added

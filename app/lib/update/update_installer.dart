@@ -6,6 +6,9 @@ import 'package:taskwise_shared/taskwise_shared.dart';
 
 import '../desktop/desktop_shell.dart';
 import '../logging/app_log.dart';
+import 'windows_update.dart';
+
+export 'windows_update.dart';
 
 /// Installs a verified update for one way of installing Taskwise. Tasks and
 /// settings live in the app-support folder, apart from the program, so they
@@ -191,9 +194,13 @@ class TarballInstaller implements UpdateInstaller {
   }
 }
 
-/// Windows portable folder: a PowerShell helper waits for Taskwise to exit,
-/// copies the new files over the folder (adding and replacing, never
-/// deleting) and starts it again.
+/// Windows portable folder: a hidden PowerShell helper waits for Taskwise
+/// to exit, unzips the update, copies the new files over the folder (adding
+/// and replacing, never deleting) and starts Taskwise again. It is started
+/// through a short PowerShell that hands off with `Start-Process` (a
+/// detached start never ran), and logs its steps to `%TEMP%\taskwise-update.log`,
+/// which the next start adds to the app's log ([importWindowsUpdateLog]).
+/// See `windows_update.dart`.
 class WindowsUpdateInstaller implements UpdateInstaller {
   WindowsUpdateInstaller(this.installDir);
 
@@ -208,49 +215,39 @@ class WindowsUpdateInstaller implements UpdateInstaller {
 
   @override
   Future<InstallOutcome> install(File file) async {
-    final script = File('${file.parent.path}\\taskwise-update.ps1');
-    await script.writeAsString(windowsUpdateScript);
-    await Process.start('powershell.exe', [
-      '-NoProfile',
-      '-ExecutionPolicy',
-      'Bypass',
-      '-WindowStyle',
-      'Hidden',
-      '-File',
-      script.path,
-      '-ProcessId',
-      '$pid',
-      '-Zip',
-      file.path,
-      '-Target',
-      installDir.path,
-      '-Exe',
-      Platform.resolvedExecutable,
-    ], mode: ProcessStartMode.detached);
+    final dir = file.parent.path;
+    // Throws if the helper didn't start: Taskwise keeps running then.
+    await startWindowsUpdateHelper(
+      processId: pid,
+      zip: file.path,
+      target: installDir.path,
+      exe: Platform.resolvedExecutable,
+      scriptPath: '$dir\\$windowsUpdateScriptName',
+      logPath: '$dir\\$windowsUpdateLogName',
+    );
+    appLog.info('update', 'Update helper started, quitting');
     await _quit();
     return InstallOutcome.started;
   }
 }
 
-/// The Windows helper (see [WindowsUpdateInstaller]). robocopy retries files
-/// that are still locked for a moment after Taskwise exits; exit codes below
-/// 8 mean success. If copying fails, the old version starts again.
-const windowsUpdateScript = r'''
-param([int]$ProcessId, [string]$Zip, [string]$Target, [string]$Exe)
-$ErrorActionPreference = 'Continue'
-Wait-Process -Id $ProcessId -Timeout 60 -ErrorAction SilentlyContinue
-$work = Join-Path $env:TEMP ('taskwise-update-' + [guid]::NewGuid())
-try {
-  Expand-Archive -LiteralPath $Zip -DestinationPath $work -Force
-  $src = Join-Path $work 'Taskwise'
-  if (-not (Test-Path (Join-Path $src 'taskwise.exe'))) { $src = $work }
-  robocopy $src $Target /E /R:20 /W:1 /NFL /NDL /NJH /NJS /NP | Out-Null
-} finally {
-  Remove-Item -LiteralPath $work -Recurse -Force -ErrorAction SilentlyContinue
-  Remove-Item -LiteralPath $Zip -Force -ErrorAction SilentlyContinue
-  Start-Process -FilePath $Exe
+/// Adds the Windows update helper's log at [path] (left by the last update)
+/// to [log] under `update`, as warnings if a step failed, and deletes it.
+Future<void> importWindowsUpdateLog(String path, [AppLog? log]) async {
+  final target = log ?? appLog;
+  try {
+    final lines = await takeWindowsUpdateLog(path);
+    if (lines.isEmpty) return;
+    final level = lines.any((l) => l.contains('FAILED'))
+        ? LogLevel.warning
+        : LogLevel.info;
+    for (final line in lines) {
+      target.add(level, 'update', 'Update helper: $line');
+    }
+  } on Object catch (e) {
+    target.warning('update', 'Update helper log unreadable: $e');
+  }
 }
-''';
 
 /// Android: installs the APK with the system's package installer
 /// (`AppUpdater.kt`). Android shows its own "Update Taskwise?" screen and
