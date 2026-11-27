@@ -12,6 +12,8 @@ final class Device implements SyncRecord {
     this.deleted = false,
     this.updatedByDevice,
     this.isMain = false,
+    this.timeZone,
+    this.pushEnabled = false,
   });
 
   factory Device.fromJson(Map<String, Object?> json) => Device(
@@ -23,6 +25,8 @@ final class Device implements SyncRecord {
     deleted: json['deleted'] as bool? ?? false,
     updatedByDevice: json['updatedByDevice'] as String?,
     isMain: json['main'] as bool? ?? false,
+    timeZone: json['timeZone'] as String?,
+    pushEnabled: json['pushEnabled'] as bool? ?? false,
   );
 
   @override
@@ -40,6 +44,12 @@ final class Device implements SyncRecord {
   /// The main device manages the account's devices (set by the server).
   final bool isMain;
 
+  /// IANA time zone of a web device (set by the server; null before 1.4).
+  final String? timeZone;
+
+  /// Whether the device has Web Push on (set by the server).
+  final bool pushEnabled;
+
   Map<String, Object?> toJson() => {
     'id': id,
     'name': name,
@@ -49,6 +59,8 @@ final class Device implements SyncRecord {
     'deleted': deleted,
     'updatedByDevice': updatedByDevice,
     'main': isMain,
+    if (timeZone != null) 'timeZone': timeZone,
+    if (pushEnabled) 'pushEnabled': pushEnabled,
   };
 
   @override
@@ -61,7 +73,9 @@ final class Device implements SyncRecord {
       other.updatedAt == updatedAt &&
       other.deleted == deleted &&
       other.updatedByDevice == updatedByDevice &&
-      other.isMain == isMain;
+      other.isMain == isMain &&
+      other.timeZone == timeZone &&
+      other.pushEnabled == pushEnabled;
 
   @override
   int get hashCode => Object.hash(
@@ -73,6 +87,8 @@ final class Device implements SyncRecord {
     deleted,
     updatedByDevice,
     isMain,
+    timeZone,
+    pushEnabled,
   );
 
   @override

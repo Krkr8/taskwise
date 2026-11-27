@@ -11,6 +11,7 @@ export 'src/logic/assistant.dart';
 export 'src/logic/calendar.dart';
 export 'src/logic/location_plan.dart';
 export 'src/logic/missed_repeats.dart';
+export 'src/logic/push_plan.dart';
 export 'src/logic/recurrence.dart';
 export 'src/logic/reminder_schedule.dart';
 export 'src/logic/task_query.dart';

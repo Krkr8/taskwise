@@ -119,6 +119,27 @@ void main() {
         Device.fromJson,
       );
       roundTrip(
+        Device(
+          id: 'w',
+          name: 'Web',
+          type: DeviceType.web,
+          updatedAt: _t0,
+          timeZone: 'Asia/Baghdad',
+          pushEnabled: true,
+        ),
+        (v) => v.toJson(),
+        Device.fromJson,
+      );
+      // Servers before 1.4 send neither field.
+      final old = Device.fromJson({
+        'id': 'd',
+        'name': 'x',
+        'type': 'linux',
+        'updatedAt': _t0.toIso8601String(),
+      });
+      expect(old.timeZone, isNull);
+      expect(old.pushEnabled, isFalse);
+      roundTrip(
         TaskTargetDevice(id: 'x', taskId: 't', deviceId: 'd', updatedAt: _t0),
         (v) => v.toJson(),
         TaskTargetDevice.fromJson,
