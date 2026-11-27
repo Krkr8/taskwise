@@ -29,6 +29,7 @@ abstract final class SettingKeys {
   /// When this device last checked for due reminders (ISO UTC). Desktop
   /// uses it to show reminders missed while the app wasn't running.
   static const remindersCheckedAt = 'reminders_checked_at';
+
   /// Hash of the last push plan uploaded per web device (JSON map);
   /// device-only.
   static const pushPlanHashes = 'push_plan_hashes';

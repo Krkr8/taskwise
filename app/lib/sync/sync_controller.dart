@@ -269,8 +269,9 @@ class SyncController extends Notifier<SyncState> {
   }
 
   /// What the push plan uploader needs: the signed-in API and the devices
-  /// as the server last listed them. Null when not signed in.
-  ({SyncApi api, List<Device> devices})? get pushContext {
+  /// as the server last listed them (null until the first listing). Null
+  /// when not signed in.
+  ({SyncApi api, List<Device>? devices})? get pushContext {
     final engine = _engine;
     return engine == null
         ? null
@@ -283,7 +284,7 @@ class SyncController extends Notifier<SyncState> {
   Future<void> _syncTimeZone(SyncEngine engine) async {
     final zone = await ref.read(deviceTimeZoneProvider.future);
     if (zone == null || zone == _timeZoneSent) return;
-    final own = engine.serverDevices
+    final own = (engine.serverDevices ?? const <Device>[])
         .where((d) => d.id == engine.deviceId)
         .firstOrNull;
     if (own == null || own.timeZone == zone) return;

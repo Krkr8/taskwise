@@ -33,8 +33,9 @@ class SyncEngine {
   final SettingsRepository _settings;
 
   /// The devices as the server last listed them (with the time zone and
-  /// web push flag, which the local table doesn't keep).
-  List<Device> serverDevices = const [];
+  /// web push flag, which the local table doesn't keep). Null until the
+  /// first listing (after a restart, or while offline).
+  List<Device>? serverDevices;
 
   /// Changes per push request, and per pull page.
   final int pushBatch;

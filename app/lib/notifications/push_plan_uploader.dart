@@ -17,6 +17,11 @@ final pushPlanDebounceProvider = Provider<Duration>(
   (ref) => const Duration(seconds: 5),
 );
 
+/// How long after a failure nothing is tried (except by [PushPlanUploader.uploadNow]).
+final pushPlanBackoffProvider = Provider<Duration>(
+  (ref) => const Duration(minutes: 5),
+);
+
 /// Uploads each web device's push plan (the reminders the server sends as
 /// Web Push) from every device that shares its time zone. Read it once (the
 /// app root does) to start it. Task 5 calls [PushPlanUploader.uploadNow]
@@ -33,10 +38,9 @@ class PushPlanUploader {
 
   final Ref _ref;
 
-  /// After a failure nothing is tried for this long (except [uploadNow]).
-  static const backoff = Duration(minutes: 5);
-
   Timer? _pending;
+  Timer? _retry;
+  bool _failed = false;
   Timer? _periodic;
   Future<void>? _running;
   bool _again = false;
@@ -102,6 +106,7 @@ class PushPlanUploader {
     do {
       _again = false;
       _freshAgain = false;
+      _failed = false;
       try {
         await _upload(fresh: useFresh);
       } on Object catch (e, stack) {
@@ -109,12 +114,23 @@ class PushPlanUploader {
         appLog.error('push', e, stack);
         _backOff();
       }
+      if (!_failed) {
+        // A clean run: no backoff, no pending retry.
+        _retryAfter = null;
+        _retry?.cancel();
+        _retry = null;
+      }
       useFresh = _freshAgain;
     } while (_again && !_disposed && !_notConfigured);
   }
 
   void _backOff() {
+    _failed = true;
+    final backoff = _ref.read(pushPlanBackoffProvider);
     _retryAfter = _ref.read(clockProvider)().add(backoff);
+    // A change inside the window is dropped; this run picks it up after.
+    _retry?.cancel();
+    if (!_disposed) _retry = Timer(backoff, _schedule);
   }
 
   Future<void> _upload({required bool fresh}) async {
@@ -134,6 +150,9 @@ class PushPlanUploader {
         return;
       }
     }
+    // Not listed yet (just started, or offline): nothing to compare, so
+    // keep the stored hashes as they are.
+    if (devices == null) return;
     final myId = _ref.read(deviceIdProvider);
     final myZone = await _ref.read(deviceTimeZoneProvider.future);
     final targets = [
@@ -195,6 +214,7 @@ class PushPlanUploader {
   void dispose() {
     _disposed = true;
     _pending?.cancel();
+    _retry?.cancel();
     _periodic?.cancel();
   }
 }

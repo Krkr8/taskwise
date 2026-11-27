@@ -38,6 +38,9 @@ class FakeSyncServer {
   final pushPlans = <String, List<Map<String, Object?>>>{};
   int pushPlanUploads = 0;
 
+  /// The next this many plan uploads answer 500.
+  int pushPlanFailures = 0;
+
   /// Requests seen, as "METHOD /path".
   final requests = <String>[];
 
@@ -126,6 +129,10 @@ class FakeSyncServer {
     if (path.startsWith('/push/')) {
       if (!pushConfigured) return _error(404, 'push_not_configured');
       if (path.startsWith('/push/plan/') && request.method == 'PUT') {
+        if (pushPlanFailures > 0) {
+          pushPlanFailures--;
+          return _error(500, 'internal');
+        }
         final id = Uri.decodeComponent(path.substring('/push/plan/'.length));
         final target = devices[id];
         if (target == null ||

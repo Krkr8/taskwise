@@ -22,6 +22,8 @@ void main() {
   late AppDatabase db;
   late ProviderContainer container;
   late String deviceId;
+  late MemoryTokenStore tokens;
+  late DateTime now;
   late TaskRepository tasks;
   late Task task;
 
@@ -46,6 +48,37 @@ void main() {
 
   setUpAll(() => initializeDateFormatting('en'));
 
+  Future<ProviderContainer> makeContainer() async {
+    final c = ProviderContainer(
+      overrides: [
+        databaseProvider.overrideWithValue(db),
+        deviceIdProvider.overrideWithValue(deviceId),
+        deviceTypeProvider.overrideWithValue(DeviceType.linux),
+        tokenStoreProvider.overrideWithValue(tokens),
+        syncHttpClientProvider.overrideWithValue(server.client),
+        clockProvider.overrideWithValue(() => now),
+        deviceTimeZoneProvider.overrideWith((ref) async => 'Europe/Berlin'),
+        pushPlanDebounceProvider.overrideWithValue(
+          const Duration(milliseconds: 20),
+        ),
+        pushPlanBackoffProvider.overrideWithValue(
+          const Duration(milliseconds: 150),
+        ),
+      ],
+    );
+    c
+      ..listen(syncControllerProvider, (_, _) {})
+      ..listen(taskEntriesProvider, (_, _) {})
+      ..listen(timeRemindersProvider, (_, _) {})
+      ..listen(taskTargetsProvider, (_, _) {});
+    await Future.wait([
+      c.read(taskEntriesProvider.future),
+      c.read(timeRemindersProvider.future),
+      c.read(taskTargetsProvider.future),
+    ]);
+    return c;
+  }
+
   setUp(() async {
     server = FakeSyncServer();
     db = openTestDatabase();
@@ -62,30 +95,9 @@ void main() {
       dueTimeMinutes: 9 * 60,
     );
     await ReminderRepository(db, deviceId: deviceId).addRelative(task.id, 30);
-    container = ProviderContainer(
-      overrides: [
-        databaseProvider.overrideWithValue(db),
-        deviceIdProvider.overrideWithValue(deviceId),
-        deviceTypeProvider.overrideWithValue(DeviceType.linux),
-        tokenStoreProvider.overrideWithValue(MemoryTokenStore()),
-        syncHttpClientProvider.overrideWithValue(server.client),
-        clockProvider.overrideWithValue(() => DateTime(2026, 11, 28, 10)),
-        deviceTimeZoneProvider.overrideWith((ref) async => 'Europe/Berlin'),
-        pushPlanDebounceProvider.overrideWithValue(
-          const Duration(milliseconds: 20),
-        ),
-      ],
-    );
-    container
-      ..listen(syncControllerProvider, (_, _) {})
-      ..listen(taskEntriesProvider, (_, _) {})
-      ..listen(timeRemindersProvider, (_, _) {})
-      ..listen(taskTargetsProvider, (_, _) {});
-    await Future.wait([
-      container.read(taskEntriesProvider.future),
-      container.read(timeRemindersProvider.future),
-      container.read(taskTargetsProvider.future),
-    ]);
+    tokens = MemoryTokenStore();
+    now = DateTime(2026, 11, 28, 10);
+    container = await makeContainer();
   });
 
   tearDown(() async {
@@ -188,5 +200,58 @@ void main() {
     await signInAndStart();
     await Future<void>.delayed(const Duration(milliseconds: 300));
     expect(server.pushPlanUploads, 1);
+  });
+
+  test('hashes survive a restart until the devices are loaded', () async {
+    addWebDevice('web1');
+    await signInAndStart();
+    await uploader().uploadNow();
+    expect(server.pushPlanUploads, 1);
+    final stored = await SettingsRepository(
+      db,
+      deviceId: deviceId,
+    ).getPushPlanHashes();
+    expect(stored, isNotEmpty);
+    container.dispose();
+
+    // Restart while offline: the engine exists but has no device list.
+    server.offline = true;
+    container = await makeContainer();
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    container.read(pushPlanUploaderProvider);
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    expect(
+      await SettingsRepository(db, deviceId: deviceId).getPushPlanHashes(),
+      stored,
+    );
+
+    // Back online: devices load, nothing changed, nothing is uploaded.
+    server.offline = false;
+    await container.read(syncControllerProvider.notifier).syncNow();
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    expect(server.pushPlanUploads, 1);
+    expect(
+      await SettingsRepository(db, deviceId: deviceId).getPushPlanHashes(),
+      stored,
+    );
+  });
+
+  test('a change inside the backoff window is retried afterwards', () async {
+    addWebDevice('web1');
+    await signInAndStart();
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    expect(server.pushPlanUploads, 1);
+
+    server.pushPlanFailures = 1;
+    await tasks.saveTask(task.copyWith(title: 'Pay rent today'));
+    await Future<void>.delayed(const Duration(milliseconds: 80));
+    expect(server.pushPlanUploads, 1, reason: 'the upload failed');
+
+    // The clock passes the backoff; the one-shot retry uploads, with no
+    // further change to trigger it.
+    now = now.add(const Duration(minutes: 10));
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+    expect(server.pushPlanUploads, 2);
+    expect(server.pushPlans['web1']!.single['title'], 'Pay rent today');
   });
 }
