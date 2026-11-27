@@ -47,7 +47,7 @@ p { margin: 0 0 1rem; overflow-wrap: anywhere; }
   padding: 1rem; margin: 0 var(--depth) var(--depth) 0;
 }
 .downloads { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 1rem; padding: 0; list-style: none; margin: 0; }
-.downloads .btn { background: var(--card); margin: 0; }
+.downloads .btn { background: var(--card); color: var(--ink); margin: 0; }
 .downloads li { margin-right: var(--depth); }
 [dir="rtl"] .btn, [dir="rtl"] .card { margin: 0 0 var(--depth) var(--depth); }
 [dir="rtl"] .downloads li { margin-right: 0; margin-left: var(--depth); }

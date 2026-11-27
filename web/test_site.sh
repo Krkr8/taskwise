@@ -58,14 +58,18 @@ except Exception as e:
 ok = True
 def hdrs(src):
     return {h["key"]: h["value"] for r in j.get("headers", []) if r["source"] == src for h in r["headers"]}
+if "cleanUrls" in j: print("FAIL: cleanUrls must not be set"); ok = False
 a = hdrs("/app/(.*)")
 if a.get("Cross-Origin-Opener-Policy") != "same-origin": print("FAIL: COOP"); ok = False
 if a.get("Cross-Origin-Embedder-Policy") != "credentialless": print("FAIL: COEP"); ok = False
-for s in ["/app/index.html", "/app/flutter_bootstrap.js", "/app/sw.js", "/app/manifest.json", "/index.html", "/ar/index.html"]:
+if "Cache-Control" in a: print("FAIL: /app/(.*) must not set Cache-Control"); ok = False
+for s in ["/", "/index.html", "/ar", "/ar/", "/ar/index.html", "/app", "/app/", "/app/index.html",
+          "/app/flutter_bootstrap.js", "/app/sw.js", "/app/manifest.json"]:
     if hdrs(s).get("Cache-Control") != "no-cache": print("FAIL: no-cache for", s); ok = False
+if not any(r["source"].startswith("/app/((?!") and any(h["key"] == "Cache-Control" and h["value"] == "public, max-age=3600" for h in r["headers"]) for r in j.get("headers", [])):
+    print("FAIL: max-age rule for other /app files"); ok = False
 if "immutable" in json.dumps(j): print("FAIL: immutable must not be used"); ok = False
-if not j.get("cleanUrls"): print("FAIL: cleanUrls"); ok = False
-if not any(r["source"] in ("/app", "/app$") and r["destination"] == "/app/" for r in j.get("redirects", [])): print("FAIL: /app redirect"); ok = False
+if not any(r["source"] == "/app(?!/)" and r["destination"] == "/app/" for r in j.get("redirects", [])): print("FAIL: /app redirect"); ok = False
 sys.exit(0 if ok else 1)
 PY
 fi
