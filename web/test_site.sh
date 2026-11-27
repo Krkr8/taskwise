@@ -4,6 +4,7 @@ set -u
 out="${1:?usage: test_site.sh <out_dir>}"
 fail=0
 bad() { echo "FAIL: $*"; fail=1; }
+# build_site.sh's marker file (.taskwise-site) isn't part of the site's checks.
 
 for f in index.html ar/index.html style.css app/index.html app/sw.js app/sqlite3.wasm vercel.json \
   fonts/SpaceGrotesk-Bold.ttf fonts/IBMPlexSansArabic-Regular.ttf; do

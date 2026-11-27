@@ -28,10 +28,22 @@ esac
 case "$root_real/" in
   "$out"/*) echo "error: refusing to use $out (it contains the repository)" >&2; exit 1 ;;
 esac
+# The folder is deleted and rebuilt: only an empty one, or one this script
+# built before (it has the marker file), so a typo can't delete e.g. ~/Downloads.
+marker=".taskwise-site"
+if [ -e "$out" ] && [ ! -d "$out" ]; then
+  echo "error: $out exists and is not a directory" >&2; exit 1
+fi
+if [ -d "$out" ] && [ -n "$(ls -A "$out")" ] && [ ! -f "$out/$marker" ]; then
+  echo "error: refusing to delete $out: it isn't empty and wasn't built by this script (no $marker file). Pick a new or empty folder." >&2
+  exit 1
+fi
 
 (cd "$root/app" && flutter build web --release --base-href /app/ --pwa-strategy=none)
 
 rm -rf "$out"
+mkdir -p "$out"
+echo "Built by web/build_site.sh, which deletes this folder on its next run." > "$out/$marker"
 mkdir -p "$out/app" "$out/fonts"
 cp -r "$root/web/site/." "$out/"
 cp -r "$root/app/build/web/." "$out/app/"
