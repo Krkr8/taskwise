@@ -1533,5 +1533,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get storageTemporaryWarning =>
-      'This browser can\'t save your tasks. They\'re gone when you close or reload the page, unless you sync them.';
+      'This browser isn\'t keeping your tasks. Sign in to sync them, or leave private browsing.';
+
+  @override
+  String get startErrorTitle => 'Taskwise couldn\'t start in this browser';
+
+  @override
+  String get startErrorMessage =>
+      'Reload the page. If it keeps happening, try another browser.';
+
+  @override
+  String get startErrorReload => 'Reload';
 }

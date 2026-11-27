@@ -498,5 +498,8 @@
   "updateErrorInstall": "The update couldn't be installed.",
   "updateErrorPermission": "Allow Taskwise to install apps (\"Allow from this source\"), then tap Update again.",
   "updateTryAgain": "Try again",
-  "storageTemporaryWarning": "This browser can't save your tasks. They're gone when you close or reload the page, unless you sync them."
+  "storageTemporaryWarning": "This browser isn't keeping your tasks. Sign in to sync them, or leave private browsing.",
+  "startErrorTitle": "Taskwise couldn't start in this browser",
+  "startErrorMessage": "Reload the page. If it keeps happening, try another browser.",
+  "startErrorReload": "Reload"
 }

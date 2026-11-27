@@ -413,5 +413,8 @@
   "updateErrorInstall": "تعذّر تثبيت التحديث.",
   "updateErrorPermission": "اسمح لـ Taskwise بتثبيت التطبيقات (\"السماح من هذا المصدر\")، ثم اضغط تحديث مرة أخرى.",
   "updateTryAgain": "حاول مرة أخرى",
-  "storageTemporaryWarning": "لا يستطيع هذا المتصفح حفظ مهامك. ستضيع عند إغلاق الصفحة أو إعادة تحميلها، إلا إذا زامنتها."
+  "storageTemporaryWarning": "هذا المتصفح لا يحفظ مهامك. سجّل الدخول لمزامنتها، أو اخرج من التصفح الخاص.",
+  "startErrorTitle": "تعذّر تشغيل Taskwise في هذا المتصفح",
+  "startErrorMessage": "أعد تحميل الصفحة. إن تكرّر ذلك، جرّب متصفحًا آخر.",
+  "startErrorReload": "أعد التحميل"
 }

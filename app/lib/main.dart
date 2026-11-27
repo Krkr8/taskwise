@@ -10,6 +10,8 @@ import 'bootstrap.dart';
 import 'desktop/desktop_shell.dart';
 import 'logging/app_log.dart';
 import 'platform/app_target.dart';
+import 'platform/page_reload.dart';
+import 'ui/shared/common/start_error_app.dart';
 import 'version.dart';
 
 export 'bootstrap.dart' show configureIntl;
@@ -26,7 +28,20 @@ Future<void> main(List<String> args) async {
     if (shell == null) exit(0);
   }
 
-  final boot = await AppBootstrap.start();
+  final AppBootstrap boot;
+  if (appTarget.isWeb) {
+    // A browser that can't load the database files would otherwise leave a
+    // blank page.
+    try {
+      boot = await AppBootstrap.start();
+    } on Object catch (error, stack) {
+      appLog.error('app', error, stack, 'Start-up failed');
+      runApp(const StartErrorApp(onReload: reloadPage));
+      return;
+    }
+  } else {
+    boot = await AppBootstrap.start();
+  }
   appLog.info(
     'app',
     'Taskwise $appVersion started on ${boot.deviceType.name} '

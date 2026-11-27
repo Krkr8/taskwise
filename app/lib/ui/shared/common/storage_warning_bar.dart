@@ -5,72 +5,69 @@ import '../../../data/storage_status.dart';
 import '../tasks/labels.dart';
 import '../theme/tokens.dart';
 
-/// A bar above the design's shell when the browser can't keep the tasks
-/// ([StorageStatus.temporary]), in every design. It can be closed for this
+/// A bar above the design's shell while the browser can't keep the tasks
+/// ([StorageStatus.temporary]), in every design. It stays for the whole
 /// visit; otherwise it shows nothing. Wraps the shell (see app.dart).
-class StorageWarningBar extends ConsumerStatefulWidget {
+///
+/// The tree has the same shape either way, so the shell keeps its state
+/// (tab, scroll, typed text) when the bar comes or goes.
+class StorageWarningBar extends ConsumerWidget {
   const StorageWarningBar({super.key, required this.child});
 
   final Widget child;
 
   @override
-  ConsumerState<StorageWarningBar> createState() => _StorageWarningBarState();
-}
-
-class _StorageWarningBarState extends ConsumerState<StorageWarningBar> {
-  bool _closed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final status = ref.watch(storageStatusProvider);
-    if (status == StorageStatus.persistent || _closed) return widget.child;
-    final scheme = Theme.of(context).colorScheme;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final temporary =
+        ref.watch(storageStatusProvider) == StorageStatus.temporary;
     return Column(
       children: [
-        Material(
-          color: scheme.errorContainer,
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsetsDirectional.only(
-                start: Spacing.lg,
-                top: Spacing.xs,
-                bottom: Spacing.xs,
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.warning_amber_outlined,
-                    color: scheme.onErrorContainer,
-                  ),
-                  const SizedBox(width: Spacing.md),
-                  Expanded(
-                    child: Text(
-                      context.l10n.storageTemporaryWarning,
-                      style: TextStyle(color: scheme.onErrorContainer),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: MaterialLocalizations.of(context)
-                        .closeButtonTooltip,
-                    color: scheme.onErrorContainer,
-                    icon: const Icon(Icons.close),
-                    onPressed: () => setState(() => _closed = true),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
+        if (temporary) const _Bar() else const SizedBox.shrink(),
         Expanded(
           // The bar already keeps clear of the status bar.
           child: MediaQuery.removePadding(
             context: context,
-            removeTop: true,
-            child: widget.child,
+            removeTop: temporary,
+            child: child,
           ),
         ),
       ],
+    );
+  }
+}
+
+class _Bar extends StatelessWidget {
+  const _Bar();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: scheme.errorContainer,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.lg,
+            vertical: Spacing.sm,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.warning_amber_outlined,
+                color: scheme.onErrorContainer,
+              ),
+              const SizedBox(width: Spacing.md),
+              Expanded(
+                child: Text(
+                  context.l10n.storageTemporaryWarning,
+                  style: TextStyle(color: scheme.onErrorContainer),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

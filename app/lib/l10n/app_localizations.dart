@@ -2507,8 +2507,26 @@ abstract class AppLocalizations {
   /// No description provided for @storageTemporaryWarning.
   ///
   /// In en, this message translates to:
-  /// **'This browser can\'t save your tasks. They\'re gone when you close or reload the page, unless you sync them.'**
+  /// **'This browser isn\'t keeping your tasks. Sign in to sync them, or leave private browsing.'**
   String get storageTemporaryWarning;
+
+  /// No description provided for @startErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Taskwise couldn\'t start in this browser'**
+  String get startErrorTitle;
+
+  /// No description provided for @startErrorMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload the page. If it keeps happening, try another browser.'**
+  String get startErrorMessage;
+
+  /// No description provided for @startErrorReload.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload'**
+  String get startErrorReload;
 }
 
 class _AppLocalizationsDelegate

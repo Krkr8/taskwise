@@ -1570,5 +1570,15 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get storageTemporaryWarning =>
-      'لا يستطيع هذا المتصفح حفظ مهامك. ستضيع عند إغلاق الصفحة أو إعادة تحميلها، إلا إذا زامنتها.';
+      'هذا المتصفح لا يحفظ مهامك. سجّل الدخول لمزامنتها، أو اخرج من التصفح الخاص.';
+
+  @override
+  String get startErrorTitle => 'تعذّر تشغيل Taskwise في هذا المتصفح';
+
+  @override
+  String get startErrorMessage =>
+      'أعد تحميل الصفحة. إن تكرّر ذلك، جرّب متصفحًا آخر.';
+
+  @override
+  String get startErrorReload => 'أعد التحميل';
 }
