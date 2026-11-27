@@ -44,6 +44,10 @@ If you change the API, change the fixtures first. Then both test suites tell you
 { "status": "ok", "apiVersion": 1, "time": "2026-10-31T12:00:00.000Z" }
 ```
 
+## Browsers
+
+The server answers cross-origin requests from any origin (`Access-Control-Allow-Origin: *`), including errors such as `401` and `404`, so the web app can talk to it. There are no cookies: a browser sends the token in the `Authorization` header, and `Content-Type` is allowed too. Preflight (`OPTIONS`) answers are cached for one day.
+
 ## Account
 
 There is one account. It is created once, and only by someone who knows the server's `SETUP_SECRET` environment variable, because the server is public.

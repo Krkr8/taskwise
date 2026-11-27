@@ -202,6 +202,10 @@ The data stays in the `taskwise-data` volume. For plain Node, run `git pull`, `n
 
 On each device: **Settings → Sync → Connect to your server**. Enter the address (for example `https://taskwise.example.com` or `https://<your-app>.vercel.app`), your username and password, and a name for the device. The first device to connect becomes the **main device**, which can rename and remove the others. Tasks that are already on the device are uploaded and merged.
 
+## The web app
+
+The Taskwise web app talks to your server from the browser. Nothing to set up: the server allows browser requests (CORS) by itself. A server older than 1.3.0 doesn't, so redeploy or update it ([Update the server](#update-the-server)) before connecting the web app.
+
 ## If something goes wrong
 
 - **`/api/v1/health` shows `"status":"error"`:** the server can't reach its database. Check `DATABASE_URL` (and `DATABASE_AUTH_TOKEN` for Turso). Docker: `docker logs taskwise`. Node: the terminal or `journalctl -u taskwise`. Vercel: the **Logs** tab.

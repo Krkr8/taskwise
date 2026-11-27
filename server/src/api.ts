@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
+import { cors } from 'hono/cors';
 import { createMiddleware } from 'hono/factory';
 
 import { requireDevice } from './auth/middleware.js';
@@ -50,7 +51,17 @@ export function createApp(deps: AppDeps): Hono<AppEnv> {
     .route('/', deviceRoutes(deps))
     .route('/', syncRoutes());
 
+  // The web app runs on another origin. Auth is a bearer token in the
+  // Authorization header (no cookies), so any origin is fine.
   return new Hono<AppEnv>()
+    .use(
+      cors({
+        origin: '*',
+        allowMethods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+        allowHeaders: ['Authorization', 'Content-Type'],
+        maxAge: 86400,
+      }),
+    )
     .route(apiBasePath, api)
     .notFound((c) =>
       c.json({ error: { code: 'not_found', message: 'No such endpoint.' } }, 404),
