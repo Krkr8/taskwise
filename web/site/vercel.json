@@ -1,11 +1,5 @@
 {
-  "redirects": [
-    {
-      "source": "/app(?!/)",
-      "destination": "/app/",
-      "permanent": false
-    }
-  ],
+  "trailingSlash": true,
   "headers": [
     {
       "source": "/app/(.*)",

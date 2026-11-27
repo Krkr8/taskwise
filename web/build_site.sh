@@ -9,13 +9,21 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "error: version must look like 1.2.3, got '$version'" >&2; exit 1; }
 commit="$(git -C "$root" rev-parse --short HEAD 2>/dev/null)" || { echo "error: not a git checkout" >&2; exit 1; }
 
-# Resolve <out_dir> to an absolute path and refuse dangerous targets before any rm -rf.
-mkdir -p "$out"
-out="$(cd "$out" && pwd -P)"
+# Resolve <out_dir> to an absolute path WITHOUT creating it, and refuse dangerous
+# targets (the repo root or anything inside it, /, $HOME, any parent of the repo
+# root) before anything is created or deleted.
 root_real="$(cd "$root" && pwd -P)"
+out_parent="$(dirname "$out")"
+[ -d "$out_parent" ] || { echo "error: parent of $out does not exist" >&2; exit 1; }
+if [ -d "$out" ]; then
+  out="$(cd "$out" && pwd -P)"
+else
+  out="$(cd "$out_parent" && pwd -P)/$(basename "$out")"
+fi
+home_real="$(cd "$HOME" && pwd -P)"
 case "$out" in
-  /|"$HOME"|"$root_real"|"$root_real/app/build/web"|"$root_real/app/build"|"$root_real/app")
-    echo "error: refusing to use $out as the output directory" >&2; exit 1 ;;
+  /|"$home_real"|"$HOME"|"$root_real"|"$root_real"/*)
+    echo "error: refusing to use $out as the output directory (repo root or inside it, /, or \$HOME)" >&2; exit 1 ;;
 esac
 case "$root_real/" in
   "$out"/*) echo "error: refusing to use $out (it contains the repository)" >&2; exit 1 ;;

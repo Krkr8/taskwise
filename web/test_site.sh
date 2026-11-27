@@ -69,7 +69,25 @@ for s in ["/", "/index.html", "/ar", "/ar/", "/ar/index.html", "/app", "/app/", 
 if not any(r["source"].startswith("/app/((?!") and any(h["key"] == "Cache-Control" and h["value"] == "public, max-age=3600" for h in r["headers"]) for r in j.get("headers", [])):
     print("FAIL: max-age rule for other /app files"); ok = False
 if "immutable" in json.dumps(j): print("FAIL: immutable must not be used"); ok = False
-if not any(r["source"] == "/app(?!/)" and r["destination"] == "/app/" for r in j.get("redirects", [])): print("FAIL: /app redirect"); ok = False
+if j.get("trailingSlash") is not True: print("FAIL: trailingSlash must be true (Vercel then redirects /app -> /app/)"); ok = False
+if j.get("redirects"): print("FAIL: no custom redirects allowed"); ok = False
+# Guard: every header source must be a plausible path-to-regexp pattern. Parentheses
+# must balance, and a group may not start with "(?" at the top level unless it is
+# nested inside a capturing group (a bare "(?!" there is invalid in path-to-regexp).
+import re
+for r in j.get("headers", []):
+    src = r["source"]; depth = 0; good = True
+    for i, c in enumerate(src):
+        if c == "\\" : continue
+        if c == "(":
+            if src[i+1:i+2] == "?" and depth == 0: good = False
+            depth += 1
+        elif c == ")":
+            depth -= 1
+            if depth < 0: good = False
+    if depth != 0 or not good: print("FAIL: bad header source", src); ok = False; continue
+    try: re.compile(src.replace("(.*)", "(.*)"))
+    except re.error as e: print("FAIL: header source does not compile:", src, e); ok = False
 sys.exit(0 if ok else 1)
 PY
 fi
