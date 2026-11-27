@@ -1,0 +1,9 @@
+# `flutter run -d web-server` / `flutter drive` (web) serve the app with the
+# site's cross-origin isolation headers (web/site/vercel.json), so the
+# browser offers drift the same storage (OPFS) as on the real site.
+server:
+  headers:
+    - name: Cross-Origin-Opener-Policy
+      value: same-origin
+    - name: Cross-Origin-Embedder-Policy
+      value: credentialless

@@ -1,0 +1,125 @@
+name: Web site
+
+# Builds the site (home page + the web app under /app/, web/build_site.sh)
+# and deploys it to Vercel when a release is published. Not on the tag: tags
+# only make draft releases, and installed apps also see a release only once
+# it's published, so the site, its download links and the app updates move
+# together.
+#
+# By hand (Actions → Web site → Run workflow): deploys the branch or tag
+# picked under "Use workflow from" (e.g. main for a home page fix, or a tag
+# to deploy that release exactly), with the download links and the app's
+# cache version of `version` (empty: the latest published release).
+#
+# Needs the repository secrets VERCEL_TOKEN, VERCEL_ORG_ID and
+# VERCEL_PROJECT_ID. With the repository variable WEB_APP_URL (the site's
+# address, e.g. https://<project>.vercel.app) it also checks the live site.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to deploy, e.g. 1.3.0 (empty for the latest published release)
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+# One deploy at a time; a newer one waits instead of cancelling a deploy
+# half-way.
+concurrency:
+  group: web-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - name: Pick the version
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ -n "$RELEASE_TAG" ]; then
+            tag="$RELEASE_TAG"
+          elif [ -n "$INPUT_VERSION" ]; then
+            tag="v${INPUT_VERSION#v}"
+          else
+            # The latest published release (not drafts or pre-releases).
+            tag=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
+          fi
+          version="${tag#v}"
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::'$tag' isn't a version like v1.3.0"
+            exit 1
+          fi
+          echo "Deploying the site for $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - uses: subosito/flutter-action@v2.23.0
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build the site
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: web/build_site.sh "$VERSION" "$RUNNER_TEMP/site"
+
+      - name: Check the site
+        run: web/test_site.sh "$RUNNER_TEMP/site"
+
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
+
+      - name: Deploy to Vercel
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          missing=""
+          for name in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID; do
+            [ -n "${!name}" ] || missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Not deployed: the repository secrets$missing are missing (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+          url=$(npx --yes vercel@65.15.0 deploy "$RUNNER_TEMP/site" --prod --yes --token "$VERCEL_TOKEN")
+          echo "Deployed $VERSION: $url"
+          echo "Deployed the site for $VERSION: $url" >> "$GITHUB_STEP_SUMMARY"
+
+      # The production address can take a moment to switch to the new
+      # deployment.
+      - name: Check the live site
+        if: vars.WEB_APP_URL != ''
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          WEB_APP_URL: ${{ vars.WEB_APP_URL }}
+        run: |
+          site="${WEB_APP_URL%/}"
+          for _ in $(seq 1 12); do
+            status=$(curl -s -o /dev/null -w '%{http_code}' "$site/app/" || true)
+            sw=$(curl -fs "$site/app/sw.js" || true)
+            if [ "$status" = 200 ] && grep -q "CACHE_VERSION = '$VERSION-" <<< "$sw"; then
+              echo "$site/app/ answers 200 and its sw.js is version $VERSION"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::$site/app/ answered $status, and its sw.js $(grep -q "CACHE_VERSION = '$VERSION-" <<< "$sw" && echo is || echo "isn't") version $VERSION"
+          exit 1

@@ -77,6 +77,59 @@ jobs:
             TZ=$tz dart test
           done
 
+  # The web app: the site builds and passes its checks (web/build_site.sh,
+  # web/test_site.sh), and the app works in Chrome against the sync server:
+  # sign-in, sync, reload, two tabs (app/integration_test/web_smoke_test.dart).
+  web:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: subosito/flutter-action@v2.23.0
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      # build_site.sh runs `flutter build web --release --base-href /app/
+      # --pwa-strategy=none`; the version is the app's current one.
+      - name: Build and check the site
+        run: |
+          version=$(sed -n 's/^version: *\([0-9.]*\).*/\1/p' app/pubspec.yaml)
+          web/build_site.sh "$version" "$RUNNER_TEMP/site"
+          web/test_site.sh "$RUNNER_TEMP/site"
+
+      # A chromedriver matching the runner's Chrome.
+      - uses: nanasess/setup-chromedriver@v3.0.0
+
+      - name: Test the web app in Chrome against the sync server
+        run: |
+          (cd server && npm ci)
+          (cd server && DATABASE_URL=:memory: SETUP_SECRET=live-test-secret \
+            PORT=8787 npx tsx src/node.ts > /tmp/server.log 2>&1 &)
+          chromedriver --port=4444 > /tmp/chromedriver.log 2>&1 &
+          for _ in $(seq 1 30); do
+            curl -fs http://localhost:8787/api/v1/health && \
+              curl -fs http://localhost:4444/status > /dev/null && break
+            sleep 1
+          done
+          cd app
+          flutter drive -d web-server --browser-name=chrome \
+            --driver=test_driver/integration_test.dart \
+            --target=integration_test/web_smoke_test.dart \
+            --dart-define=SERVER=http://localhost:8787 \
+            || { cat /tmp/server.log /tmp/chromedriver.log; exit 1; }
+          cat build/integration_response_data.json
+
   # Location reminders' Swift logic (GeofenceEngine) is platform-free, so the
   # walk simulator and the Swift unit tests run on Linux too.
   location-logic:

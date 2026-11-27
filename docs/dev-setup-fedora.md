@@ -40,7 +40,7 @@ source ~/.bashrc
 Turn off platforms Taskwise doesn't target, so `flutter doctor` stays quiet about them:
 
 ```bash
-flutter config --no-enable-android --no-enable-web
+flutter config --no-enable-android
 flutter doctor -v
 ```
 
@@ -73,6 +73,68 @@ flutter run -d linux
 ```
 
 For the sync server, see "Running the server locally" in [server-setup-vercel.md](server-setup-vercel.md).
+
+## 5. The web app
+
+The same app runs in a browser (Flutter web; the web-only files are in `app/web/`). Without a browser, start Flutter's web server and open the address it prints in any browser on the machine:
+
+```bash
+cd app
+flutter run -d web-server --web-port 8080
+```
+
+`app/web_dev_config.yaml` makes this server send the same cross-origin isolation headers as the real site (`web/site/vercel.json`), so the browser offers the same storage (OPFS) as there. The app log (Settings → About → View logs) says which storage the browser picked: `Browser storage: opfsLocks` in Chrome.
+
+### Chrome for Testing (no sudo)
+
+For `flutter run -d chrome` and the browser test, install Chrome for Testing and its matching chromedriver into your home folder (versions pinned; any newer pair of the same version works too):
+
+```bash
+mkdir -p ~/.local/share/chrome-for-testing
+cd ~/.local/share/chrome-for-testing
+npx -y @puppeteer/browsers@3.2.7 install chrome@158.0.8127.88 --path ~/.local/share/chrome-for-testing
+npx -y @puppeteer/browsers@3.2.7 install chromedriver@158.0.8127.88 --path ~/.local/share/chrome-for-testing
+```
+
+Chrome then is `~/.local/share/chrome-for-testing/chrome/linux-158.0.8127.88/chrome-linux64/chrome`. To use it with `flutter run -d chrome`:
+
+```bash
+export CHROME_EXECUTABLE=~/.local/share/chrome-for-testing/chrome/linux-158.0.8127.88/chrome-linux64/chrome
+```
+
+If Chrome doesn't start because of missing libraries, `ldd` on that file lists them (Fedora with GNOME already has them).
+
+### The browser test
+
+`app/integration_test/web_smoke_test.dart` runs the app in Chrome against a local sync server: it signs in, adds a task, finds it on the server, reloads the page and opens a second tab. CI runs it in the `web` job. Locally, with three terminals (or `&`):
+
+```bash
+# 1. A throwaway sync server (in memory)
+cd server && DATABASE_URL=:memory: SETUP_SECRET=live-test-secret PORT=8787 npx tsx src/node.ts
+
+# 2. chromedriver
+~/.local/share/chrome-for-testing/chromedriver/linux-158.0.8127.88/chromedriver-linux64/chromedriver --port=4444
+
+# 3. The test (takes about 2 minutes)
+cd app
+flutter drive -d web-server --browser-name=chrome \
+  --chrome-binary=$HOME/.local/share/chrome-for-testing/chrome/linux-158.0.8127.88/chrome-linux64/chrome \
+  --driver=test_driver/integration_test.dart \
+  --target=integration_test/web_smoke_test.dart \
+  --dart-define=SERVER=http://localhost:8787
+```
+
+It prints `All tests passed.`; the steps it did and the storage the browser picked are in `app/build/integration_response_data.json`. Add `--no-headless` to watch it. Stop the server and chromedriver (Ctrl+C) afterwards.
+
+### The site
+
+`web/build_site.sh <version> <out_dir>` builds the whole site (home page and the app under `/app/`) into a folder outside the repository, and `web/test_site.sh <out_dir>` checks it:
+
+```bash
+web/build_site.sh 1.3.0 /tmp/taskwise-site && web/test_site.sh /tmp/taskwise-site
+```
+
+GitHub Actions deploys it to Vercel when a release is published (`.github/workflows/web.yml`).
 
 ## Troubleshooting: `flutter test` fails with "Building native assets failed"
 
