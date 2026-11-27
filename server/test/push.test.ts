@@ -469,6 +469,22 @@ describe('queueing', () => {
     expect((await request('GET', '/cron/daily', { token: cronSecret })).body.queuedPushes).toBe(0);
   });
 
+  it('queues an item just inside the horizon with an hour of retention slack; later ones wait for the cron', async () => {
+    const { upload, item, clock, scheduler, request } = await ready();
+    const now = clock.now;
+    const inside = now + 7 * day - 2 * hour;
+    const between = now + 7 * day - 30 * 60 * 1000;
+    await upload([item('inside', inside), item('between', between)]);
+    expect(scheduler.queued.map((q) => q.msg.key)).toEqual(['inside']);
+    const delay = scheduler.queued[0]!.delaySeconds;
+    expect(delay).toBeLessThanOrEqual(601200);
+    expect(delay + 3600).toBeLessThanOrEqual(604800);
+    clock.now += day;
+    const cron = await request('GET', '/cron/daily', { token: cronSecret });
+    expect(cron.body.queuedPushes).toBe(1);
+    expect(scheduler.queued.map((q) => q.msg.key)).toEqual(['inside', 'between']);
+  });
+
   it('the daily cron removes items whose time is long past', async () => {
     const { upload, item, clock, request, rows } = await ready();
     await upload([item('a', clock.now + hour), item('b', clock.now + 5 * day)]);

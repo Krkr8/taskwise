@@ -203,7 +203,7 @@ All these endpoints need a device token. When the server has no VAPID keys (`VAP
   - At most 500 items. `title` and `body` are at most 1000 characters (the push shortens them).
   - Unsent items that aren't in the new list are deleted and won't be sent. An item whose `fireAt` changed is sent at the new time. A changed `title` or `body` is used when the item is sent. Items already sent are not sent again.
 
-The server queues one message per item due within 7 days (on Vercel with Vercel Queues; on Node an in-process timer). The daily job queues the items that have come within 7 days since. When a message arrives, the server checks that the item is still unsent with the same `fireAt`, marks it sent and pushes it to every subscription of the device. A message that arrives more than 60 minutes late sends nothing. Subscriptions the push service reports gone (404/410) are deleted.
+The server queues one message per item due within 7 days minus an hour (on Vercel with Vercel Queues; on Node an in-process timer). The daily job queues the items that have come within that window since. When a message arrives, the server checks that the item is still unsent with the same `fireAt`, marks it sent and pushes it to every subscription of the device. A message that arrives more than 60 minutes late sends nothing. Subscriptions the push service reports gone (404/410) are deleted.
 
 The push's JSON payload, which the web app's service worker shows:
 ```json
@@ -212,6 +212,6 @@ The push's JSON payload, which the web app's service worker shows:
 
 ## Daily job: `GET /cron/daily`
 
-Vercel Cron calls it once a day (03:00 UTC ± 1 h; see `server/vercel.json`) with `Authorization: Bearer <CRON_SECRET>`. Calling it more than once is safe. It purges as described above, then saves a JSON copy of all records in the database's `backups` table, keeping the newest 7. It also removes push items whose time is more than 2 days past, and queues the pushes that are now due within 7 days.
+Vercel Cron calls it once a day (03:00 UTC ± 1 h; see `server/vercel.json`) with `Authorization: Bearer <CRON_SECRET>`. Calling it more than once is safe. It purges as described above, then saves a JSON copy of all records in the database's `backups` table, keeping the newest 7. It also removes push items whose time is more than 2 days past, and queues the pushes that are now due within that window.
 
 The reply is `{"purgedRecords": 3, "purgedLoginAttempts": 1, "backupRecords": 120, "purgedPushItems": 4, "queuedPushes": 2}`.

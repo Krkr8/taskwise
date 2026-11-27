@@ -17,15 +17,18 @@ export interface PushScheduler {
   enqueue(msg: PushMessage, delaySeconds: number): Promise<void>;
 }
 
-/** How far ahead messages are queued (Vercel Queues allows up to 7 days). */
-export const queueHorizonMs = 7 * 24 * 60 * 60 * 1000;
+/**
+ * How far ahead messages are queued: 7 days (the Vercel Queues maximum for
+ * retention) minus an hour, so retention (delay + 1 hour) always fits.
+ */
+export const queueHorizonMs = 7 * 24 * 3600 * 1000 - 3600 * 1000;
 
 /** Enqueue calls made at once. */
 const enqueueBatch = 25;
 
 /**
  * Queues every unsent, not yet queued item with a fire time in
- * (now, now + 7 days], of [deviceId] or of all devices, and returns how many
+ * (now, now + queueHorizonMs] (7 days minus an hour), of [deviceId] or of all devices, and returns how many
  * were queued. Items are marked queued first, in one statement, so two calls
  * at once queue each item only once. Items whose enqueue fails are unmarked
  * (the next upload or the daily cron tries again) and the call throws.

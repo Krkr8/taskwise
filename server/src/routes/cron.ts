@@ -12,7 +12,7 @@ import { purge } from '../sync/purge.js';
 /**
  * GET /cron/daily: run by Vercel Cron once a day (see vercel.json), which
  * sends `Authorization: Bearer $CRON_SECRET`. Safe to run more than once.
- * It also queues the pushes that have come within the 7-day queue horizon.
+ * It also queues the pushes that have come within the queue horizon (7 days minus an hour).
  */
 export function cronRoutes(deps: AppDeps) {
   return new Hono<AppEnv>().get('/cron/daily', async (c) => {
