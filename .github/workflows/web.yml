@@ -113,15 +113,29 @@ jobs:
             echo "::error::Not deployed: the repository secrets$missing are missing (Settings → Secrets and variables → Actions)."
             exit 1
           fi
+          # Deployment addresses contain the Vercel account's name, and this
+          # repository's logs are public: the CLI's output goes to a file and
+          # is only shown, with every *.vercel.app host blanked, on failure.
+          log="$RUNNER_TEMP/vercel.log"
+          args=(deploy "$RUNNER_TEMP/site" --yes --token "$VERCEL_TOKEN")
+          [ "$PREVIEW" = true ] || args+=(--prod)
+          if ! url=$(npx --yes vercel@65.15.0 "${args[@]}" 2>"$log"); then
+            sed -E 's#[a-z0-9.-]+\.vercel\.app#<deployment>#g' "$log"
+            echo "::error::The Vercel deploy failed (log above, addresses hidden)."
+            exit 1
+          fi
+          echo "::add-mask::$url"
           if [ "$PREVIEW" = true ]; then
-            # A preview deployment: its own address, production unchanged.
-            url=$(npx --yes vercel@65.15.0 deploy "$RUNNER_TEMP/site" --yes --token "$VERCEL_TOKEN")
-            echo "Preview of $VERSION (not production): $url"
-            echo "Preview of the site for $VERSION (not production): $url" >> "$GITHUB_STEP_SUMMARY"
+            # Check the preview here and print only the results.
+            for p in /app /app/ /app/sw.js /ar; do
+              line=$(curl -s -o /dev/null -D - "$url$p" | tr -d '\r' |
+                grep -iE '^HTTP|^location|^cache-control|^cross-origin-(opener|embedder)' |
+                sed -E 's#https://[^ ]+##' | tr '\n' ' ')
+              echo "$p: $line"
+            done
+            echo "Preview of the site for $VERSION deployed (address not shown: it contains the account name; see the Vercel dashboard)." >> "$GITHUB_STEP_SUMMARY"
           else
-            url=$(npx --yes vercel@65.15.0 deploy "$RUNNER_TEMP/site" --prod --yes --token "$VERCEL_TOKEN")
-            echo "Deployed $VERSION: $url"
-            echo "Deployed the site for $VERSION: $url" >> "$GITHUB_STEP_SUMMARY"
+            echo "Deployed the site for $VERSION to production." >> "$GITHUB_STEP_SUMMARY"
           fi
 
       # The production address can take a moment to switch to the new
