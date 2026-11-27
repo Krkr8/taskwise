@@ -515,7 +515,7 @@
   "startErrorReload": "Reload",
   "homeScreenGuideTitle": "Add Taskwise to your Home Screen",
   "homeScreenGuideWhy": "On iPhone, Taskwise works best from your Home Screen: it opens like an app and keeps your tasks. A Safari tab keeps a separate copy of your tasks, which Safari may clear.",
-  "homeScreenGuideStep1": "Tap the Share button. If you can't see it, tap ⋯ first.",
+  "homeScreenGuideStep1": "Tap the Share button. If you can't see it, tap More (the three dots) first.",
   "homeScreenGuideStep2": "Choose “Add to Home Screen”.",
   "homeScreenGuideStep3": "Open Taskwise from your Home Screen and sign in there.",
   "homeScreenGuideContinue": "Continue in the browser anyway",

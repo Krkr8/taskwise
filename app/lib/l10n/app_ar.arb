@@ -428,7 +428,7 @@
   "startErrorReload": "أعد التحميل",
   "homeScreenGuideTitle": "أضف Taskwise إلى الشاشة الرئيسية",
   "homeScreenGuideWhy": "على iPhone يعمل Taskwise أفضل من الشاشة الرئيسية: يُفتح كتطبيق ويحتفظ بمهامك. أما علامة تبويب Safari فتحتفظ بنسخة منفصلة من مهامك قد يمسحها Safari.",
-  "homeScreenGuideStep1": "اضغط زر المشاركة. إن لم تجده، فاضغط ⋯ أولًا.",
+  "homeScreenGuideStep1": "اضغط زر المشاركة. إن لم تجده، فاضغط «المزيد» (النقاط الثلاث) أولًا.",
   "homeScreenGuideStep2": "اختر «إضافة إلى الشاشة الرئيسية».",
   "homeScreenGuideStep3": "افتح Taskwise من الشاشة الرئيسية وسجّل الدخول هناك.",
   "homeScreenGuideContinue": "المتابعة في المتصفح على أي حال",

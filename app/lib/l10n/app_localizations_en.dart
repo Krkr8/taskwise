@@ -1589,7 +1589,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeScreenGuideStep1 =>
-      'Tap the Share button. If you can\'t see it, tap ⋯ first.';
+      'Tap the Share button. If you can\'t see it, tap More (the three dots) first.';
 
   @override
   String get homeScreenGuideStep2 => 'Choose “Add to Home Screen”.';

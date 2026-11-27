@@ -1626,7 +1626,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get homeScreenGuideStep1 =>
-      'اضغط زر المشاركة. إن لم تجده، فاضغط ⋯ أولًا.';
+      'اضغط زر المشاركة. إن لم تجده، فاضغط «المزيد» (النقاط الثلاث) أولًا.';
 
   @override
   String get homeScreenGuideStep2 => 'اختر «إضافة إلى الشاشة الرئيسية».';

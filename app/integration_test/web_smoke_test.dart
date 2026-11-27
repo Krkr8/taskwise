@@ -23,7 +23,10 @@
 //   3. the conductor reloads the writer tab: the task is in the database
 //      before the app syncs (the browser kept it);
 //   4. a second tab, while the first is open: shows the task and adds one,
-//      which the first tab sees; the database passes an integrity check.
+//      which the first tab sees; the database passes an integrity check;
+//   5. a third tab shows the app in Brutal and Lapis, in English and Arabic,
+//      and lists the hosts the page fetched from: only the page's own and
+//      the sync server (no fonts from Google, app/web_README.md).
 @Timeout(Duration(minutes: 10))
 library;
 
@@ -37,7 +40,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:taskwise/app.dart';
 import 'package:taskwise/bootstrap.dart';
+import 'package:taskwise/data/app_settings.dart';
 import 'package:taskwise/data/db/app_database.dart';
+import 'package:taskwise/data/repositories/settings_repository.dart';
 import 'package:taskwise/data/storage_status.dart';
 import 'package:taskwise/logging/app_log.dart';
 import 'package:taskwise/sync/sync_api.dart';
@@ -126,6 +131,33 @@ void _conductor(IntegrationTestWidgetsFlutterBinding binding) {
       );
       await channel.next('writer', 'saw-second', _step);
       _log('the first tab sees the second tab\'s task');
+
+      tabs.add(_openTab('looks', title));
+      final looks = await channel.next('looks', 'hosts', _step);
+      final hosts = (looks['hosts']! as List).cast<String>();
+      final fallbackFonts = (looks['fallbackFonts']! as List).cast<String>();
+      report['hosts'] = hosts;
+      report['requests'] = looks['requests'];
+      report['fallbackFonts'] = fallbackFonts;
+      final allowed = {
+        Uri.parse(web.window.location.href).authority,
+        Uri.parse(_server).authority,
+      };
+      expect(
+        hosts.where((host) => !allowed.contains(host)),
+        isEmpty,
+        reason: 'the app fetched from other hosts: $hosts',
+      );
+      // Only Roboto: any other font means a character the bundled fonts lack.
+      expect(
+        fallbackFonts.where((path) => !path.contains('/roboto/')),
+        isEmpty,
+        reason: 'the engine looked for fallback fonts: $fallbackFonts',
+      );
+      _log(
+        'Brutal and Lapis, English and Arabic: fetched only from '
+        '${hosts.join(', ')}',
+      );
       report['steps'] = _progress;
     } on Object catch (error) {
       // flutter drive shows only the failure: say how far it got.
@@ -217,7 +249,42 @@ Future<void> _runTab(
   );
   await _pumpFor(tester, const Duration(seconds: 2));
 
-  if (role == 'writer' && !reloaded) {
+  if (role == 'looks') {
+    // The browser keeps 250 entries by default, and the debug build loads
+    // more files than that at start: room for the fonts fetched from here
+    // on (a fallback font is fetched when a text needs it). The start
+    // itself is checked on the release build (web/test_site_browser.mjs).
+    web.window.performance.setResourceTimingBufferSize(100000);
+    final settings = SettingsRepository(boot.db, deviceId: boot.deviceId);
+    for (final design in [AppDesign.brutal, AppDesign.lapis]) {
+      for (final language in AppLanguage.values) {
+        await settings.setDesign(design);
+        await settings.setLanguage(language);
+        await _pumpFor(tester, const Duration(seconds: 2));
+      }
+    }
+    await settings.setDesign(AppDesign.brutal);
+    await settings.setLanguage(AppLanguage.en);
+    await _pumpFor(tester, const Duration(seconds: 1));
+    final urls = [
+      web.window.location.href,
+      for (final entry
+          in web.window.performance.getEntriesByType('resource').toDart)
+        entry.name,
+    ].map(Uri.parse).where((uri) => uri.scheme.startsWith('http'));
+    channel.send({
+      'role': role,
+      'event': 'hosts',
+      'requests': urls.length,
+      'hosts': {for (final uri in urls) uri.authority}.toList(),
+      'fallbackFonts': [
+        for (final uri in urls)
+          if (uri.path.contains('/fallback-fonts/') ||
+              uri.host == 'fonts.gstatic.com')
+            uri.toString(),
+      ],
+    });
+  } else if (role == 'writer' && !reloaded) {
     await _signIn(tester);
     await _quickAdd(tester, title);
     channel.send({'role': role, 'event': 'added', 'storage': storage});

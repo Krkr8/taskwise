@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../platform/app_target.dart';
 import 'brutal.dart';
 import 'tokens.dart';
 
@@ -84,7 +85,12 @@ abstract final class AppTheme {
     );
   }
 
+  /// The styles also go to the buttons, chips and menus below, which don't
+  /// get ThemeData's fontFamily. In the apps those keep the platform's font;
+  /// the web has none (the engine would fetch one from Google), so there
+  /// every style names the bundled fonts.
   static TextTheme _text(Color ink, Color muted) {
+    final web = appTarget.isWeb;
     const w4 = FontWeight.w400;
     const w5 = FontWeight.w500;
     const w7 = FontWeight.w700;
@@ -99,6 +105,8 @@ abstract final class AppTheme {
       height: height,
       letterSpacing: ls,
       color: ink,
+      fontFamily: web ? 'SpaceGrotesk' : null,
+      fontFamilyFallback: web ? const ['Alexandria'] : null,
     );
     return TextTheme(
       displayLarge: s(56, w7, height: 1.05, ls: -1.5),

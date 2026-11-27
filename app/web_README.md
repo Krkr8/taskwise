@@ -16,6 +16,7 @@ flutter build web --pwa-strategy=none
 | `sw.js` | Our service worker (below) |
 | `icons/` | Generated from the iOS app icon (below) |
 | `sqlite3.wasm`, `drift_worker.js` | The database (below) |
+| `fallback-fonts/` | Roboto, the engine's default font (below) |
 
 ## The service worker
 
@@ -50,8 +51,27 @@ flutter build web --pwa-strategy=none
   Reload calls `window.taskwiseReloadToNewVersion()`, which posts
   `{type: 'reload'}`; the worker skips waiting, takes over, and the page
   reloads. On `activate`, the older caches are deleted.
-
 Check the syntax after a change: `node --check web/sw.js`.
+
+## Fonts: nothing from Google
+
+Flutter's engine always loads Roboto (its default font) and, for a character
+no loaded font has, a Noto font, from `fontFallbackBaseUrl`
+(`https://fonts.gstatic.com/s/` unless set). `flutter_bootstrap.js` sets it
+to `fallback-fonts/`, which holds the one file the engine asks for:
+
+| File | Source | sha256 |
+| --- | --- | --- |
+| `fallback-fonts/roboto/v32/KFOmCnqEu92Fr1Me4GZLCzYlKw.woff2` | https://fonts.gstatic.com/s/roboto/v32/KFOmCnqEu92Fr1Me4GZLCzYlKw.woff2 (the engine's `_robotoUrl`) | `35b02ca266b79eb4996590f15817425a1ce9ebf48f84471843233ff614656bf2` |
+
+Roboto is under the SIL Open Font License (`fallback-fonts/OFL-Roboto.txt`).
+After a Flutter upgrade, check the engine still asks for that path
+(`grep -rn _robotoUrl` in `bin/cache/flutter_web_sdk/` of the Flutter SDK).
+Every text in the app uses the bundled fonts (Brutal: Space Grotesk +
+Alexandria, Lapis: IBM Plex Sans Arabic), so no Noto font is needed; text
+must not use characters these lack (e.g. write "the three dots", not "⋯").
+The browser test checks that a start in English and Arabic, in both designs,
+contacts no other host.
 
 ## The icons
 

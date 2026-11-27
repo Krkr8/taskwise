@@ -2597,7 +2597,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeScreenGuideStep1.
   ///
   /// In en, this message translates to:
-  /// **'Tap the Share button. If you can\'t see it, tap ⋯ first.'**
+  /// **'Tap the Share button. If you can\'t see it, tap More (the three dots) first.'**
   String get homeScreenGuideStep1;
 
   /// No description provided for @homeScreenGuideStep2.
