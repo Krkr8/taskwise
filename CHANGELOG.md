@@ -6,6 +6,18 @@ When a version is released, its section becomes the text of the draft GitHub rel
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-27
+
+### Added
+
+- **Taskwise in the browser.** The same app now runs in any modern browser, with nothing to install: sign in with your own server's address, and your tasks sync like on any other device (it shows up in Settings → Devices as, for example, "Safari on iPhone"). Brutal and Lapis are available there, in light and dark. After one visit it also starts without internet, and a bar offers **Reload** when there is a new version. On an iPhone, add it to the Home Screen first (the app shows how). Not on the web yet: reminders (planned), location reminders, Siri and shortcuts, background sync and in-app updates. See [docs/web-app.md](docs/web-app.md).
+- **A home page** with the download links for every platform and the browser version, in English and Arabic.
+- **Server: browser access (CORS).** The sync server now answers requests from browsers. **Redeploy your server** (or update it) before you connect the web app; the other apps don't need anything.
+
+### Changed
+
+- The device list knows a new kind of device, "web". Older apps show it as "other".
+
 ## [1.2.1] - 2026-11-27
 
 ### Fixed

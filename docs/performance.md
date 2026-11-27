@@ -154,3 +154,19 @@ after.
 - **Grouping, search and calendar logic.** Sorting 2,000 tasks into
   sections takes about 0.5 ms, and the month's calendar items (including
   repeats) about 0.5 ms.
+
+## Web
+
+Measured on 2026-11-27 with the release web build (`flutter build web --pwa-strategy=none`, the same files the site serves under `/app/`), in Chrome for Testing 158 on the Fedora laptop, **headless with software rendering** (no GPU). Real browsers with a GPU should do at least as well. 2,000 tasks, spread like the desktop test's, were imported with Settings → Backup → Import from a file (a file made with the same generator idea; no subtasks, tags or reminders).
+
+| What | Result |
+|---|---|
+| Size of `build/web` | 50 MB on disk. Most of it is the unused renderer variants in `canvaskit/` (37 MB); a browser downloads one of them. |
+| `main.dart.js` | 6.5 MB (1.5 MB gzip, 1.2 MB brotli) |
+| `sqlite3.wasm` | 744 KB |
+| First visit on "Fast 4G" (DevTools' setting: 9 Mbit/s, 562 ms delay), nothing cached | The app's first screen after **6.0 s**; 3.3 MB transferred (brotli). With the 2,000 tasks in the browser's storage, the list shows after **7.2 s**. Later visits start from the service worker's cache: a second or two. |
+| Scrolling the list (down and back up, 2,000 tasks) | Median frame 33 ms (about 30 frames a second), 9 in 10 under 50 ms, worst 83 ms. The same measure on the Settings page gave 16.7 ms (60 frames a second). |
+| A hard fling through the list | Median 33 ms, worst 117 ms. |
+| Switching to the calendar | One slow frame of 367 ms (building the month), then 60 frames a second. |
+
+Scrolling is smooth but not at 60 frames in this software-rendered setup; the native apps' profile numbers above are for a different engine and aren't directly comparable. Nothing here looks like a blocker. Ideas if it ever matters: a smaller first download (the 6.5 MB script is most of it), and checking the list on a real phone.

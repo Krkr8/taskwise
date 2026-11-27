@@ -1,6 +1,6 @@
 # Taskwise
 
-Taskwise is a personal to-do and reminders app for Windows, Linux, iPhone and Android. It works offline, and it can keep your devices in step through a small sync server that you run yourself, for free. It speaks English and Arabic, and it can remind you by time or, on phones, by place.
+Taskwise is a personal to-do and reminders app for Windows, Linux, iPhone and Android, and it also runs in a web browser. It works offline, and it can keep your devices in step through a small sync server that you run yourself, for free. It speaks English and Arabic, and it can remind you by time or, on phones, by place.
 
 <p align="center">
   <img src="design/brutal/desktop-light/01-tasks.png" alt="Taskwise on a desktop: the task list in the Brutal design" width="720">
@@ -52,9 +52,11 @@ Download the newest build from **[Releases](https://github.com/Krkr8/taskwise/re
 | Windows 11 (x64) | `taskwise-<version>-windows-x64.zip` | [Install on Windows](docs/install-windows.md) |
 | iPhone (iOS 15+) | `taskwise-<version>-ios-unsigned.ipa` | [Install on iPhone](docs/install-ios-sidestore.md) |
 | Android (8.0+) | `taskwise-<version>-android.apk` | [Install on Android](docs/install-android.md) |
+| Web browser (any) | nothing to install: the Taskwise web app (address in the repository's About box) <!-- WEB_APP_URL --> | [Taskwise in the browser](docs/web-app.md) |
 
 - **Linux:** the AppImage is one file that runs on Debian 12+, Ubuntu 22.04+, Arch, Fedora and most other distributions: make it executable and open it. Or extract the tar.gz and run `./install.sh`, which installs for your user only, with no `sudo`.
 - **Windows:** a portable folder. Extract the zip and run `taskwise.exe`; no installer and no admin rights. Windows warns about it once because the app isn't code-signed.
+- **Web:** the same app in a browser, with Brutal and Lapis. On an iPhone, add it to the Home Screen first. No reminders on the web yet. [Details](docs/web-app.md).
 - **Android:** Taskwise isn't on Google Play. Download the APK on the phone and install it (Android asks you to allow installing from your browser once). Updates install over the old version.
 - **iPhone:** Taskwise isn't on the App Store. You install the `.ipa` yourself with a free Apple ID, using [iloader](https://iloader.app) or [SideStore](https://sidestore.io) from a Linux, Windows or Mac computer. A free Apple ID has to refresh the app every 7 days. [What works with a free Apple ID](docs/ios-free-apple-id.md).
 

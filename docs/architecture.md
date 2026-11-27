@@ -4,12 +4,13 @@ Taskwise is three projects in one repository:
 
 | Folder | What it is |
 |---|---|
-| `app/` | The Flutter app for Linux, Windows, iPhone and Android. |
+| `app/` | The Flutter app for Linux, Windows, iPhone, Android and the web. The web shell (page, service worker, database files) is in `app/web/` (see `app/web_README.md`). |
 | `app/packages/taskwise_android/` | Taskwise's own Android code as a local plugin: location reminders (`GeofenceEngine.kt`, a port of the Swift engine, and `LocationReminderManager.kt`), the "Save to" dialog, and the "New task" shortcut and share (`AssistantIntents.kt`). A plugin, so it is also registered in the background-sync engine. |
 | `shared/` | Pure Dart models and logic used by the app (and mirrored by the server's tests): tasks, reminders, places, repeat rules, the reminder schedule, task grouping, the location plan. No Flutter in here. |
 | `server/` | The TypeScript + Hono sync server (Vercel + Turso). API: `docs/sync-api.md`. |
 | `tools/geofence_sim/` | The walk simulator and Linux runner for the iPhone's Swift location code (the Android twin is `GeofenceWalkTest.kt`). |
 | `design/` | Screenshots of every design (made by the design tour, see below). |
+| `web/` | The public home page (`web/site/`, English and Arabic) and the scripts that build and check the whole site, with the app under `/app/` (`build_site.sh`, `test_site.sh`). Deployed by `.github/workflows/web.yml`. |
 | `docs/` | Setup and install guides, the sync API, this file. |
 
 ## Inside `app/lib/`
@@ -27,11 +28,14 @@ Taskwise is three projects in one repository:
 | `update/` | In-app updates: checking GitHub Releases, verifying the signed `SHA256SUMS`, and the installers for Windows, the Linux AppImage and tar.gz, and Android (`AppUpdater.kt`, channel `taskwise/update`). See `docs/updates.md`. |
 | `assistant/` | Siri's inbox and snapshot on the iPhone, and Android's "New task" shortcut and share (channel `taskwise/assistant`: `AssistantPlugin.swift` and `AssistantIntents.swift` on the iPhone, `TaskwiseAndroidPlugin.kt` on Android). See `docs/assistants.md`. |
 | `desktop/` | Tray icon, single window, start on login. |
+| `platform/` | Which kind of device the app runs on. `AppTarget` (`app_target.dart`) replaces `Platform.isX` checks (`dart:io`'s `Platform` throws in a browser). Browser-only code (`package:web`, `dart:js_interop`: storage, the service worker, the browser name, the Home Screen guide) sits behind conditional imports, `if (dart.library.js_interop)`, with a plain Dart twin for the VM so tests still compile. Tests set `debugAppTargetOverride` (`test/flutter_test_config.dart` sets it to the host). |
 | `version.dart` | The app version (a test keeps it equal to `pubspec.yaml`). |
 | `l10n/` | English and Arabic texts (`app_en.arb`, `app_ar.arb`); the Dart files next to them are generated. |
 | `ui/` | Everything on screen, split by design (below). |
 
 None of the folders outside `ui/` know which design is in use.
+
+On the web only Brutal and Lapis are offered (any other stored design shows Brutal), and a few things are off: reminders, location, background sync, in-app updates (each checks `AppTarget`). See `docs/web-app.md`.
 
 ## Designs (`app/lib/ui/`)
 
@@ -97,6 +101,8 @@ Keep new screens in `shared/` unless a design really needs its own version, so a
 | The real app in a window: places, location reminders, the map | `flutter test integration_test/location_test.dart -d linux` |
 | Screenshots of every screen, design and look | `flutter test integration_test/design_tour_test.dart -d linux --dart-define=SHOTS=$PWD/../design` |
 | Speed with 2,000 tasks, every design | `flutter drive --profile -d linux --driver=test_driver/integration_test.dart --target=integration_test/performance_test.dart` (see `docs/performance.md`) |
+| The web app in Chrome against a local server | `flutter drive -d web-server ... --target=integration_test/web_smoke_test.dart` (see `docs/dev-setup-fedora.md`, "The browser test") |
+| The built site | `web/build_site.sh <version> <out_dir> && web/test_site.sh <out_dir>` |
 | Shared logic | `cd shared && dart test` |
 | Server | `cd server && npm test` |
 | iPhone location logic and Siri's inbox | `tools/geofence_sim/run.sh test` and `tools/geofence_sim/run.sh` |
