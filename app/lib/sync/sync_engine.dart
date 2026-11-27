@@ -32,6 +32,10 @@ class SyncEngine {
   final RecordCodec _codec;
   final SettingsRepository _settings;
 
+  /// The devices as the server last listed them (with the time zone and
+  /// web push flag, which the local table doesn't keep).
+  List<Device> serverDevices = const [];
+
   /// Changes per push request, and per pull page.
   final int pushBatch;
   final int pullLimit;
@@ -175,6 +179,7 @@ class SyncEngine {
   /// devices; revoked ones come back as `deleted`).
   Future<void> refreshDevices() async {
     final devices = await api.devices();
+    serverDevices = devices;
     await db.transaction(() async {
       for (final d in devices) {
         await db

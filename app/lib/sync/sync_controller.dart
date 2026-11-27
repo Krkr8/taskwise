@@ -12,6 +12,7 @@ import 'sync_api.dart';
 import 'sync_engine.dart';
 import 'token_store.dart';
 import '../logging/app_log.dart';
+import '../notifications/device_time_zone.dart';
 import '../platform/app_target.dart';
 import '../platform/page_reload.dart';
 
@@ -113,6 +114,7 @@ class SyncController extends Notifier<SyncState> {
   Future<void>? _running;
   bool _again = false;
   bool _disposed = false;
+  String? _timeZoneSent;
 
   @override
   SyncState build() {
@@ -167,14 +169,17 @@ class SyncController extends Notifier<SyncState> {
       );
     }
     final deviceId = ref.read(deviceIdProvider);
+    final timeZone = await ref.read(deviceTimeZoneProvider.future);
     final login = await api.login(
       username: username,
       password: password,
       deviceId: deviceId,
       deviceName: deviceName,
       deviceType: ref.read(deviceTypeProvider),
+      timeZone: timeZone,
     );
     _stop();
+    _timeZoneSent = timeZone;
     await ref.read(tokenStoreProvider).write(login.token);
     final url = api.baseUri.toString();
     await ref
@@ -263,6 +268,33 @@ class SyncController extends Notifier<SyncState> {
     await engine.refreshDevices();
   }
 
+  /// What the push plan uploader needs: the signed-in API and the devices
+  /// as the server last listed them. Null when not signed in.
+  ({SyncApi api, List<Device> devices})? get pushContext {
+    final engine = _engine;
+    return engine == null
+        ? null
+        : (api: engine.api, devices: engine.serverDevices);
+  }
+
+  /// Tells the server this device's time zone when it differs from what the
+  /// server has (the zone changes when the user travels). Tried once per
+  /// zone and run, so an older server that refuses it isn't asked again.
+  Future<void> _syncTimeZone(SyncEngine engine) async {
+    final zone = await ref.read(deviceTimeZoneProvider.future);
+    if (zone == null || zone == _timeZoneSent) return;
+    final own = engine.serverDevices
+        .where((d) => d.id == engine.deviceId)
+        .firstOrNull;
+    if (own == null || own.timeZone == zone) return;
+    _timeZoneSent = zone;
+    try {
+      await engine.api.updateDeviceTimeZone(engine.deviceId, zone);
+    } on SyncApiException catch (e) {
+      appLog.warning('sync', 'Could not send the time zone: ${e.message}');
+    }
+  }
+
   SyncEngine _requireEngine() =>
       _engine ??
       (throw const SyncHttpException(401, 'unauthorized', 'Not signed in'));
@@ -294,6 +326,7 @@ class SyncController extends Notifier<SyncState> {
       final report = await engine.sync();
       appLog.info('sync', 'Synced: $report');
       if (_disposed || _engine != engine) return;
+      await _syncTimeZone(engine);
       final now = ref.read(clockProvider)().toUtc();
       await ref.read(settingsRepositoryProvider).setLastSyncedAt(now);
       state = state.copyWith(

@@ -209,26 +209,12 @@ class ReminderScheduler {
       channelName: l10n.notifChannel,
       snoozeMinutes: settings.snoozeMinutes,
       snoozeLabel: (m) => snoozeLabel(l10n, m),
-      body: (p) {
-        final entries = _ref.read(taskEntriesProvider).value ?? const [];
-        final task = entries
-            .map((e) => e.task)
-            .where((t) => t.id == p.taskId)
-            .firstOrNull;
-        // Relative to the day it fires: "Due today, 6:00 PM".
-        final day = l10n.relativeDate(
-          p.occurrence,
-          LocalDate.fromDateTime(p.fireAt),
-        );
-        if (p.snoozed && task != null && task.dueDate == null) {
-          return l10n.notifSnoozedNoDate;
-        }
-        final minutes = task?.dueTimeMinutes;
-        final when = minutes == null
-            ? day
-            : '$day, ${l10n.clockTime(minutes, settings.timeFormat)}';
-        return p.snoozed ? l10n.notifSnoozed(when) : l10n.notifDue(when);
-      },
+      body: (p) => notificationBody(
+        l10n,
+        p,
+        _ref.read(taskEntriesProvider).value ?? const [],
+        settings.timeFormat,
+      ),
     );
   }
 
@@ -249,3 +235,26 @@ String snoozeLabel(AppLocalizations l10n, int minutes) => l10n.notifSnooze(
       ? l10n.durationHours(minutes ~/ 60)
       : l10n.durationMinutes(minutes),
 );
+
+/// The text under a reminder's title, relative to the day it fires:
+/// "Due today, 6:00 PM". Shared by native notifications and web push plans.
+String notificationBody(
+  AppLocalizations l10n,
+  PlannedNotification p,
+  List<TaskEntry> entries,
+  TimeFormat timeFormat,
+) {
+  final task = entries
+      .map((e) => e.task)
+      .where((t) => t.id == p.taskId)
+      .firstOrNull;
+  final day = l10n.relativeDate(p.occurrence, LocalDate.fromDateTime(p.fireAt));
+  if (p.snoozed && task != null && task.dueDate == null) {
+    return l10n.notifSnoozedNoDate;
+  }
+  final minutes = task?.dueTimeMinutes;
+  final when = minutes == null
+      ? day
+      : '$day, ${l10n.clockTime(minutes, timeFormat)}';
+  return p.snoozed ? l10n.notifSnoozed(when) : l10n.notifDue(when);
+}

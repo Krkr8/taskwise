@@ -125,6 +125,7 @@ class SyncApi {
     required String deviceId,
     required String deviceName,
     required DeviceType deviceType,
+    String? timeZone,
   }) async {
     final body = await _send(
       'POST',
@@ -132,7 +133,12 @@ class SyncApi {
       body: {
         'username': username,
         'password': password,
-        'device': {'id': deviceId, 'name': deviceName, 'type': deviceType.name},
+        'device': {
+          'id': deviceId,
+          'name': deviceName,
+          'type': deviceType.name,
+          'timeZone': ?timeZone,
+        },
       },
     );
     return (
@@ -189,6 +195,45 @@ class SyncApi {
       '/devices/${Uri.encodeComponent(id)}',
       body: {'name': name},
     ),
+  );
+
+  /// Tells the server this device's IANA time zone (web push plans).
+  Future<void> updateDeviceTimeZone(String id, String timeZone) => _send(
+    'PATCH',
+    '/devices/${Uri.encodeComponent(id)}',
+    body: {'timeZone': timeZone},
+  );
+
+  // ------------------------------------------------------------- web push
+
+  /// The server's VAPID public key. Throws [SyncHttpException] with code
+  /// `push_not_configured` (404) when the server has no web push.
+  Future<String> pushKey() async =>
+      (await _send('GET', '/push/key'))['publicKey']! as String;
+
+  Future<void> putPushSubscription({
+    required String endpoint,
+    required String p256dh,
+    required String auth,
+  }) => _send(
+    'PUT',
+    '/push/subscription',
+    body: {
+      'endpoint': endpoint,
+      'keys': {'p256dh': p256dh, 'auth': auth},
+    },
+  );
+
+  Future<void> deletePushSubscription(String endpoint) =>
+      _send('DELETE', '/push/subscription', body: {'endpoint': endpoint});
+
+  /// Replaces the reminders the server will push to a web device.
+  Future<void> putPushPlan(String deviceId, List<PushPlanItem> items) => _send(
+    'PUT',
+    '/push/plan/${Uri.encodeComponent(deviceId)}',
+    body: {
+      'items': [for (final i in items) i.toJson()],
+    },
   );
 
   /// Makes another device the main one (only the main device may).

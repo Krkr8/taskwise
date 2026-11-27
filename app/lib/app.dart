@@ -19,6 +19,7 @@ import 'ui/shared/web/add_to_home_screen_page.dart';
 import 'ui/shared/web/browser_safe_area.dart';
 import 'ui/shared/web/new_version_bar.dart';
 import 'update/update_controller.dart';
+import 'notifications/push_plan_uploader.dart';
 
 /// Root widget: theme, language/RTL and time format come from settings.
 class TaskwiseApp extends ConsumerWidget {
@@ -33,6 +34,7 @@ class TaskwiseApp extends ConsumerWidget {
     // Siri's inbox, the update checks and sync (kept alive by these watches).
     ref
       ..watch(reminderSchedulerProvider)
+      ..watch(pushPlanUploaderProvider)
       ..watch(missedRepeatsProvider)
       ..watch(assistantSyncProvider)
       ..watch(updateControllerProvider)

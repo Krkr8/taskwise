@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
 
@@ -27,6 +29,9 @@ abstract final class SettingKeys {
   /// When this device last checked for due reminders (ISO UTC). Desktop
   /// uses it to show reminders missed while the app wasn't running.
   static const remindersCheckedAt = 'reminders_checked_at';
+  /// Hash of the last push plan uploaded per web device (JSON map);
+  /// device-only.
+  static const pushPlanHashes = 'push_plan_hashes';
   static const thisDeviceId = 'this_device_id';
 
   // Sync (all device-only).
@@ -146,6 +151,21 @@ class SettingsRepository extends RepositoryBase {
     at.toUtc().toIso8601String(),
     synced: false,
   );
+
+  Future<Map<String, String>> getPushPlanHashes() async {
+    final row = await (db.select(
+      db.settings,
+    )..where((s) => s.id.equals(SettingKeys.pushPlanHashes))).getSingleOrNull();
+    if (row == null) return {};
+    try {
+      return (jsonDecode(row.value) as Map).cast<String, String>();
+    } on Object {
+      return {};
+    }
+  }
+
+  Future<void> setPushPlanHashes(Map<String, String> hashes) =>
+      _put(SettingKeys.pushPlanHashes, jsonEncode(hashes), synced: false);
 
   // --------------------------------------------------------------- updates
 

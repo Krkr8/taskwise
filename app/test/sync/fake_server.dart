@@ -31,6 +31,13 @@ class FakeSyncServer {
   /// edits made on the device during a push).
   Future<void> Function()? onPush;
 
+  /// False: the push endpoints answer 404 `push_not_configured`.
+  bool pushConfigured = true;
+
+  /// Uploaded push plans by web device id, and how many uploads were made.
+  final pushPlans = <String, List<Map<String, Object?>>>{};
+  int pushPlanUploads = 0;
+
   /// Requests seen, as "METHOD /path".
   final requests = <String>[];
 
@@ -116,6 +123,23 @@ class FakeSyncServer {
         'hasMore': changes.length > limit,
       });
     }
+    if (path.startsWith('/push/')) {
+      if (!pushConfigured) return _error(404, 'push_not_configured');
+      if (path.startsWith('/push/plan/') && request.method == 'PUT') {
+        final id = Uri.decodeComponent(path.substring('/push/plan/'.length));
+        final target = devices[id];
+        if (target == null ||
+            target['type'] != 'web' ||
+            target['deleted'] == true) {
+          return _error(404, 'not_found');
+        }
+        pushPlans[id] = (body!['items']! as List).cast<Map<String, Object?>>();
+        pushPlanUploads++;
+        return _json({'ok': true});
+      }
+      if (path == '/push/key') return _json({'publicKey': 'test-key'});
+      return _error(404, 'not_found');
+    }
     if (path == '/devices') return _json({'devices': devices.values.toList()});
     final me = devices[deviceId]!;
     if (path == '/devices/claim-main') {
@@ -134,6 +158,7 @@ class FakeSyncServer {
       if (id != deviceId && !isMain) return _error(403, 'forbidden');
       if (request.method == 'PATCH') {
         if (body!['name'] case final String name) device['name'] = name;
+        if (body['timeZone'] case final String zone) device['timeZone'] = zone;
         if (body['main'] == true) {
           if (!isMain) return _error(403, 'forbidden');
           for (final d in devices.values) {
