@@ -47,4 +47,14 @@ describe('CORS', () => {
     expect(res.status).toBe(404);
     expect(res.headers.get('access-control-allow-origin')).toBe('*');
   });
+
+  it('lets the browser read Retry-After (rate limits)', async () => {
+    const t = await testApp();
+    const res = await t.app.request('/api/v1/health', {
+      headers: { Origin: origin },
+    });
+    expect(res.headers.get('access-control-expose-headers')).toBe(
+      'Retry-After',
+    );
+  });
 });

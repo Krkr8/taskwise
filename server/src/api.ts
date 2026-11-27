@@ -59,6 +59,8 @@ export function createApp(deps: AppDeps): Hono<AppEnv> {
         origin: '*',
         allowMethods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
         allowHeaders: ['Authorization', 'Content-Type'],
+        // The app reads it on a 429 to say when to try again.
+        exposeHeaders: ['Retry-After'],
         maxAge: 86400,
       }),
     )
