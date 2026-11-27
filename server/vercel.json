@@ -5,5 +5,15 @@
       "path": "/api/v1/cron/daily",
       "schedule": "0 3 * * *"
     }
-  ]
+  ],
+  "functions": {
+    "api/push-delivery.ts": {
+      "experimentalTriggers": [
+        {
+          "type": "queue/v2beta",
+          "topic": "taskwise-push"
+        }
+      ]
+    }
+  }
 }

@@ -12,15 +12,14 @@ import { createApp } from './api.js';
 import { configFromEnv } from './config.js';
 import type { AppEnv } from './context.js';
 import { Database } from './db/client.js';
+import { QueuePushScheduler } from './push/vercel_queue.js';
+import { appFromConfig } from './wiring.js';
 
 const config = configFromEnv();
 const database = Database.fromUrl(config.databaseUrl, config.databaseAuthToken);
 
-const app: Hono<AppEnv> = createApp({
-  db: () => database.client(),
-  setupSecret: config.setupSecret,
-  cronSecret: config.cronSecret,
-  now: Date.now,
-});
+const app: Hono<AppEnv> = createApp(
+  appFromConfig(config, database, new QueuePushScheduler()),
+);
 
 export default app;

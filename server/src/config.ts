@@ -7,6 +7,15 @@ export interface Config {
   readonly setupSecret: string | undefined;
   /** Vercel Cron sends it as `Authorization: Bearer <secret>`. */
   readonly cronSecret: string | undefined;
+  /** Web Push (VAPID) keys; set only when all three variables are. */
+  readonly vapid: VapidConfig | undefined;
+}
+
+export interface VapidConfig {
+  readonly publicKey: string;
+  readonly privateKey: string;
+  /** `mailto:` an email address, or the site's https URL. */
+  readonly subject: string;
 }
 
 /** Reads [Config] from [env], treating empty values as unset. */
@@ -17,7 +26,14 @@ export function configFromEnv(
     const raw = env[name]?.trim();
     return raw ? raw : undefined;
   };
+  const publicKey = value('VAPID_PUBLIC_KEY');
+  const privateKey = value('VAPID_PRIVATE_KEY');
+  const subject = value('VAPID_SUBJECT');
   return {
+    vapid:
+      publicKey && privateKey && subject
+        ? { publicKey, privateKey, subject }
+        : undefined,
     databaseUrl: value('DATABASE_URL'),
     databaseAuthToken: value('DATABASE_AUTH_TOKEN'),
     setupSecret: value('SETUP_SECRET'),

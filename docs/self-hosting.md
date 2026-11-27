@@ -209,6 +209,29 @@ The Taskwise web app talks to your server from the browser. Nothing to set up: t
 - **On Vercel (A):** open your fork on GitHub and click **Sync fork → Update branch**. Vercel redeploys the server by itself; check `https://<your-app>.vercel.app/api/v1/health` after a minute.
 - **With Docker or Node (B):** follow [Update the server](#update-the-server).
 
+## Web reminders
+
+The web app can show reminders as notifications (Web Push). This needs three more settings, called VAPID keys. Without them the server works as before and the web app says it isn't set up for reminders yet.
+
+1. Make the keys (once, on any computer with Node.js):
+
+   ```bash
+   npx web-push@4.0.0 generate-vapid-keys
+   ```
+
+2. Set these three environment variables:
+
+   | Name | What it is |
+   |---|---|
+   | `VAPID_PUBLIC_KEY` | The public key from step 1. |
+   | `VAPID_PRIVATE_KEY` | The private key from step 1. Keep it secret. |
+   | `VAPID_SUBJECT` | `mailto:` followed by your email address, or your site's `https://` address. Push services use it to reach you if something is wrong. |
+
+3. **On Vercel (A):** put them in the server project under **Settings → Environment Variables**, then redeploy. Reminders are queued with Vercel Queues (the `taskwise-push` topic), which needs no further setup.
+   **With Docker or Node (B):** pass the same three variables (`--env-file` or `-e`). The server checks for due reminders every 30 seconds by itself; there is nothing else to run.
+
+Keep the keys: if you change them, browsers have to subscribe again.
+
 ## If something goes wrong
 
 - **`/api/v1/health` shows `"status":"error"`:** the server can't reach its database. Check `DATABASE_URL` (and `DATABASE_AUTH_TOKEN` for Turso). Docker: `docker logs taskwise`. Node: the terminal or `journalctl -u taskwise`. Vercel: the **Logs** tab.
