@@ -10,7 +10,10 @@ name: Web site
 # is always built from that release's tag (v<version>, whatever branch is
 # picked under "Use workflow from"), with its download links and the app's
 # cache version; `version` empty means the latest published release. A home
-# page fix therefore ships with the next release or a patch release.
+# page fix therefore ships with the next release or a patch release. With
+# `preview` ticked it deploys to a preview address only (printed in the log
+# and the summary), for checks before production: e.g. the first deploy's
+# /app -> /app/ redirect, the COOP/COEP and cache headers.
 #
 # Needs the repository secrets VERCEL_TOKEN, VERCEL_ORG_ID and
 # VERCEL_PROJECT_ID. With the repository variable WEB_APP_URL (the site's
@@ -25,6 +28,11 @@ on:
         description: Version to deploy, e.g. 1.3.0 (empty for the latest published release)
         required: false
         default: ''
+      preview:
+        description: Preview only (not the production address), e.g. for the first deploy's checks
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -92,6 +100,7 @@ jobs:
       - name: Deploy to Vercel
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          PREVIEW: ${{ inputs.preview }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
@@ -104,14 +113,21 @@ jobs:
             echo "::error::Not deployed: the repository secrets$missing are missing (Settings → Secrets and variables → Actions)."
             exit 1
           fi
-          url=$(npx --yes vercel@65.15.0 deploy "$RUNNER_TEMP/site" --prod --yes --token "$VERCEL_TOKEN")
-          echo "Deployed $VERSION: $url"
-          echo "Deployed the site for $VERSION: $url" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$PREVIEW" = true ]; then
+            # A preview deployment: its own address, production unchanged.
+            url=$(npx --yes vercel@65.15.0 deploy "$RUNNER_TEMP/site" --yes --token "$VERCEL_TOKEN")
+            echo "Preview of $VERSION (not production): $url"
+            echo "Preview of the site for $VERSION (not production): $url" >> "$GITHUB_STEP_SUMMARY"
+          else
+            url=$(npx --yes vercel@65.15.0 deploy "$RUNNER_TEMP/site" --prod --yes --token "$VERCEL_TOKEN")
+            echo "Deployed $VERSION: $url"
+            echo "Deployed the site for $VERSION: $url" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       # The production address can take a moment to switch to the new
       # deployment.
       - name: Check the live site
-        if: vars.WEB_APP_URL != ''
+        if: vars.WEB_APP_URL != '' && inputs.preview != true
         env:
           VERSION: ${{ steps.version.outputs.version }}
           WEB_APP_URL: ${{ vars.WEB_APP_URL }}
