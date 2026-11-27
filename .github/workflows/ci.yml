@@ -82,6 +82,7 @@ jobs:
   # sign-in, sync, reload, two tabs (app/integration_test/web_smoke_test.dart).
   web:
     runs-on: ubuntu-24.04
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7.0.1
 
