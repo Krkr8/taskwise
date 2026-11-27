@@ -2,7 +2,7 @@
 
 Taskwise also runs in a web browser: the same app, on any computer or phone, with nothing to install. It is the same code as the Windows, Linux, iPhone and Android apps.
 
-The address of the public site is in the repository's **website** field (the About box, top right of the project page on GitHub) <!-- WEB_APP_URL -->. The home page there has the download links for every platform. The app itself is at `/app/` on the same address.
+The public site is **[taskwise-web.vercel.app](https://taskwise-web.vercel.app)** <!-- WEB_APP_URL --> (also in the repository's website field on GitHub). The home page there has the download links for every platform. The app itself is at `/app/` on the same address.
 
 ## Use it
 
