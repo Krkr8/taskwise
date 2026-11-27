@@ -52,7 +52,7 @@ Download the newest build from **[Releases](https://github.com/Krkr8/taskwise/re
 | Windows 11 (x64) | `taskwise-<version>-windows-x64.zip` | [Install on Windows](docs/install-windows.md) |
 | iPhone (iOS 15+) | `taskwise-<version>-ios-unsigned.ipa` | [Install on iPhone](docs/install-ios-sidestore.md) |
 | Android (8.0+) | `taskwise-<version>-android.apk` | [Install on Android](docs/install-android.md) |
-| Web browser (any) | nothing to install: the Taskwise web app (address in the repository's About box) <!-- WEB_APP_URL --> | [Taskwise in the browser](docs/web-app.md) |
+| Web browser (any) | nothing to install: the Taskwise web app, at the address in the repository's website field (the About box on GitHub) <!-- WEB_APP_URL --> | [Taskwise in the browser](docs/web-app.md) |
 
 - **Linux:** the AppImage is one file that runs on Debian 12+, Ubuntu 22.04+, Arch, Fedora and most other distributions: make it executable and open it. Or extract the tar.gz and run `./install.sh`, which installs for your user only, with no `sudo`.
 - **Windows:** a portable folder. Extract the zip and run `taskwise.exe`; no installer and no admin rights. Windows warns about it once because the app isn't code-signed.

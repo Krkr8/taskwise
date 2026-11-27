@@ -204,7 +204,10 @@ On each device: **Settings → Sync → Connect to your server**. Enter the addr
 
 ## The web app
 
-The Taskwise web app talks to your server from the browser. Nothing to set up: the server allows browser requests (CORS) by itself. A server older than 1.3.0 doesn't, so redeploy or update it ([Update the server](#update-the-server)) before connecting the web app.
+The Taskwise web app talks to your server from the browser. Nothing to set up: the server allows browser requests (CORS) by itself. A server older than 1.3.0 doesn't, so update it before connecting the web app:
+
+- **On Vercel (A):** open your fork on GitHub and click **Sync fork → Update branch**. Vercel redeploys the server by itself; check `https://<your-app>.vercel.app/api/v1/health` after a minute.
+- **With Docker or Node (B):** follow [Update the server](#update-the-server).
 
 ## If something goes wrong
 

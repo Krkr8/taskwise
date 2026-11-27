@@ -2,7 +2,7 @@
 
 Taskwise also runs in a web browser: the same app, on any computer or phone, with nothing to install. It is the same code as the Windows, Linux, iPhone and Android apps.
 
-The address of the public site is in the repository's **About** box on GitHub (top right of the project page) <!-- WEB_APP_URL -->. The home page there has the download links for every platform. The app itself is at `/app/` on the same address.
+The address of the public site is in the repository's **website** field (the About box, top right of the project page on GitHub) <!-- WEB_APP_URL -->. The home page there has the download links for every platform. The app itself is at `/app/` on the same address.
 
 ## Use it
 
@@ -13,7 +13,7 @@ The address of the public site is in the repository's **About** box on GitHub (t
 
 The server must be version 1.3.0 or newer, because that is the first version that lets browsers talk to it. If you run your own, redeploy it first: see [the web app in the self-hosting guide](self-hosting.md#the-web-app).
 
-After you have opened the app once, it starts without internet too (your tasks are kept in the browser, and changes sync when you are online again). When a new version is out, a bar at the top says **New version**; tap **Reload**.
+After you have opened the app once, it starts without internet too (your tasks are kept in the browser, and changes sync when you are online again). When a new version is out, a bar says a new version of Taskwise is ready; tap **Reload**.
 
 ## On an iPhone: add it to the Home Screen
 
@@ -39,10 +39,10 @@ If the page says it could not start, the browser could not load the database fil
 
 The public site is only one copy. You can host yours (free):
 
-1. Fork the repository on GitHub.
-2. Create a Vercel project from the command line, so Vercel's own Git builds stay off. In an empty folder, run `npx vercel@<version> link` and pick a project name. It writes `.vercel/project.json` with the **org id** and **project id**.
+1. Fork the repository on GitHub. GitHub turns Actions off in a fork: open your fork's **Actions** tab and enable the workflows first.
+2. Create a Vercel project from the command line, so Vercel's own Git builds stay off. In an empty folder, run `npx vercel@65.15.0 link`. Answer that you don't want to link an existing project, so it creates a new one, and pick a project name; the framework is **Other**, with no build command (the workflow uploads a site that is already built). It writes `.vercel/project.json` with the **org id** and **project id**.
 3. Make a token at vercel.com/account/tokens.
 4. In your fork's **Settings → Secrets and variables → Actions**, add the secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID`, and the variable `WEB_APP_URL` (your site's address).
-5. Publish a release in your fork. The workflow `.github/workflows/web.yml` builds the site (`web/build_site.sh`, checked by `web/test_site.sh`) and deploys it. You can also run it by hand from the Actions tab for a release.
+5. Publish a release in your fork. The workflow `.github/workflows/web.yml` builds the site (`web/build_site.sh`, checked by `web/test_site.sh`) and deploys it. You can also run it by hand from the Actions tab for a release; tick **preview** to deploy to a preview address first (production stays as it is).
 
 Developing the web app: [dev-setup-fedora.md](dev-setup-fedora.md) (section "The web app") and [architecture.md](architecture.md).
