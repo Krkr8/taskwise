@@ -1380,6 +1380,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String fileDownloaded(String name) {
+    return 'Downloaded $name';
+  }
+
+  @override
   String backupImported(int changed, int kept, int skipped) {
     return 'Import done: $changed added or updated, $kept already newer here, $skipped skipped';
   }
@@ -1402,6 +1407,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String aboutVersion(String version) {
     return 'Taskwise $version';
   }
+
+  @override
+  String get aboutWebApp => 'Web app';
+
+  @override
+  String get aboutSharedComputer =>
+      'On a shared computer, sign out when you\'re done.';
 
   @override
   String get aboutViewLogs => 'View logs';

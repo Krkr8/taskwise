@@ -283,7 +283,8 @@ class SettingsPage extends ConsumerWidget {
                 ),
               ],
             ),
-            if (ref.watch(locationPlatformProvider).supported) ...[
+            if (!appTarget.isWeb &&
+                ref.watch(locationPlatformProvider).supported) ...[
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.my_location),

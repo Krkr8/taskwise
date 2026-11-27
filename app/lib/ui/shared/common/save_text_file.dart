@@ -7,6 +7,9 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../platform/app_target.dart';
+import 'save_text_file_stub.dart'
+    if (dart.library.js_interop) 'save_text_file_web.dart'
+    as web;
 
 /// Saves [text] as a file named [name] the way each platform expects, and
 /// returns the message to show, or null when the user cancelled.
@@ -14,6 +17,7 @@ import '../../../platform/app_target.dart';
 /// - Desktop: a save dialog (file_selector).
 /// - iPhone: the app's Documents folder, which the Files app shows under
 ///   "On My iPhone → Taskwise".
+/// - Web: a browser download.
 /// - Android: the system's "Save to" screen (`ACTION_CREATE_DOCUMENT`, see
 ///   FilesPlugin.kt), since file_selector can't save there.
 Future<String?> saveTextFile(
@@ -23,6 +27,10 @@ Future<String?> saveTextFile(
   required String mimeType,
   List<XTypeGroup> typeGroups = const [],
 }) async {
+  if (appTarget.isWeb) {
+    web.downloadTextFile(name: name, text: text, mimeType: mimeType);
+    return l10n.fileDownloaded(name);
+  }
   if (appTarget == AppTarget.android) {
     final saved = await _files.invokeMethod<bool>('saveFile', {
       'name': name,

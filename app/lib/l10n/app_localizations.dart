@@ -2246,6 +2246,12 @@ abstract class AppLocalizations {
   /// **'Saved {name}'**
   String fileSaved(String name);
 
+  /// No description provided for @fileDownloaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloaded {name}'**
+  String fileDownloaded(String name);
+
   /// No description provided for @backupImported.
   ///
   /// In en, this message translates to:
@@ -2281,6 +2287,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Taskwise {version}'**
   String aboutVersion(String version);
+
+  /// No description provided for @aboutWebApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Web app'**
+  String get aboutWebApp;
+
+  /// No description provided for @aboutSharedComputer.
+  ///
+  /// In en, this message translates to:
+  /// **'On a shared computer, sign out when you\'re done.'**
+  String get aboutSharedComputer;
 
   /// No description provided for @aboutViewLogs.
   ///

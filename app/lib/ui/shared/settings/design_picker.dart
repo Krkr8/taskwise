@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/app_settings.dart';
+import '../../../platform/app_target.dart';
 import '../../../state/providers.dart';
 import '../tasks/labels.dart';
 import '../theme/tokens.dart';
@@ -15,12 +16,15 @@ class DesignPicker extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final current = ref.watch(appSettingsProvider).design;
+    final current = effectiveDesign(
+      ref.watch(appSettingsProvider).design,
+      appTarget,
+    );
     return Wrap(
       spacing: Spacing.sm,
       runSpacing: Spacing.sm,
       children: [
-        for (final design in AppDesign.values)
+        for (final design in availableDesigns(appTarget))
           ChoiceChip(
             key: ValueKey('design-${design.name}'),
             avatar: _Swatch(designSwatch(design)),

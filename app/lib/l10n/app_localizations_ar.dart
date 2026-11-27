@@ -1416,6 +1416,11 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String fileDownloaded(String name) {
+    return 'تم تنزيل $name';
+  }
+
+  @override
   String backupImported(int changed, int kept, int skipped) {
     return 'اكتمل الاستيراد: $changed أُضيفت أو حُدّثت، $kept أحدث هنا، $skipped تُخطّيت';
   }
@@ -1438,6 +1443,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String aboutVersion(String version) {
     return 'Taskwise $version';
   }
+
+  @override
+  String get aboutWebApp => 'تطبيق الويب';
+
+  @override
+  String get aboutSharedComputer => 'على جهاز مشترك، سجّل الخروج عند الانتهاء.';
 
   @override
   String get aboutViewLogs => 'عرض السجلات';

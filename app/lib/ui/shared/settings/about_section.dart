@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../platform/app_target.dart';
 import '../../../update/update_controller.dart';
 import '../../../version.dart';
 import '../tasks/labels.dart';
@@ -15,7 +16,8 @@ class AboutSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final updates = ref.watch(updateConfigProvider).enabled;
+    final isWeb = appTarget.isWeb;
+    final updates = !isWeb && ref.watch(updateConfigProvider).enabled;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -24,6 +26,14 @@ class AboutSection extends ConsumerWidget {
           leading: const Icon(Icons.info_outline),
           title: Text(l10n.aboutVersion(appVersion)),
         ),
+        if (isWeb) ...[
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.language),
+            title: Text(l10n.aboutWebApp),
+            subtitle: Text(l10n.aboutSharedComputer),
+          ),
+        ],
         if (updates) const _UpdateRows(),
         ListTile(
           contentPadding: EdgeInsets.zero,

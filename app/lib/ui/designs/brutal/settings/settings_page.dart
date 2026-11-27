@@ -323,7 +323,8 @@ class SettingsPage extends ConsumerWidget {
                     ),
                   ],
                 ),
-                if (ref.watch(locationPlatformProvider).supported) ...[
+                if (!appTarget.isWeb &&
+                    ref.watch(locationPlatformProvider).supported) ...[
                   // A gap before the rows about this phone.
                   const SizedBox(height: Spacing.xl),
                   ListTile(

@@ -2,6 +2,8 @@ import 'dart:ui' show Locale, PlatformDispatcher;
 
 import 'package:taskwise_shared/taskwise_shared.dart';
 
+import '../platform/app_target.dart';
+
 /// Light/dark preference.
 enum ThemePreference { system, light, dark }
 
@@ -15,6 +17,14 @@ enum AppDesign {
 
   static const fallback = AppDesign.brutal;
 }
+
+/// The designs a target offers. The web has Brutal and Lapis only.
+List<AppDesign> availableDesigns(AppTarget target) =>
+    target.isWeb ? const [AppDesign.brutal, AppDesign.lapis] : AppDesign.values;
+
+/// The design to show: [stored] when [target] offers it, else Brutal.
+AppDesign effectiveDesign(AppDesign stored, AppTarget target) =>
+    availableDesigns(target).contains(stored) ? stored : AppDesign.fallback;
 
 /// UI languages (SPEC.md section 3.5).
 enum AppLanguage { en, ar }
