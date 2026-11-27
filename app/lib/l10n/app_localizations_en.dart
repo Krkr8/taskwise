@@ -1564,4 +1564,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get startErrorReload => 'Reload';
+
+  @override
+  String get homeScreenGuideTitle => 'Add Taskwise to your Home Screen';
+
+  @override
+  String get homeScreenGuideWhy =>
+      'On iPhone, Taskwise works best from your Home Screen: it opens like an app and can send reminders. A Safari tab keeps a separate copy of your tasks.';
+
+  @override
+  String get homeScreenGuideStep1 =>
+      'Tap the Share button. If you can\'t see it, tap ⋯ first.';
+
+  @override
+  String get homeScreenGuideStep2 => 'Choose “Add to Home Screen”.';
+
+  @override
+  String get homeScreenGuideStep3 =>
+      'Open Taskwise from your Home Screen and sign in there.';
+
+  @override
+  String get homeScreenGuideContinue => 'Continue in Safari anyway';
+
+  @override
+  String get newVersionReady => 'A new version of Taskwise is ready.';
+
+  @override
+  String get newVersionReload => 'Reload';
 }

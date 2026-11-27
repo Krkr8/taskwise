@@ -1600,4 +1600,31 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get startErrorReload => 'أعد التحميل';
+
+  @override
+  String get homeScreenGuideTitle => 'أضف Taskwise إلى الشاشة الرئيسية';
+
+  @override
+  String get homeScreenGuideWhy =>
+      'على iPhone يعمل Taskwise أفضل من الشاشة الرئيسية: يُفتح كتطبيق ويمكنه إرسال التذكيرات. أما علامة تبويب Safari فتحتفظ بنسخة منفصلة من مهامك.';
+
+  @override
+  String get homeScreenGuideStep1 =>
+      'اضغط زر المشاركة. إن لم تجده، فاضغط ⋯ أولًا.';
+
+  @override
+  String get homeScreenGuideStep2 => 'اختر «إضافة إلى الشاشة الرئيسية».';
+
+  @override
+  String get homeScreenGuideStep3 =>
+      'افتح Taskwise من الشاشة الرئيسية وسجّل الدخول هناك.';
+
+  @override
+  String get homeScreenGuideContinue => 'المتابعة في Safari على أي حال';
+
+  @override
+  String get newVersionReady => 'إصدار جديد من Taskwise جاهز.';
+
+  @override
+  String get newVersionReload => 'أعد التحميل';
 }

@@ -421,5 +421,13 @@
   "storageTemporaryWarning": "هذا المتصفح لا يحفظ مهامك. سجّل الدخول لمزامنتها، أو اخرج من التصفح الخاص.",
   "startErrorTitle": "تعذّر تشغيل Taskwise في هذا المتصفح",
   "startErrorMessage": "أعد تحميل الصفحة. إن تكرّر ذلك، جرّب متصفحًا آخر.",
-  "startErrorReload": "أعد التحميل"
+  "startErrorReload": "أعد التحميل",
+  "homeScreenGuideTitle": "أضف Taskwise إلى الشاشة الرئيسية",
+  "homeScreenGuideWhy": "على iPhone يعمل Taskwise أفضل من الشاشة الرئيسية: يُفتح كتطبيق ويمكنه إرسال التذكيرات. أما علامة تبويب Safari فتحتفظ بنسخة منفصلة من مهامك.",
+  "homeScreenGuideStep1": "اضغط زر المشاركة. إن لم تجده، فاضغط ⋯ أولًا.",
+  "homeScreenGuideStep2": "اختر «إضافة إلى الشاشة الرئيسية».",
+  "homeScreenGuideStep3": "افتح Taskwise من الشاشة الرئيسية وسجّل الدخول هناك.",
+  "homeScreenGuideContinue": "المتابعة في Safari على أي حال",
+  "newVersionReady": "إصدار جديد من Taskwise جاهز.",
+  "newVersionReload": "أعد التحميل"
 }

@@ -2557,6 +2557,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reload'**
   String get startErrorReload;
+
+  /// No description provided for @homeScreenGuideTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Taskwise to your Home Screen'**
+  String get homeScreenGuideTitle;
+
+  /// No description provided for @homeScreenGuideWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'On iPhone, Taskwise works best from your Home Screen: it opens like an app and can send reminders. A Safari tab keeps a separate copy of your tasks.'**
+  String get homeScreenGuideWhy;
+
+  /// No description provided for @homeScreenGuideStep1.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the Share button. If you can\'t see it, tap ⋯ first.'**
+  String get homeScreenGuideStep1;
+
+  /// No description provided for @homeScreenGuideStep2.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose “Add to Home Screen”.'**
+  String get homeScreenGuideStep2;
+
+  /// No description provided for @homeScreenGuideStep3.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Taskwise from your Home Screen and sign in there.'**
+  String get homeScreenGuideStep3;
+
+  /// No description provided for @homeScreenGuideContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue in Safari anyway'**
+  String get homeScreenGuideContinue;
+
+  /// No description provided for @newVersionReady.
+  ///
+  /// In en, this message translates to:
+  /// **'A new version of Taskwise is ready.'**
+  String get newVersionReady;
+
+  /// No description provided for @newVersionReload.
+  ///
+  /// In en, this message translates to:
+  /// **'Reload'**
+  String get newVersionReload;
 }
 
 class _AppLocalizationsDelegate

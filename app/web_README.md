@@ -1,0 +1,84 @@
+# app/web
+
+The files of the browser build (Flutter web), copied as they are into
+`build/web/`. This note lives outside `web/` so it isn't published with them.
+
+Build with our own service worker instead of Flutter's:
+
+```sh
+flutter build web --pwa-strategy=none
+```
+
+| File | What it is |
+| --- | --- |
+| `index.html` | Title, theme colours (Brutal light/dark), iPhone Home Screen tags, registers `sw.js`, then loads `flutter_bootstrap.js` |
+| `manifest.json` | Name, icons, `display: standalone`, Brutal colours |
+| `sw.js` | Our service worker (below) |
+| `icons/` | Generated from the iOS app icon (below) |
+| `sqlite3.wasm`, `drift_worker.js` | The database (below) |
+
+## The service worker
+
+`sw.js` keeps the app's own files for an offline start:
+
+- network first for `index.html` (and every page load), `flutter_bootstrap.js`
+  and `manifest.json`; cache first for everything else in the app's folder;
+- never other sites (the sync server, map tiles) and never anything but GET;
+- one cache per version, `taskwise-app-<version>`. `const CACHE_VERSION =
+  '{{VERSION}}'` is replaced by the site build with the release version. Left
+  as it is (a dev build, `flutter run`), the worker caches nothing.
+- When a new version has installed while an older one runs, it posts
+  `{type: 'new-version'}`. The page (`index.html`) then sets
+  `window.taskwiseNewVersionReady`, fires a `taskwise-new-version` event, and
+  the app shows "A new version of Taskwise is ready. · Reload"
+  (`lib/platform/web_shell.dart`, `lib/ui/shared/web/new_version_bar.dart`).
+  Reload calls `window.taskwiseReloadToNewVersion()`, which posts
+  `{type: 'reload'}`; the worker skips waiting, takes over, and the page
+  reloads. On `activate`, the older caches are deleted.
+
+Check the syntax after a change: `node --check web/sw.js`.
+
+## The icons
+
+From the iOS app icon (1024 px, full bleed on the Brutal paper colour
+`#F7F0E1`), with ImageMagick 7, in `app/web/`:
+
+```sh
+I=../ios/Runner/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png
+magick $I -resize 192x192 -strip icons/Icon-192.png
+magick $I -resize 512x512 -strip icons/Icon-512.png
+# Maskable: the icon in the middle 80 % (the safe zone) on the paper colour.
+magick $I -resize 410x410 -background '#F7F0E1' -gravity center -extent 512x512 -strip icons/Icon-maskable-512.png
+magick $I -resize 180x180 -strip icons/apple-touch-icon.png
+magick $I -resize 32x32 -strip icons/favicon-32.png
+magick $I -resize 48x48 -strip icons/favicon-48.png
+```
+
+## The database files
+
+The web app's database is drift's WebAssembly build of SQLite
+(`AppDatabase.openConnection` in `lib/data/db/app_database.dart`). It needs two
+files next to `index.html`. They must match the `drift` and `sqlite3` versions in
+the repo's `pubspec.lock`: download them again whenever those change.
+
+| File | Version | Source | sha256 |
+| --- | --- | --- | --- |
+| `sqlite3.wasm` | sqlite3 3.7.1 | https://github.com/simolus3/sqlite3.dart/releases/download/sqlite3-3.7.1/sqlite3.wasm | `87c1869b533ea4b6daa1f4dc6aa7e9cf3dae6e6ea53f8ed57080c08eb5f64303` |
+| `drift_worker.js` | drift 2.35.2 | https://github.com/simolus3/drift/releases/download/drift-2.35.2/drift_worker.js | `191fc9db018d2bbecb1723e81118fcf2c5c094df8644c2fcba2ed51df061e90a` |
+
+The sha256 values match the digests GitHub shows for these release assets.
+
+To update them, in `app/web/`:
+
+```sh
+# Versions from pubspec.lock (repo root)
+grep -A6 '^  sqlite3:\|^  drift:' ../../pubspec.lock | grep version
+dir=$(mktemp -d)
+gh release download sqlite3-<version> -R simolus3/sqlite3.dart -p sqlite3.wasm -D "$dir"
+gh release download drift-<version> -R simolus3/drift -p drift_worker.js -D "$dir"
+head -c 4 "$dir/sqlite3.wasm" | od -An -tx1   # must be 00 61 73 6d
+sha256sum "$dir"/*                            # compare with the release page
+cp "$dir/sqlite3.wasm" "$dir/drift_worker.js" .
+```
+
+Then update the table above.

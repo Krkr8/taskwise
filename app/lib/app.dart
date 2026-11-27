@@ -15,6 +15,9 @@ import 'ui/designs/design.dart';
 import 'ui/shared/assistant/assistant_action_listener.dart';
 import 'ui/shared/common/storage_warning_bar.dart';
 import 'ui/shared/update/update_listener.dart';
+import 'ui/shared/web/add_to_home_screen_page.dart';
+import 'ui/shared/web/browser_safe_area.dart';
+import 'ui/shared/web/new_version_bar.dart';
 import 'update/update_controller.dart';
 
 /// Root widget: theme, language/RTL and time format come from settings.
@@ -70,22 +73,31 @@ class TaskwiseApp extends ConsumerWidget {
         data: MediaQuery.of(context).copyWith(
           alwaysUse24HourFormat: settings.timeFormat == TimeFormat.h24,
         ),
-        // Tapping outside a text field closes the keyboard. Flutter only does
-        // this for mouse clicks on iOS/Android, so the keyboard would
-        // otherwise cover the bottom bar until a field is submitted.
-        child: Actions(
-          actions: {
-            EditableTextTapOutsideIntent:
-                CallbackAction<EditableTextTapOutsideIntent>(
-                  onInvoke: (intent) => intent.focusNode.unfocus(),
-                ),
-          },
-          child: child!,
+        child: BrowserSafeArea(
+          // Tapping outside a text field closes the keyboard. Flutter only
+          // does this for mouse clicks on iOS/Android, so the keyboard would
+          // otherwise cover the bottom bar until a field is submitted.
+          child: Actions(
+            actions: {
+              EditableTextTapOutsideIntent:
+                  CallbackAction<EditableTextTapOutsideIntent>(
+                    onInvoke: (intent) => intent.focusNode.unfocus(),
+                  ),
+            },
+            child: child!,
+          ),
         ),
       ),
+      // The web-only parts (storage warning, new version, the iPhone Home
+      // Screen guide, and the safe areas above) do nothing outside the
+      // browser.
       home: UpdateListener(
-        child: AssistantActionListener(
-          child: StorageWarningBar(child: spec.shell()),
+        child: NewVersionBar(
+          child: AssistantActionListener(
+            child: StorageWarningBar(
+              child: AddToHomeScreenGate(child: spec.shell()),
+            ),
+          ),
         ),
       ),
     );
