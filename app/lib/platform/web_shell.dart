@@ -15,7 +15,7 @@ abstract class WebShell {
   /// separate storage on iOS, so the tab suggests the Home Screen first.
   bool get isIosBrowserTab;
 
-  /// "Continue in Safari anyway" was chosen in this tab already.
+  /// "Continue in the browser anyway" was chosen in this tab already.
   bool get guideDismissed;
 
   /// Remembers [guideDismissed] for this tab (until it's closed).

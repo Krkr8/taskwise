@@ -2591,7 +2591,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeScreenGuideContinue.
   ///
   /// In en, this message translates to:
-  /// **'Continue in Safari anyway'**
+  /// **'Continue in the browser anyway'**
   String get homeScreenGuideContinue;
 
   /// No description provided for @newVersionReady.

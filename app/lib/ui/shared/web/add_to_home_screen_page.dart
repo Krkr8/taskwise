@@ -43,7 +43,7 @@ class _AddToHomeScreenGateState extends ConsumerState<AddToHomeScreenGate> {
 }
 
 /// "Add Taskwise to your Home Screen": Share → Add to Home Screen, with
-/// "Continue in Safari anyway" below.
+/// "Continue in the browser anyway" below.
 class AddToHomeScreenPage extends StatelessWidget {
   const AddToHomeScreenPage({super.key, required this.onContinue});
 

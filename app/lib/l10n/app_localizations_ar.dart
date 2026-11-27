@@ -1620,7 +1620,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'افتح Taskwise من الشاشة الرئيسية وسجّل الدخول هناك.';
 
   @override
-  String get homeScreenGuideContinue => 'المتابعة في Safari على أي حال';
+  String get homeScreenGuideContinue => 'المتابعة في المتصفح على أي حال';
 
   @override
   String get newVersionReady => 'إصدار جديد من Taskwise جاهز.';

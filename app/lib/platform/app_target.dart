@@ -40,7 +40,7 @@ extension AppTargetX on AppTarget {
   bool get isWeb => this == AppTarget.web;
 }
 
-/// Shown in the start log line, e.g. "Linux 6.x" or "web (iOS)".
-String platformDescription() => appTarget.isWeb
-    ? 'web (${defaultTargetPlatform.name})'
-    : nativePlatformDescription();
+/// Shown in the start log line after the device type, e.g. "linux
+/// (Linux 6.x)", or "web (iOS)" with the system the browser runs on.
+String platformDescription() =>
+    appTarget.isWeb ? defaultTargetPlatform.name : nativePlatformDescription();

@@ -9,7 +9,7 @@ String browserUserAgent() => ua.userAgent();
 String webDeviceName(String userAgent) {
   final browser = userAgent.contains('Edg')
       ? 'Edge'
-      : userAgent.contains('Firefox')
+      : userAgent.contains('Firefox') || userAgent.contains('FxiOS')
       ? 'Firefox'
       : userAgent.contains('Chrome') || userAgent.contains('CriOS')
       ? 'Chrome'

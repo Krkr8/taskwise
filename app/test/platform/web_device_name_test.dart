@@ -34,4 +34,32 @@ void main() {
     );
     expect(webDeviceName(''), 'Browser on device');
   });
+
+  test('other browsers on iPhone are named after themselves', () {
+    // Every iPhone browser says "Safari" in its user agent.
+    expect(
+      webDeviceName(
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) '
+        'AppleWebKit/605.1.15 (KHTML, like Gecko) FxiOS/121.0 '
+        'Mobile/15E148 Safari/605.1.15',
+      ),
+      'Firefox on iPhone',
+    );
+    expect(
+      webDeviceName(
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) '
+        'AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/120.0.6099.119 '
+        'Mobile/15E148 Safari/604.1',
+      ),
+      'Chrome on iPhone',
+    );
+    expect(
+      webDeviceName(
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) '
+        'AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 '
+        'EdgiOS/120.0.2210.126 Mobile/15E148 Safari/605.1.15',
+      ),
+      'Edge on iPhone',
+    );
+  });
 }

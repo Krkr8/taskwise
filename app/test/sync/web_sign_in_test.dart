@@ -33,11 +33,56 @@ void main() {
     });
     test('localhost is fine for local testing', () {
       expect(
+        checkServerForWeb(Uri.parse('http://[::1]:8787'), pageOrigin: page),
+        isNull,
+      );
+      expect(
         checkServerForWeb(Uri.parse('http://localhost:8787'), pageOrigin: page),
         isNull,
       );
       expect(
         checkServerForWeb(Uri.parse('http://127.0.0.1:8787'), pageOrigin: page),
+        isNull,
+      );
+    });
+  });
+
+  group('serverParamIn', () {
+    test('reads #server= (never sent to the host) and ?server=', () {
+      expect(
+        serverParamIn(
+          Uri.parse(
+            'https://taskwise-app.vercel.app/app/#server=https://my.example',
+          ),
+        ),
+        'https://my.example',
+      );
+      expect(
+        serverParamIn(
+          Uri.parse(
+            'https://taskwise-app.vercel.app/app/#server=https%3A%2F%2Fmy.example%2Fsync',
+          ),
+        ),
+        'https://my.example/sync',
+      );
+      expect(
+        serverParamIn(
+          Uri.parse(
+            'https://taskwise-app.vercel.app/app/?server=https://my.example',
+          ),
+        ),
+        'https://my.example',
+      );
+    });
+    test('nothing, empty or another fragment gives null', () {
+      expect(serverParamIn(Uri.parse('https://t.example/app/')), isNull);
+      expect(serverParamIn(Uri.parse('https://t.example/app/#/')), isNull);
+      expect(
+        serverParamIn(Uri.parse('https://t.example/app/#server=')),
+        isNull,
+      );
+      expect(
+        serverParamIn(Uri.parse('https://t.example/app/?server=%20')),
         isNull,
       );
     });
@@ -50,6 +95,7 @@ void main() {
     late String deviceId;
 
     setUp(() async {
+      final savedTarget = debugAppTargetOverride;
       debugAppTargetOverride = AppTarget.web;
       debugPageOrigin = Uri.parse('https://taskwise-app.vercel.app');
       db = openTestDatabase();
@@ -64,7 +110,7 @@ void main() {
         throw http.ClientException('Failed to fetch', request.url);
       });
       addTearDown(() async {
-        debugAppTargetOverride = AppTarget.linux;
+        debugAppTargetOverride = savedTarget;
         debugPageOrigin = null;
         debugLaunchServerParam = null;
         await db.close();

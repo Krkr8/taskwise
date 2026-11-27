@@ -34,6 +34,18 @@
   </style>
 
   <script>
+    // `#server=<address>` (docs/web-app.md) pre-fills the sign-in form. The
+    // app reads it from here (lib/platform/launch_params_web.dart); it's
+    // taken out of the address before Flutter starts, which would read it as
+    // a page of the app.
+    (function () {
+      if (location.hash.indexOf('server=') < 0) return;
+      window.taskwiseLaunchHash = location.hash.slice(1);
+      history.replaceState(history.state, '', location.pathname + location.search);
+    })();
+  </script>
+
+  <script>
     // The page side of sw.js (see app/web_README.md). The app reads
     // `taskwiseNewVersionReady`, listens for `taskwise-new-version` and calls
     // `taskwiseReloadToNewVersion()` (lib/platform/web_shell_web.dart).

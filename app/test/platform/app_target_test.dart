@@ -33,6 +33,7 @@ void main() {
   test('the override changes appTarget and platformDescription', () {
     debugAppTargetOverride = AppTarget.web;
     expect(appTarget, AppTarget.web);
-    expect(platformDescription(), startsWith('web ('));
+    // The start log says "started on web (<platform>)", not "web (web (…))".
+    expect(platformDescription(), defaultTargetPlatform.name);
   });
 }

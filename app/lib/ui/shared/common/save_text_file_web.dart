@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:js_interop';
 
 import 'package:web/web.dart' as web;
@@ -20,5 +21,6 @@ void downloadTextFile({
   web.document.body!.append(anchor);
   anchor.click();
   anchor.remove();
-  web.URL.revokeObjectURL(url);
+  // Not right away: Safari may not have started the download yet.
+  Timer(const Duration(seconds: 1), () => web.URL.revokeObjectURL(url));
 }

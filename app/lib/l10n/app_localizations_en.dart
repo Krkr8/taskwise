@@ -1584,7 +1584,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Open Taskwise from your Home Screen and sign in there.';
 
   @override
-  String get homeScreenGuideContinue => 'Continue in Safari anyway';
+  String get homeScreenGuideContinue => 'Continue in the browser anyway';
 
   @override
   String get newVersionReady => 'A new version of Taskwise is ready.';

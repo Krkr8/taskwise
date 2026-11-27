@@ -8,7 +8,7 @@ The address of the public site is in the repository's **About** box on GitHub (t
 
 1. Open the site and choose **Open Taskwise in the browser**.
 2. Taskwise works on its own, in the browser's storage. To share your tasks with your other devices, sign in to your own sync server: **Settings → Sync → Connect to your server**.
-3. Enter **your server's address** (for example `https://<your-server>.vercel.app`), your username and your password. The web app doesn't know your server in advance. A link of the form `.../app/?server=https://<your-server>` fills the address in for you, so you can bookmark it.
+3. Enter **your server's address** (for example `https://<your-server>.vercel.app`), your username and your password. The web app doesn't know your server in advance. A link of the form `.../app/#server=https://<your-server>` fills the address in for you, so you can bookmark it. (The part after `#` stays in your browser; it isn't sent to the site. `?server=` works too.)
 4. The device shows up in **Settings → Devices** as, for example, "Safari on iPhone" or "Chrome on Linux".
 
 The server must be version 1.3.0 or newer, because that is the first version that lets browsers talk to it. If you run your own, redeploy it first: see [the web app in the self-hosting guide](self-hosting.md#the-web-app).
@@ -19,7 +19,7 @@ After you have opened the app once, it starts without internet too (your tasks a
 
 Safari throws away a website's stored data after a week without a visit, and a tab in Safari can be emptied at any time. A web app **on the Home Screen** keeps its data and opens like an app. So:
 
-1. Open the site in Safari (Chrome and Firefox on the iPhone are Safari underneath; they show up as "Safari on iPhone").
+1. Open the site in Safari. (Chrome, Edge and Firefox on the iPhone are Safari underneath, with the same limits; they show up under their own names, for example "Chrome on iPhone".)
 2. Tap the share button, then **Add to Home Screen**.
 3. Open Taskwise **from the Home Screen icon**, and sign in there. The Home Screen app has its own storage, separate from the Safari tab, so sign in again there even if you did it in Safari.
 

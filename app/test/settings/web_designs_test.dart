@@ -56,8 +56,9 @@ void main() {
     WidgetTester tester,
     AppDesign design,
   ) async {
+    final savedTarget = debugAppTargetOverride;
     debugAppTargetOverride = AppTarget.web;
-    addTearDown(() => debugAppTargetOverride = null);
+    addTearDown(() => debugAppTargetOverride = savedTarget);
     configureIntl();
     driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
     tester.view

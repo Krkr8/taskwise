@@ -37,26 +37,30 @@ class FakeWebShell implements WebShell {
 
 const _taskList = 'Add a task and press Enter';
 const _guideTitle = 'Add Taskwise to your Home Screen';
-const _continue = 'Continue in Safari anyway';
+const _continue = 'Continue in the browser anyway';
 const _newVersion = 'A new version of Taskwise is ready.';
 
 void main() {
   group('Home Screen guide', () {
     final iosTab = FakeWebShell(isIosBrowserTab: true);
 
-    appTest('an iPhone Safari tab shows the guide first; "Continue in Safari '
-        'anyway" shows the task list', (tester, repo) async {
-      expect(find.text(_guideTitle), findsOneWidget);
-      expect(find.textContaining('Add to Home Screen'), findsWidgets);
-      expect(find.text(_taskList), findsNothing);
+    appTest(
+      'an iPhone Safari tab shows the guide first; "Continue in the browser '
+      'anyway" shows the task list',
+      (tester, repo) async {
+        expect(find.text(_guideTitle), findsOneWidget);
+        expect(find.textContaining('Add to Home Screen'), findsWidgets);
+        expect(find.text(_taskList), findsNothing);
 
-      await tester.tap(find.text(_continue));
-      await tester.pumpAndSettle();
-      expect(find.text(_guideTitle), findsNothing);
-      expect(find.text(_taskList), findsOneWidget);
-      // Not shown again in this tab.
-      expect(iosTab.guideDismissed, isTrue);
-    }, overrides: [webShellProvider.overrideWithValue(iosTab)]);
+        await tester.tap(find.text(_continue));
+        await tester.pumpAndSettle();
+        expect(find.text(_guideTitle), findsNothing);
+        expect(find.text(_taskList), findsOneWidget);
+        // Not shown again in this tab.
+        expect(iosTab.guideDismissed, isTrue);
+      },
+      overrides: [webShellProvider.overrideWithValue(iosTab)],
+    );
 
     appTest(
       'not again once dismissed in this tab',
@@ -138,7 +142,7 @@ void main() {
         expect(find.text('إصدار جديد من Taskwise جاهز.'), findsOneWidget);
         expect(find.text('أعد التحميل'), findsOneWidget);
 
-        await tester.tap(find.text('المتابعة في Safari على أي حال'));
+        await tester.tap(find.text('المتابعة في المتصفح على أي حال'));
         await tester.pumpAndSettle();
         expect(find.text('أضف Taskwise إلى الشاشة الرئيسية'), findsNothing);
       },
