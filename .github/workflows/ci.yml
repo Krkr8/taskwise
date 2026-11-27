@@ -109,6 +109,12 @@ jobs:
           web/build_site.sh "$version" "$RUNNER_TEMP/site"
           web/test_site.sh "$RUNNER_TEMP/site"
 
+      # The built site in Chrome: an update that was never reloaded still
+      # starts offline, a server that never answers too, and a first visit
+      # (English, Arabic) fetches only from the site itself.
+      - name: Check the site in Chrome (updates, offline, no third parties)
+        run: node web/test_site_browser.mjs "$RUNNER_TEMP/site" "$(command -v google-chrome)"
+
       # A chromedriver matching the runner's Chrome.
       - uses: nanasess/setup-chromedriver@v3.0.0
 

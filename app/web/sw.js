@@ -47,16 +47,35 @@ function fetchFresh(urlOrRequest) {
   return fetch(new Request(urlOrRequest, { cache: 'no-cache' }));
 }
 
+// Everything this version needs for an offline start, before it replaces
+// the running one: the main files, and every file an older version's cache
+// holds (CanvasKit, fonts, assets), fetched fresh. Activating deletes the
+// older caches, so without them an update that was never reloaded (the new
+// worker waits, the user closes the tab) would start offline with no
+// CanvasKit: a blank page.
 async function precache() {
   const cache = await caches.open(CACHE);
+  const urls = new Set(PRECACHE.map(keyFor));
+  for (const name of await caches.keys()) {
+    if (!name.startsWith(PREFIX) || name === CACHE) continue;
+    const old = await caches.open(name);
+    for (const request of await old.keys()) {
+      if (request.url.startsWith(scope)) urls.add(request.url);
+    }
+  }
   await Promise.all(
-    PRECACHE.map(async (path) => {
-      try {
-        const response = await fetchFresh(scope + path);
-        if (cacheable(response)) await cache.put(keyFor(path), response);
-      } catch (_) {
-        // Missing or offline: it's cached when the app asks for it.
+    [...urls].map(async (url) => {
+      // Offline or a server error rejects: the install fails as a whole and
+      // the running version keeps serving (the browser tries again later).
+      const response = await fetchFresh(url);
+      if (response.status === 404 && !PRECACHE.map(keyFor).includes(url)) {
+        // An older version's file that this one no longer has.
+        return;
       }
+      if (!cacheable(response)) {
+        throw new Error(`sw: ${url} answered ${response.status}`);
+      }
+      await cache.put(url, response);
     }),
   );
 }
@@ -126,21 +145,44 @@ self.addEventListener('message', (event) => {
   }
 });
 
-async function networkFirst(event, key) {
-  const cache = await caches.open(CACHE);
-  try {
-    // Page loads go as they are (a navigation can't be copied freely).
-    const request = event.request;
-    const response = await (request.mode === 'navigate'
-      ? fetch(request)
-      : fetchFresh(request));
-    if (cacheable(response)) event.waitUntil(cache.put(key, response.clone()));
-    return response;
-  } catch (error) {
-    const cached = await cache.match(key);
-    if (cached) return cached;
-    throw error;
-  }
+// How long a page load waits for the network before it uses the cached
+// copy (a very slow connection shouldn't keep a blank page). Without a
+// cached copy it keeps waiting for the network.
+const NETWORK_TIMEOUT_MS = 4000;
+
+function networkFirst(event, key) {
+  // Page loads go as they are (a navigation can't be copied freely).
+  const request = event.request;
+  const network =
+    request.mode === 'navigate' ? fetch(request) : fetchFresh(request);
+  // Saved even when the cached copy answered first. The copy is taken as
+  // soon as the response arrives, before the page reads it.
+  const saved = network.then((response) => {
+    if (!cacheable(response)) return undefined;
+    const copy = response.clone();
+    return caches.open(CACHE).then((cache) => cache.put(key, copy));
+  });
+  event.waitUntil(saved.catch(() => {}));
+
+  return (async () => {
+    const cached = () => caches.open(CACHE).then((cache) => cache.match(key));
+    let timer;
+    const timeout = new Promise((resolve) => {
+      timer = setTimeout(resolve, NETWORK_TIMEOUT_MS, null);
+    });
+    try {
+      const response = await Promise.race([network, timeout]);
+      if (response) return response;
+      // Slow network: the cached copy, else keep waiting.
+      return (await cached()) || (await network);
+    } catch (error) {
+      const copy = await cached();
+      if (copy) return copy;
+      throw error;
+    } finally {
+      clearTimeout(timer);
+    }
+  })();
 }
 
 async function cacheFirst(event) {

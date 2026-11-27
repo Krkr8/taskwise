@@ -23,9 +23,11 @@ flutter build web --pwa-strategy=none
 `sw.js` keeps the app's own files for an offline start:
 
 - network first only for `index.html` (and every page load) and
-  `manifest.json`. Everything else in the app's folder is cache first from
-  the version's cache, `flutter_bootstrap.js` too: it goes with
-  `main.dart.js`, so a page that an older worker still controls never mixes
+  `manifest.json`, with a 4 s timeout: on a very slow connection the
+  cached copy answers, and the network's answer is still saved for next
+  time (without a cached copy it keeps waiting). Everything else in the
+  app's folder is cache first from the version's cache,
+  `flutter_bootstrap.js` too: it goes with `main.dart.js`, so a page that an older worker still controls never mixes
   old and new files;
 - every file it puts in the cache is fetched with `cache: 'no-cache'`
   (revalidated with the server), because Flutter doesn't hash the names of
@@ -51,6 +53,22 @@ flutter build web --pwa-strategy=none
   Reload calls `window.taskwiseReloadToNewVersion()`, which posts
   `{type: 'reload'}`; the worker skips waiting, takes over, and the page
   reloads. On `activate`, the older caches are deleted.
+- So installing a new version is all or nothing: besides the main files it
+  copies every file of the older versions' caches into its own, fetched
+  fresh (CanvasKit, fonts, assets: the files an offline start needs). If
+  one can't be fetched (offline, a server error), the install fails and the
+  running version keeps serving; the browser tries again at a later visit.
+  An older file the new version no longer has (404) is left out. Without
+  this, a new version that installed and waited (the tab closed without
+  Reload) would take over at the next start, delete the older cache, and
+  start offline without CanvasKit: a blank page.
+
+`web/test_site_browser.mjs` checks this in Chrome on a built site (CI's `web`
+job runs it): version 1 is visited, version 2 installs and waits, the tab
+closes, the server goes away, and a new tab must start the app; then a
+server that never answers; and that a first visit, in English and in
+Arabic, fetches only from the site itself.
+
 Check the syntax after a change: `node --check web/sw.js`.
 
 ## Fonts: nothing from Google

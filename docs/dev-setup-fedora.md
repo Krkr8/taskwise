@@ -134,6 +134,15 @@ It prints `All tests passed.`; the steps it did and the storage the browser pick
 web/build_site.sh 1.3.0 /tmp/taskwise-site && web/test_site.sh /tmp/taskwise-site
 ```
 
+The output folder must be new, empty, or an earlier output of the script (it has a `.taskwise-site` file): the script deletes it first, and refuses any other folder.
+
+Then check the built site in Chrome for Testing (about a minute; it prints `All browser checks passed.`): an update that was never reloaded must still start offline, a server that never answers too, and a first visit in English and in Arabic must fetch nothing from other hosts (it lists the hosts). An optional third argument saves screenshots there.
+
+```bash
+node web/test_site_browser.mjs /tmp/taskwise-site \
+  ~/.local/share/chrome-for-testing/chrome/linux-158.0.8127.88/chrome-linux64/chrome
+```
+
 GitHub Actions deploys it to Vercel when a release is published (`.github/workflows/web.yml`).
 
 ## Troubleshooting: `flutter test` fails with "Building native assets failed"
