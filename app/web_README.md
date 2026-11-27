@@ -21,8 +21,23 @@ flutter build web --pwa-strategy=none
 
 `sw.js` keeps the app's own files for an offline start:
 
-- network first for `index.html` (and every page load), `flutter_bootstrap.js`
-  and `manifest.json`; cache first for everything else in the app's folder;
+- network first only for `index.html` (and every page load) and
+  `manifest.json`. Everything else in the app's folder is cache first from
+  the version's cache, `flutter_bootstrap.js` too: it goes with
+  `main.dart.js`, so a page that an older worker still controls never mixes
+  old and new files;
+- every file it puts in the cache is fetched with `cache: 'no-cache'`
+  (revalidated with the server), because Flutter doesn't hash the names of
+  CanvasKit and the assets and the browser's own cache could hold old copies;
+- one online visit is enough for an offline start. Installing fetches the
+  main files (`index.html`, `flutter_bootstrap.js`, `manifest.json`,
+  `main.dart.js`, `sqlite3.wasm`, `drift_worker.js`). On the first visit the
+  rest (CanvasKit, fonts, `assets/`) loads before the worker controls the
+  page, so when it takes over, `index.html` posts `{type: 'cache', urls}`:
+  the page's address plus the app files from
+  `performance.getEntriesByType('resource')` (and, through a
+  `PerformanceObserver`, the ones that finish later). The worker caches
+  those it doesn't have yet, only from the app's folder;
 - never other sites (the sync server, map tiles) and never anything but GET;
 - one cache per version, `taskwise-app-<version>`. `const CACHE_VERSION =
   '{{VERSION}}'` is replaced by the site build with the release version. Left

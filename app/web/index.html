@@ -41,6 +41,7 @@
       if (!('serviceWorker' in navigator)) return;
       var waiting = null;
       var reloading = false;
+      var controlled = !!navigator.serviceWorker.controller;
 
       function newVersion(worker) {
         if (waiting) return;
@@ -59,9 +60,45 @@
         setTimeout(function () { location.reload(); }, 3000);
       };
 
-      // The new worker took over (after 'reload', maybe from another tab).
+      // The first visit: the files loaded before the worker took over didn't
+      // go through it. Tell it which ones they were (the app's own; the
+      // worker checks again), so the next start works offline.
+      function listLoadedFiles() {
+        var worker = navigator.serviceWorker.controller;
+        if (!worker) return;
+        var appFolder = new URL('./', document.baseURI).href;
+        var seen = {};
+        function send(names) {
+          var urls = names.filter(function (name) {
+            if (seen[name] || name.indexOf(appFolder) !== 0) return false;
+            seen[name] = true;
+            return true;
+          });
+          if (urls.length) worker.postMessage({ type: 'cache', urls: urls });
+        }
+        function names(entries) {
+          return entries.map(function (entry) { return entry.name; });
+        }
+        send([location.href].concat(names(performance.getEntriesByType('resource'))));
+        // Files that finish loading later (CanvasKit, fonts).
+        try {
+          new PerformanceObserver(function (list) {
+            send(names(list.getEntries()));
+          }).observe({ type: 'resource', buffered: true });
+        } catch (_) {}
+      }
+
       navigator.serviceWorker.addEventListener('controllerchange', function () {
-        if (!waiting || reloading) return;
+        if (!waiting) {
+          // The first worker took over this page (clients.claim()).
+          if (!controlled) {
+            controlled = true;
+            listLoadedFiles();
+          }
+          return;
+        }
+        // The new worker took over (after 'reload', maybe from another tab).
+        if (reloading) return;
         reloading = true;
         location.reload();
       });
