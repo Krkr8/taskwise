@@ -912,6 +912,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Can\'t reach the server. Check the address and your connection.';
 
   @override
+  String get signInErrorNeedsHttps =>
+      'This server must use https:// to work in the browser';
+
+  @override
+  String get signInErrorBlockedInBrowser =>
+      'Can\'t reach this server from the browser. If it\'s yours, update it to Taskwise 1.3.0 or later.';
+
+  @override
   String get signInErrorBadAddress =>
       'That doesn\'t look like a server address.';
 

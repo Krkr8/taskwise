@@ -238,6 +238,8 @@
   "fieldRequired": "مطلوب",
   "passwordTooShort": "10 أحرف على الأقل",
   "signInErrorUnreachable": "تعذّر الوصول إلى الخادم. تحقّق من العنوان ومن اتصالك.",
+  "signInErrorNeedsHttps": "يجب أن يستخدم هذا الخادم https:// ليعمل في المتصفح",
+  "signInErrorBlockedInBrowser": "تعذّر الوصول إلى هذا الخادم من المتصفح. إن كان خادمك، حدّثه إلى Taskwise 1.3.0 أو أحدث.",
   "signInErrorBadAddress": "لا يبدو هذا عنوان خادم.",
   "signInErrorNotTaskwise": "أجاب هذا العنوان، لكنه ليس خادم Taskwise.",
   "signInErrorWrongPassword": "اسم المستخدم أو كلمة المرور غير صحيحة.",

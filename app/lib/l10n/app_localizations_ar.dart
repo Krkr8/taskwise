@@ -946,6 +946,14 @@ class AppLocalizationsAr extends AppLocalizations {
       'تعذّر الوصول إلى الخادم. تحقّق من العنوان ومن اتصالك.';
 
   @override
+  String get signInErrorNeedsHttps =>
+      'يجب أن يستخدم هذا الخادم https:// ليعمل في المتصفح';
+
+  @override
+  String get signInErrorBlockedInBrowser =>
+      'تعذّر الوصول إلى هذا الخادم من المتصفح. إن كان خادمك، حدّثه إلى Taskwise 1.3.0 أو أحدث.';
+
+  @override
   String get signInErrorBadAddress => 'لا يبدو هذا عنوان خادم.';
 
   @override

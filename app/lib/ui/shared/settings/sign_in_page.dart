@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../platform/app_target.dart';
+import '../../../platform/web_launch_params.dart';
 import '../../../state/providers.dart';
 import '../../../sync/sync_api.dart';
 import '../../../sync/sync_controller.dart';
@@ -27,7 +29,10 @@ class SignInPage extends ConsumerStatefulWidget {
 class _SignInPageState extends ConsumerState<SignInPage> {
   final _form = GlobalKey<FormState>();
   late final _server = TextEditingController(
-    text: ref.read(syncControllerProvider).serverUrl ?? '',
+    text:
+        ref.read(syncControllerProvider).serverUrl ??
+        (appTarget.isWeb ? launchServerParam() : null) ??
+        '',
   );
   late final _username = TextEditingController(
     text: ref.read(syncControllerProvider).username ?? '',
@@ -122,7 +127,13 @@ class _SignInPageState extends ConsumerState<SignInPage> {
                     validator: (value) {
                       if (required(value) case final error?) return error;
                       try {
-                        SyncApi.normalizeServerUrl(value!);
+                        final server = SyncApi.normalizeServerUrl(value!);
+                        final origin = appTarget.isWeb ? pageOrigin() : null;
+                        if (origin != null &&
+                            checkServerForWeb(server, pageOrigin: origin) !=
+                                null) {
+                          return l10n.signInErrorNeedsHttps;
+                        }
                         return null;
                       } on FormatException {
                         return l10n.signInErrorBadAddress;
@@ -249,6 +260,8 @@ class _SignInPageState extends ConsumerState<SignInPage> {
 /// Plain-words explanation of a failed sign-in or account setup.
 String signInErrorText(AppLocalizations l10n, Object error) => switch (error) {
   FormatException() => l10n.signInErrorBadAddress,
+  SyncNetworkException(kind: SyncNetworkKind.blockedOrUnreachable) =>
+    l10n.signInErrorBlockedInBrowser,
   SyncNetworkException() => l10n.signInErrorUnreachable,
   SyncHttpException(code: 'bad_response' || 'not_found') =>
     l10n.signInErrorNotTaskwise,

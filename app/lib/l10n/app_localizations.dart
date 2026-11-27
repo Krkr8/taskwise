@@ -1472,6 +1472,18 @@ abstract class AppLocalizations {
   /// **'Can\'t reach the server. Check the address and your connection.'**
   String get signInErrorUnreachable;
 
+  /// No description provided for @signInErrorNeedsHttps.
+  ///
+  /// In en, this message translates to:
+  /// **'This server must use https:// to work in the browser'**
+  String get signInErrorNeedsHttps;
+
+  /// No description provided for @signInErrorBlockedInBrowser.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t reach this server from the browser. If it\'s yours, update it to Taskwise 1.3.0 or later.'**
+  String get signInErrorBlockedInBrowser;
+
   /// No description provided for @signInErrorBadAddress.
   ///
   /// In en, this message translates to:

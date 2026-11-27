@@ -5,6 +5,7 @@ import 'dart:io' show SocketException, HandshakeException;
 import 'package:http/http.dart' as http;
 import 'package:taskwise_shared/taskwise_shared.dart';
 
+import '../platform/app_target.dart';
 import 'record_codec.dart';
 
 /// Why a request to the sync server failed.
@@ -18,8 +19,17 @@ sealed class SyncApiException implements Exception {
 
 /// The server couldn't be reached (offline, wrong address, timeout...).
 final class SyncNetworkException extends SyncApiException {
-  const SyncNetworkException(super.message);
+  const SyncNetworkException(
+    super.message, {
+    this.kind = SyncNetworkKind.unreachable,
+  });
+
+  final SyncNetworkKind kind;
 }
+
+/// In the browser a failed request can't say why (blocked by the server's
+/// CORS rules, wrong address, offline all look the same).
+enum SyncNetworkKind { unreachable, blockedOrUnreachable }
 
 /// The server answered with an error (`{error: {code, message}}`).
 final class SyncHttpException extends SyncApiException {
@@ -228,7 +238,12 @@ class SyncApi {
     } on HandshakeException catch (e) {
       throw SyncNetworkException(e.message);
     } on http.ClientException catch (e) {
-      throw SyncNetworkException(e.message);
+      throw SyncNetworkException(
+        e.message,
+        kind: appTarget.isWeb
+            ? SyncNetworkKind.blockedOrUnreachable
+            : SyncNetworkKind.unreachable,
+      );
     }
 
     Object? json;
