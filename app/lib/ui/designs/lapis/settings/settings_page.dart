@@ -230,26 +230,36 @@ class SettingsPage extends ConsumerWidget {
                 }
               },
             ),
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: OutlinedButton.icon(
-                icon: const Icon(Icons.notifications_active_outlined),
-                label: Text(l10n.notifTestButton),
-                onPressed: () async {
-                  final messenger = ScaffoldMessenger.of(context);
-                  final sent = await ref
-                      .read(reminderSchedulerProvider)
-                      .sendTest();
-                  messenger.showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        sent ? l10n.notifTestSent : l10n.notifTestDenied,
+            // The browser can't ring reminders yet (M15): say so instead.
+            if (appTarget.isWeb)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
+                child: Text(
+                  l10n.notifWebNote,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              )
+            else
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.notifications_active_outlined),
+                  label: Text(l10n.notifTestButton),
+                  onPressed: () async {
+                    final messenger = ScaffoldMessenger.of(context);
+                    final sent = await ref
+                        .read(reminderSchedulerProvider)
+                        .sendTest();
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          sent ? l10n.notifTestSent : l10n.notifTestDenied,
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
             _Section(l10n.settingsLocation),
             // One list item, so the radius shows as soon as the places row
             // scrolls into view.

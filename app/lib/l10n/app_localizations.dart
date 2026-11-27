@@ -1616,6 +1616,12 @@ abstract class AppLocalizations {
   /// **'All devices'**
   String get notifyAllDevices;
 
+  /// No description provided for @notifyNoRemindersYet.
+  ///
+  /// In en, this message translates to:
+  /// **'no reminders yet'**
+  String get notifyNoRemindersYet;
+
   /// No description provided for @notifyNoDevice.
   ///
   /// In en, this message translates to:
@@ -1633,6 +1639,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send a test notification'**
   String get notifTestButton;
+
+  /// No description provided for @notifWebNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders don\'t ring in the browser yet. Your Taskwise apps on phones and computers remind you.'**
+  String get notifWebNote;
 
   /// No description provided for @notifTestBody.
   ///
@@ -2567,7 +2579,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeScreenGuideWhy.
   ///
   /// In en, this message translates to:
-  /// **'On iPhone, Taskwise works best from your Home Screen: it opens like an app and can send reminders. A Safari tab keeps a separate copy of your tasks.'**
+  /// **'On iPhone, Taskwise works best from your Home Screen: it opens like an app and keeps your tasks. A Safari tab keeps a separate copy of your tasks, which Safari may clear.'**
   String get homeScreenGuideWhy;
 
   /// No description provided for @homeScreenGuideStep1.

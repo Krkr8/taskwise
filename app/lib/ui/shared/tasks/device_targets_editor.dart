@@ -49,9 +49,13 @@ class DeviceTargetsEditor extends ConsumerWidget {
                 showCheckmark: false,
                 avatar: Icon(deviceTypeIcon(device.type)),
                 label: Text(
-                  device.id == thisId
-                      ? '${device.name} (${l10n.deviceThis})'
-                      : device.name,
+                  [
+                    device.name,
+                    if (device.id == thisId) '(${l10n.deviceThis})',
+                    // Browsers don't ring reminders yet (M15).
+                    if (device.type == DeviceType.web)
+                      '(${l10n.notifyNoRemindersYet})',
+                  ].join(' '),
                 ),
                 selected: all || chosen.contains(device.id),
                 onSelected: (on) {

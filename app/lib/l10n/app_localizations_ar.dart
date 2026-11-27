@@ -1033,6 +1033,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notifyAllDevices => 'كل الأجهزة';
 
   @override
+  String get notifyNoRemindersYet => 'لا تذكيرات بعد';
+
+  @override
   String get notifyNoDevice =>
       'لم يُختر أي جهاز: لن تذكّر هذه المهمة على أي جهاز.';
 
@@ -1041,6 +1044,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get notifTestButton => 'إرسال إشعار تجريبي';
+
+  @override
+  String get notifWebNote =>
+      'التذكيرات لا ترنّ في المتصفح بعد. تطبيقات Taskwise على هواتفك وحواسيبك هي التي تذكّرك.';
 
   @override
   String get notifTestBody => 'الإشعارات تعمل على هذا الجهاز.';
@@ -1606,7 +1613,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get homeScreenGuideWhy =>
-      'على iPhone يعمل Taskwise أفضل من الشاشة الرئيسية: يُفتح كتطبيق ويمكنه إرسال التذكيرات. أما علامة تبويب Safari فتحتفظ بنسخة منفصلة من مهامك.';
+      'على iPhone يعمل Taskwise أفضل من الشاشة الرئيسية: يُفتح كتطبيق ويحتفظ بمهامك. أما علامة تبويب Safari فتحتفظ بنسخة منفصلة من مهامك قد يمسحها Safari.';
 
   @override
   String get homeScreenGuideStep1 =>

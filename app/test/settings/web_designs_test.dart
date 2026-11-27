@@ -54,10 +54,11 @@ void main() {
 
   Future<Future<void> Function()> pumpWeb(
     WidgetTester tester,
-    AppDesign design,
-  ) async {
+    AppDesign design, {
+    AppTarget target = AppTarget.web,
+  }) async {
     final savedTarget = debugAppTargetOverride;
-    debugAppTargetOverride = AppTarget.web;
+    debugAppTargetOverride = target;
     addTearDown(() => debugAppTargetOverride = savedTarget);
     configureIntl();
     driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -133,4 +134,42 @@ void main() {
     expect(find.byType(lapis.AdaptiveShell), findsOneWidget);
     await close();
   });
+
+  const webNote =
+      "Reminders don't ring in the browser yet. Your Taskwise apps on phones "
+      'and computers remind you.';
+  const testButton = 'Send a test notification';
+
+  // Scrolls Settings to [text], in the notifications section.
+  Future<void> openNotifications(WidgetTester tester, String text) async {
+    await tester.tap(find.text('Settings').first);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text(text),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+  }
+
+  for (final design in [AppDesign.brutal, AppDesign.lapis]) {
+    testWidgets('${design.name} on the web says reminders don\'t ring in the '
+        'browser instead of a test notification', (tester) async {
+      final close = await pumpWeb(tester, design);
+      await openNotifications(tester, webNote);
+      expect(find.text(webNote), findsOneWidget);
+      expect(find.text(testButton), findsNothing);
+      await close();
+    });
+
+    testWidgets('${design.name} on a computer keeps the test notification', (
+      tester,
+    ) async {
+      final close = await pumpWeb(tester, design, target: AppTarget.linux);
+      await openNotifications(tester, testButton);
+      expect(find.text(testButton), findsOneWidget);
+      expect(find.text(webNote), findsNothing);
+      await close();
+    });
+  }
 }

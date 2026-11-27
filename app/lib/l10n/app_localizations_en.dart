@@ -1000,6 +1000,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifyAllDevices => 'All devices';
 
   @override
+  String get notifyNoRemindersYet => 'no reminders yet';
+
+  @override
   String get notifyNoDevice =>
       'No device chosen: this task won\'t remind anywhere.';
 
@@ -1008,6 +1011,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notifTestButton => 'Send a test notification';
+
+  @override
+  String get notifWebNote =>
+      'Reminders don\'t ring in the browser yet. Your Taskwise apps on phones and computers remind you.';
 
   @override
   String get notifTestBody => 'Notifications work on this device.';
@@ -1570,7 +1577,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeScreenGuideWhy =>
-      'On iPhone, Taskwise works best from your Home Screen: it opens like an app and can send reminders. A Safari tab keeps a separate copy of your tasks.';
+      'On iPhone, Taskwise works best from your Home Screen: it opens like an app and keeps your tasks. A Safari tab keeps a separate copy of your tasks, which Safari may clear.';
 
   @override
   String get homeScreenGuideStep1 =>
