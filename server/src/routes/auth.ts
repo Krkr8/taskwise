@@ -19,6 +19,7 @@ import {
   DeviceStore,
   deviceToJson,
   deviceTypes,
+  timeZoneField,
   type DeviceType,
 } from '../devices.js';
 import { ApiError, badRequest } from '../errors.js';
@@ -111,10 +112,12 @@ export function authRoutes(deps: AppDeps) {
     });
 }
 
+/** The login's `device`; `timeZone` is optional (apps since 1.4.0 send it). */
 function parseDevice(value: unknown): {
   id: string;
   name: string;
   type: DeviceType;
+  timeZone?: string;
 } {
   const id = stringField(value, 'id', { max: maxIdLength });
   const name = stringField(value, 'name', { max: 100 });
@@ -122,5 +125,6 @@ function parseDevice(value: unknown): {
   if (!(deviceTypes as readonly string[]).includes(type)) {
     throw badRequest(`"type" must be one of: ${deviceTypes.join(', ')}.`);
   }
-  return { id, name, type: type as DeviceType };
+  const timeZone = timeZoneField(value);
+  return { id, name, type: type as DeviceType, ...(timeZone ? { timeZone } : {}) };
 }

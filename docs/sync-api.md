@@ -26,7 +26,8 @@ If you change the API, change the fixtures first. Then both test suites tell you
 | 401 | `unauthorized` | Missing, wrong or revoked device token; wrong password; wrong cron secret |
 | 403 | `forbidden` | Wrong setup secret; a device that isn't the main one tries to manage other devices |
 | 403 | `wrong_password` | `POST /devices/claim-main` with a wrong password (not 401, so the app doesn't take it as "signed out") |
-| 404 | `not_found` | Unknown endpoint or device |
+| 404 | `not_found` | Unknown endpoint or device; a push plan for a device that isn't an active web device |
+| 404 | `push_not_configured` | Any `/push/…` endpoint when the server has no VAPID keys (see [Web reminders](#web-reminders-push)) |
 | 409 | `conflict` | `/auth/setup` when the account already exists |
 | 410 | `resync_required` | `GET /sync` with a `since` older than purged deletions (see [Tombstones](#tombstones-and-purging)) |
 | 413 | `payload_too_large` | Body over 1 MiB |
@@ -75,6 +76,7 @@ Each app install is a **device**. Logging in registers the device and returns it
 ```
 - `device.id` is a UUID that the app makes once and keeps.
 - `type` is one of `windows`, `linux`, `ios`, `android`, `other`, `web` (`android` since v0.7.0, `web` since v1.3.0; apps map a type they don't know to `other`).
+- `timeZone` (optional, since v1.4.0) is the device's IANA time zone, e.g. `"Asia/Baghdad"`. Without it (older apps) the stored one is kept.
 
 The reply:
 ```json
@@ -86,7 +88,9 @@ The reply:
 - Logging in again with the same device id replaces the token, and the old one stops working. It also re-activates a revoked device.
 - **Rate limit:** 5 failed logins within 15 minutes, per client IP or per username, block further attempts with `429` until the 15-minute window ends. A successful login clears the count.
 
-The `device` objects match the shared `Device` model.
+The `device` objects match the shared `Device` model. Two fields appear only when set, like `Device.toJson` (since v1.4.0):
+- `"timeZone": "Asia/Baghdad"` once the device has reported its time zone;
+- `"pushEnabled": true` while the device has at least one Web Push subscription.
 
 **The main device** (`"main": true`) manages the account's devices:
 - The first device to sign in becomes the main device. If there is no active main device, the next one to sign in becomes it.
@@ -97,8 +101,8 @@ The `device` objects match the shared `Device` model.
 
 The endpoints:
 - `GET /devices` returns `{"devices": [...]}` with all devices, oldest first. Revoked devices are listed as `"deleted": true`.
-- `PATCH /devices/{id}` with `{"name": "Work PC"}` renames a device. With `{"main": true}` it makes that device the main one. The two can be combined. It returns the device.
-- `DELETE /devices/{id}` revokes the device's token and returns the device with `"deleted": true`. From then on that device gets `401` everywhere, until it logs in again (it doesn't get the main role back). A device may always revoke itself (sign out).
+- `PATCH /devices/{id}` with `{"name": "Work PC"}` renames a device. With `{"main": true}` it makes that device the main one. With `{"timeZone": "Europe/London"}` (or `null` to clear it) a device sets its own time zone; for another device that's `403`. They can be combined. It returns the device.
+- `DELETE /devices/{id}` revokes the device's token, deletes its push subscriptions and unsent push items, and returns the device with `"deleted": true`. From then on that device gets `401` everywhere, until it logs in again (it doesn't get the main role back). A device may always revoke itself (sign out).
 - `POST /devices/claim-main` with `{"password": "…"}` makes the calling device the main one. A wrong password gets `403 wrong_password`. Failures count towards the same rate limit as logins.
 
 `lastSeenAt` is updated at most once a minute, by any authenticated request.
@@ -179,8 +183,35 @@ Deleting a record means pushing it with `"deleted": true`. A daily job (`GET /cr
 
 A device whose `since` is older than the purged tombstones would never learn about those deletions. It gets `410 resync_required` and should pull again from `since=0` and drop local synced records the server no longer has.
 
+## Web reminders (push)
+
+Since v1.4.0 the server sends time reminders to web devices as Web Push. The apps plan them (the server doesn't read records): every app uploads a **push plan** for each web device, and the server sends each item at its time. Push data lives in its own tables (`push_subscriptions`, `push_items`), not in the synced records, so devices on 1.2.x/1.3.0 sync unchanged.
+
+All these endpoints need a device token. When the server has no VAPID keys (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`), each one answers `404 push_not_configured`. A server older than v1.4.0 answers `404 not_found`. Apps treat both as "this server can't send reminders" and stop uploading.
+
+- `GET /push/key` returns `{"publicKey": "B…"}`, the VAPID public key a browser subscribes with.
+- `PUT /push/subscription` with the browser's subscription saves it for the calling device and answers `204`. The same endpoint again replaces it.
+  ```json
+  { "endpoint": "https://…", "keys": { "p256dh": "B…", "auth": "…" } }
+  ```
+- `DELETE /push/subscription` with `{"endpoint": "https://…"}` removes the calling device's subscription and answers `204` (also when there was none).
+- `PUT /push/plan/{deviceId}` replaces the plan of a web device and answers `204`. The device must be an active (not revoked) device of type `web`, otherwise `404 not_found`. Any signed-in device may upload it.
+  ```json
+  { "items": [ { "key": "1234", "fireAt": 1793448000000, "taskId": "0199…", "title": "Pay rent", "body": "Today at 09:00" } ] }
+  ```
+  - `fireAt` is the time in UTC milliseconds (an integer). `key` is the planner's id for that reminder occurrence, unique within the list.
+  - At most 500 items. `title` and `body` are at most 1000 characters (the push shortens them).
+  - Unsent items that aren't in the new list are deleted and won't be sent. An item whose `fireAt` changed is sent at the new time. A changed `title` or `body` is used when the item is sent. Items already sent are not sent again.
+
+The server queues one message per item due within 7 days (on Vercel with Vercel Queues; on Node an in-process timer). The daily job queues the items that have come within 7 days since. When a message arrives, the server checks that the item is still unsent with the same `fireAt`, marks it sent and pushes it to every subscription of the device. A message that arrives more than 60 minutes late sends nothing. Subscriptions the push service reports gone (404/410) are deleted.
+
+The push's JSON payload, which the web app's service worker shows:
+```json
+{ "title": "Pay rent", "body": "Today at 09:00", "taskId": "0199…", "key": "1234" }
+```
+
 ## Daily job: `GET /cron/daily`
 
-Vercel Cron calls it once a day (03:00 UTC ± 1 h; see `server/vercel.json`) with `Authorization: Bearer <CRON_SECRET>`. Calling it more than once is safe. It purges as described above, then saves a JSON copy of all records in the database's `backups` table, keeping the newest 7.
+Vercel Cron calls it once a day (03:00 UTC ± 1 h; see `server/vercel.json`) with `Authorization: Bearer <CRON_SECRET>`. Calling it more than once is safe. It purges as described above, then saves a JSON copy of all records in the database's `backups` table, keeping the newest 7. It also removes push items whose time is more than 2 days past, and queues the pushes that are now due within 7 days.
 
-The reply is `{"purgedRecords": 3, "purgedLoginAttempts": 1, "backupRecords": 120}`.
+The reply is `{"purgedRecords": 3, "purgedLoginAttempts": 1, "backupRecords": 120, "purgedPushItems": 4, "queuedPushes": 2}`.

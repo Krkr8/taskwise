@@ -13,6 +13,7 @@ export type ErrorCode =
   | 'resync_required'
   | 'setup_disabled'
   | 'not_configured'
+  | 'push_not_configured'
   | 'internal';
 
 /** An error that becomes a JSON response `{error: {code, message}}`. */

@@ -3,6 +3,16 @@ import type { Context } from 'hono';
 
 import type { DeviceRow } from './devices.js';
 import { badRequest } from './errors.js';
+import type { PushSender } from './push/deliver.js';
+import type { PushScheduler } from './push/schedule.js';
+
+/** Web Push (reminders on web devices); set when the VAPID keys are. */
+export interface PushDeps {
+  /** VAPID public key, which browsers subscribe with. */
+  publicKey: string;
+  scheduler: PushScheduler;
+  sender: PushSender;
+}
 
 /** Everything [createApp] needs; tests pass their own. */
 export interface AppDeps {
@@ -12,6 +22,8 @@ export interface AppDeps {
   readonly cronSecret: string | undefined;
   /** Current time in UTC milliseconds (tests use a fake clock). */
   readonly now: () => number;
+  /** Without it, /push/* answers 404 `push_not_configured`. */
+  readonly push?: PushDeps;
 }
 
 export interface AppEnv {

@@ -11,6 +11,7 @@ import { authRoutes } from './routes/auth.js';
 import { cronRoutes } from './routes/cron.js';
 import { deviceRoutes } from './routes/devices.js';
 import { healthRoutes } from './routes/health.js';
+import { pushRoutes } from './routes/push.js';
 import { syncRoutes } from './routes/sync.js';
 import { apiBasePath } from './version.js';
 
@@ -49,6 +50,7 @@ export function createApp(deps: AppDeps): Hono<AppEnv> {
     .route('/', cronRoutes(deps))
     .use(requireDevice(deps))
     .route('/', deviceRoutes(deps))
+    .route('/', pushRoutes(deps))
     .route('/', syncRoutes());
 
   // The web app runs on another origin. Auth is a bearer token in the

@@ -1,6 +1,7 @@
 import { createClient, type Client } from '@libsql/client';
 
 import { createApp } from '../src/api.js';
+import type { PushDeps } from '../src/context.js';
 import { migrate } from '../src/db/migrations.js';
 
 export const setupSecret = 'test-setup-secret-0123456789';
@@ -8,7 +9,10 @@ export const cronSecret = 'test-cron-secret-0123456789';
 export const password = 'a long password';
 
 /** A fresh app on an in-memory database with a controllable clock. */
-export async function testApp(start = Date.parse('2026-10-31T12:00:00.000Z')) {
+export async function testApp(
+  start = Date.parse('2026-10-31T12:00:00.000Z'),
+  { push }: { push?: PushDeps } = {},
+) {
   const db: Client = createClient({ url: ':memory:' });
   await migrate(db);
   const clock = { now: start };
@@ -17,6 +21,7 @@ export async function testApp(start = Date.parse('2026-10-31T12:00:00.000Z')) {
     setupSecret,
     cronSecret,
     now: () => clock.now,
+    ...(push ? { push } : {}),
   });
 
   const request = async (
@@ -52,12 +57,16 @@ export async function testApp(start = Date.parse('2026-10-31T12:00:00.000Z')) {
       body: { setupSecret, username: 'owner', password },
     });
 
-  const login = async (deviceId = 'device-1', type = 'linux') => {
+  const login = async (
+    deviceId = 'device-1',
+    type = 'linux',
+    extra: Record<string, unknown> = {},
+  ) => {
     const response = await request('POST', '/auth/login', {
       body: {
         username: 'owner',
         password,
-        device: { id: deviceId, name: `Device ${deviceId}`, type },
+        device: { id: deviceId, name: `Device ${deviceId}`, type, ...extra },
       },
     });
     return response.body.token as string;

@@ -28,6 +28,30 @@ describe('migrations', () => {
     const versions = await db.execute('SELECT COUNT(*) AS n FROM schema_migrations');
     expect(Number(versions.rows[0]?.['n'])).toBe(migrations.length);
   });
+
+  it('upgrade a version 2 database: devices gain a time zone, push tables appear', async () => {
+    const db = createClient({ url: ':memory:' });
+    await db.execute(
+      'CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, applied_at INTEGER NOT NULL)',
+    );
+    await db.batch(
+      [...migrations[0]!, ...migrations[1]!, 'INSERT INTO schema_migrations VALUES (1, 0), (2, 0)'],
+      'write',
+    );
+    await db.execute(`INSERT INTO devices (id, name, type, token_hash, created_at, updated_at, is_main)
+      VALUES ('phone', 'iPhone', 'ios', 'h1', 1, 1, 1)`);
+    await migrate(db);
+    const device = await db.execute('SELECT id, time_zone, is_main FROM devices');
+    expect(device.rows.map((r) => ({ ...r }))).toEqual([
+      { id: 'phone', time_zone: null, is_main: 1 },
+    ]);
+    await db.execute(`INSERT INTO push_subscriptions (endpoint, device_id, p256dh, auth, created_at)
+      VALUES ('https://push.example.com/x', 'phone', 'k', 'a', 1)`);
+    await db.execute(`INSERT INTO push_items (device_id, key, fire_at, task_id, title, body)
+      VALUES ('phone', '1', 2, 't', 'x', 'y')`);
+    const item = await db.execute('SELECT queued_at, sent_at FROM push_items');
+    expect(item.rows.map((r) => ({ ...r }))).toEqual([{ queued_at: null, sent_at: null }]);
+  });
 });
 
 describe('config', () => {

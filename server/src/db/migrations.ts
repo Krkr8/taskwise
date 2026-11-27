@@ -61,6 +61,31 @@ export const migrations: readonly (readonly string[])[] = [
        SELECT id FROM devices WHERE revoked_at IS NULL
        ORDER BY created_at LIMIT 1)`,
   ],
+  // 3: web reminders (2026-11-27). Push data lives in its own tables, not in
+  // `records`: subscriptions of web devices and the push plan per device.
+  [
+    'ALTER TABLE devices ADD COLUMN time_zone TEXT',
+    `CREATE TABLE push_subscriptions (
+       endpoint TEXT PRIMARY KEY,
+       device_id TEXT NOT NULL,
+       p256dh TEXT NOT NULL,
+       auth TEXT NOT NULL,
+       created_at INTEGER NOT NULL
+     )`,
+    'CREATE INDEX push_subscriptions_device ON push_subscriptions (device_id)',
+    `CREATE TABLE push_items (
+       device_id TEXT NOT NULL,
+       key TEXT NOT NULL,
+       fire_at INTEGER NOT NULL,
+       task_id TEXT NOT NULL,
+       title TEXT NOT NULL,
+       body TEXT NOT NULL,
+       queued_at INTEGER,
+       sent_at INTEGER,
+       PRIMARY KEY (device_id, key)
+     )`,
+    'CREATE INDEX push_items_due ON push_items (sent_at, fire_at)',
+  ],
 ];
 
 /** Brings the database schema up to date. Safe to run concurrently. */

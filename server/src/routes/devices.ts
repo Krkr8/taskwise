@@ -10,7 +10,7 @@ import {
   type AppDeps,
   type AppEnv,
 } from '../context.js';
-import { DeviceStore, deviceToJson } from '../devices.js';
+import { DeviceStore, deviceToJson, timeZoneField } from '../devices.js';
 import { ApiError, badRequest } from '../errors.js';
 import { log } from '../log.js';
 
@@ -21,6 +21,8 @@ const mainOnly = (what: string) =>
 /**
  * GET /devices, PATCH /devices/:id, DELETE /devices/:id and
  * POST /devices/claim-main.
+ *
+ * A device's time zone is set only by the device itself.
  *
  * The main device (the first to sign in) manages the others: only it can
  * remove or rename other devices and hand the role on. Any device can
@@ -46,17 +48,28 @@ export function deviceRoutes(deps: AppDeps) {
         throw badRequest('"main" can only be set to true.');
       }
       const hasName = body?.['name'] !== undefined;
-      if (!hasName && makeMain === undefined) {
-        throw badRequest('Send "name" and/or "main": true.');
+      const timeZone = timeZoneField(body);
+      if (!hasName && makeMain === undefined && timeZone === undefined) {
+        throw badRequest('Send "name", "timeZone" and/or "main": true.');
       }
       if (hasName && id !== me.id && !me.isMain) {
         throw mainOnly('rename other devices');
       }
       if (makeMain && !me.isMain) throw mainOnly('choose the main device');
+      if (timeZone !== undefined && id !== me.id) {
+        throw new ApiError(
+          403,
+          'forbidden',
+          'A device can only set its own time zone.',
+        );
+      }
 
       let device = hasName
         ? await devices.rename(id, stringField(body, 'name', { max: 100 }))
         : await devices.find(id);
+      if (timeZone !== undefined) {
+        device = await devices.setTimeZone(id, timeZone);
+      }
       if (makeMain) {
         device = await devices.makeMain(id);
         if (!device) throw new ApiError(409, 'conflict', 'That device was removed.');
