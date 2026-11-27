@@ -109,6 +109,15 @@ class AppDatabase extends _$AppDatabase {
     }
   }
 
+  /// Deletes every row of every table: the web app's sign-out with "Also
+  /// remove my tasks from this browser". The next start begins empty, as a
+  /// new device.
+  Future<void> deleteAllLocalData() => transaction(() async {
+    for (final table in allTables) {
+      await delete(table).go();
+    }
+  });
+
   Future<void> _createSyncTriggers() async {
     for (final statement in syncTriggers) {
       await customStatement(statement);

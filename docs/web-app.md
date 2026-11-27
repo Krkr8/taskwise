@@ -31,7 +31,7 @@ In a Safari tab, Taskwise shows these steps first. If the browser keeps nothing 
 - **No reminders yet.** Notifications and location reminders don't fire in the browser. Web notifications are planned (milestone M15). Tasks you add in the browser still sync, and your phone reminds you.
 - **No background sync.** The web app syncs while it is open (at start, after changes, every minute and when you come back to it), not while the tab is closed.
 - **No Siri or shortcuts, and no in-app updates.** The web app is always the newest version when you reload.
-- **Shared computers:** sign out (Settings → Sync) when you are done. Your tasks stay in that browser until you do, and clearing the site's data in the browser also removes them from there (they stay on your server).
+- **Shared computers:** sign out (Settings → Sync) when you are done, with **Also remove my tasks from this browser** ticked (it is unless you untick it). The browser then forgets your tasks, settings and the app's log, and the page starts again empty. Your tasks stay on your server and your other devices. If you untick it, your tasks stay in that browser until you clear the site's data.
 
 If the page says it could not start, the browser could not load the database files. Reload; if it keeps happening, try another browser or check that nothing blocks the site's files.
 

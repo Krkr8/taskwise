@@ -826,6 +826,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String syncSignOutConfirmWeb(String server) {
+    return 'Sign out of $server? This browser stops syncing.';
+  }
+
+  @override
+  String get syncSignOutRemoveData => 'Also remove my tasks from this browser';
+
+  @override
   String get syncSignInAgain => 'Sign in again';
 
   @override
@@ -1428,7 +1436,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aboutSharedComputer =>
-      'On a shared computer, sign out when you\'re done.';
+      'On a shared computer, sign out when you\'re done, with “Also remove my tasks from this browser” ticked.';
 
   @override
   String get aboutViewLogs => 'View logs';

@@ -123,7 +123,10 @@ void main() {
     expect(find.text('Location debug'), findsNothing);
     expect(find.text('Web app'), findsOneWidget);
     expect(
-      find.text("On a shared computer, sign out when you're done."),
+      find.text(
+        "On a shared computer, sign out when you're done, with “Also remove "
+        'my tasks from this browser” ticked.',
+      ),
       findsOneWidget,
     );
     await close();

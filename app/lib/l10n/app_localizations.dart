@@ -1352,6 +1352,18 @@ abstract class AppLocalizations {
   /// **'Sign out of {server}? This device stops syncing. Your tasks stay on it.'**
   String syncSignOutConfirm(String server);
 
+  /// No description provided for @syncSignOutConfirmWeb.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out of {server}? This browser stops syncing.'**
+  String syncSignOutConfirmWeb(String server);
+
+  /// No description provided for @syncSignOutRemoveData.
+  ///
+  /// In en, this message translates to:
+  /// **'Also remove my tasks from this browser'**
+  String get syncSignOutRemoveData;
+
   /// No description provided for @syncSignInAgain.
   ///
   /// In en, this message translates to:
@@ -2321,7 +2333,7 @@ abstract class AppLocalizations {
   /// No description provided for @aboutSharedComputer.
   ///
   /// In en, this message translates to:
-  /// **'On a shared computer, sign out when you\'re done.'**
+  /// **'On a shared computer, sign out when you\'re done, with “Also remove my tasks from this browser” ticked.'**
   String get aboutSharedComputer;
 
   /// No description provided for @aboutViewLogs.

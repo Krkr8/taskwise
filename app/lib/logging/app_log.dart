@@ -104,6 +104,21 @@ class AppLog extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Removes the lines kept in the [useStore] store and stops keeping new
+  /// ones there (the web app's sign-out that removes this browser's data;
+  /// the page reloads next). Also forgets the lines in memory.
+  void forgetStored() {
+    final store = _store;
+    _store = null;
+    _entries.clear();
+    try {
+      store?.remove(storeKey);
+    } on Object catch (e) {
+      debugPrint('Log store remove failed: $e');
+    }
+    notifyListeners();
+  }
+
   void info(String tag, String message) => add(LogLevel.info, tag, message);
 
   void warning(String tag, String message) =>
@@ -173,6 +188,8 @@ class AppLog extends ChangeNotifier {
     _saveScheduled = true;
     scheduleMicrotask(() {
       _saveScheduled = false;
+      // forgetStored() was called since.
+      if (!identical(_store, store)) return;
       try {
         store.write(
           storeKey,

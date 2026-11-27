@@ -854,6 +854,14 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String syncSignOutConfirmWeb(String server) {
+    return 'تسجيل الخروج من $server؟ سيتوقف هذا المتصفح عن المزامنة.';
+  }
+
+  @override
+  String get syncSignOutRemoveData => 'احذف مهامي من هذا المتصفح أيضًا';
+
+  @override
   String get syncSignInAgain => 'سجّل الدخول مجددًا';
 
   @override
@@ -1463,7 +1471,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aboutWebApp => 'تطبيق الويب';
 
   @override
-  String get aboutSharedComputer => 'على جهاز مشترك، سجّل الخروج عند الانتهاء.';
+  String get aboutSharedComputer =>
+      'على جهاز مشترك، سجّل الخروج عند الانتهاء مع تحديد «احذف مهامي من هذا المتصفح أيضًا».';
 
   @override
   String get aboutViewLogs => 'عرض السجلات';

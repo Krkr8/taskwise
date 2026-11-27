@@ -12,6 +12,8 @@ import 'sync_api.dart';
 import 'sync_engine.dart';
 import 'token_store.dart';
 import '../logging/app_log.dart';
+import '../platform/app_target.dart';
+import '../platform/page_reload.dart';
 
 /// Where the device token is kept. Tests override it with a
 /// [MemoryTokenStore].
@@ -197,7 +199,10 @@ class SyncController extends Notifier<SyncState> {
 
   /// Revokes this device on the server (if it can be reached) and stops
   /// syncing. Local data stays.
-  Future<void> signOut() async {
+  /// Signs this device out. On the web, [removeLocalData] also deletes
+  /// everything this browser keeps (the database and the stored log) and
+  /// reloads the page, for a shared computer. Native apps always keep it.
+  Future<void> signOut({bool removeLocalData = false}) async {
     final engine = _engine;
     _stop();
     if (engine != null) {
@@ -216,6 +221,11 @@ class SyncController extends Notifier<SyncState> {
       message: () => null,
       lastSyncedAt: () => null,
     );
+    if (removeLocalData && appTarget.isWeb) {
+      await ref.read(databaseProvider).deleteAllLocalData();
+      appLog.forgetStored();
+      reloadPage();
+    }
   }
 
   Future<void> dismissBanner() async {

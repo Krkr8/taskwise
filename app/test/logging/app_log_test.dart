@@ -85,6 +85,17 @@ void main() {
       expect((AppLog()..useStore(store)).entries, isEmpty);
     });
 
+    test('forgetStored removes the stored lines and stops saving', () async {
+      final store = MemoryKeyValueStore();
+      final log = AppLog()..useStore(store);
+      log.info('test', 'something');
+      log.forgetStored(); // before the scheduled save runs
+      log.info('sync', 'signed out');
+      await pumpEventQueue();
+      expect(store.values, isEmpty);
+      expect(log.entries.map((e) => e.message), ['signed out']);
+    });
+
     test('ignores stored lines it cannot read', () {
       final store = MemoryKeyValueStore()
         ..values[AppLog.storeKey] = '{not json';

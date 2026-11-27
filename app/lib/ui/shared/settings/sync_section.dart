@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../platform/app_target.dart';
 import '../../../state/providers.dart';
 import '../../../sync/sync_controller.dart';
 import '../tasks/labels.dart';
@@ -100,23 +101,51 @@ class SyncSection extends ConsumerWidget {
     SyncState sync,
   ) async {
     final l10n = context.l10n;
+    final host = Uri.parse(sync.serverUrl!).host;
+    // The web: on a shared computer the tasks shouldn't stay in the browser,
+    // so removing them is offered, and ticked.
+    final web = appTarget.isWeb;
+    var removeData = web;
     final ok = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        content: Text(l10n.syncSignOutConfirm(Uri.parse(sync.serverUrl!).host)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.syncSignOut),
-          ),
-        ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          content: web
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(l10n.syncSignOutConfirmWeb(host)),
+                    const SizedBox(height: Spacing.sm),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      value: removeData,
+                      title: Text(l10n.syncSignOutRemoveData),
+                      onChanged: (value) =>
+                          setState(() => removeData = value ?? false),
+                    ),
+                  ],
+                )
+              : Text(l10n.syncSignOutConfirm(host)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(l10n.syncSignOut),
+            ),
+          ],
+        ),
       ),
     );
-    if (ok ?? false) await ref.read(syncControllerProvider.notifier).signOut();
+    if (ok ?? false) {
+      await ref
+          .read(syncControllerProvider.notifier)
+          .signOut(removeLocalData: removeData);
+    }
   }
 }
 

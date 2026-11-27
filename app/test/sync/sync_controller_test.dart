@@ -1,9 +1,16 @@
 import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:taskwise/data/app_settings.dart';
 import 'package:taskwise/data/db/app_database.dart';
+import 'package:taskwise/data/repositories/category_repository.dart';
+import 'package:taskwise/data/repositories/place_repository.dart';
+import 'package:taskwise/data/repositories/reminder_repository.dart';
 import 'package:taskwise/data/repositories/settings_repository.dart';
 import 'package:taskwise/data/repositories/task_repository.dart';
+import 'package:taskwise/logging/app_log.dart';
+import 'package:taskwise/platform/app_target.dart';
+import 'package:taskwise/platform/page_reload.dart';
 import 'package:taskwise/state/providers.dart';
 import 'package:taskwise/sync/sync_api.dart';
 import 'package:taskwise/sync/sync_controller.dart';
@@ -150,6 +157,114 @@ void main() {
       deviceId: deviceId,
     ).getSyncSettings();
     expect(saved.serverUrl, isNull);
+  });
+
+  group('signing out with "remove my tasks"', () {
+    late AppTarget? savedTarget;
+    late int reloads;
+
+    setUp(() {
+      savedTarget = debugAppTargetOverride;
+      reloads = 0;
+      debugReloadPage = () => reloads++;
+    });
+    tearDown(() {
+      debugAppTargetOverride = savedTarget;
+      debugReloadPage = null;
+    });
+
+    Future<void> addData() async {
+      final tasks = TaskRepository(db, deviceId: deviceId);
+      final task = await tasks.createTask(title: 'Private task');
+      await tasks.addSubtask(task.id, 'Step');
+      final tag = await tasks.findOrCreateTag('home');
+      await tasks.setTaskTags(task.id, {tag.id});
+      await CategoryRepository(
+        db,
+        deviceId: deviceId,
+      ).createCategory('Work', 0xFF336699);
+      await ReminderRepository(
+        db,
+        deviceId: deviceId,
+      ).addAbsolute(task.id, DateTime.utc(2026, 12, 1, 9));
+      await PlaceRepository(
+        db,
+        deviceId: deviceId,
+      ).createPlace(name: 'Home', latitude: 52.5, longitude: 13.4);
+      await SettingsRepository(
+        db,
+        deviceId: deviceId,
+      ).setLanguage(AppLanguage.ar);
+    }
+
+    Future<Map<String, int>> rowCounts() async => {
+      for (final table in db.allTables)
+        table.actualTableName:
+            (await db
+                    .customSelect(
+                      'SELECT COUNT(*) AS n FROM ${table.actualTableName}',
+                    )
+                    .getSingle())
+                .read<int>('n'),
+    };
+
+    test('on the web it empties the database and the stored log, '
+        'then reloads the page', () async {
+      debugAppTargetOverride = AppTarget.web;
+      final store = MemoryKeyValueStore();
+      appLog.useStore(store);
+      appLog.info('test', 'a line');
+      await signIn();
+      await _settle(container);
+      await addData();
+      final before = await rowCounts();
+      for (final table in [
+        'tasks',
+        'subtasks',
+        'categories',
+        'tags',
+        'task_tags',
+        'reminders',
+        'places',
+        'devices',
+        'settings',
+      ]) {
+        expect(before[table], greaterThan(0), reason: table);
+      }
+
+      await controller().signOut(removeLocalData: true);
+      await pumpEventQueue();
+
+      expect(server.devices[deviceId]!['deleted'], isTrue);
+      expect(tokens.token, isNull);
+      expect((await rowCounts()).values, everyElement(0));
+      expect(store.values, isEmpty);
+      expect(reloads, 1);
+    });
+
+    test('without it the web keeps everything', () async {
+      debugAppTargetOverride = AppTarget.web;
+      await signIn();
+      await _settle(container);
+      await addData();
+      await controller().signOut();
+      final after = await rowCounts();
+      expect(after['tasks'], greaterThan(0));
+      expect(after['places'], greaterThan(0));
+      expect(reloads, 0);
+    });
+
+    test('native apps never remove data on sign-out', () async {
+      debugAppTargetOverride = AppTarget.linux;
+      await signIn();
+      await _settle(container);
+      await addData();
+      await controller().signOut(removeLocalData: true);
+      final after = await rowCounts();
+      expect(after['tasks'], greaterThan(0));
+      expect(after['settings'], greaterThan(0));
+      expect(reloads, 0);
+    });
   });
 
   test('rename and remove devices go through the server', () async {
