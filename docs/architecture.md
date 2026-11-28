@@ -35,7 +35,19 @@ Taskwise is three projects in one repository:
 
 None of the folders outside `ui/` know which design is in use.
 
-On the web only Brutal and Lapis are offered (any other stored design shows Brutal), and a few things are off: reminders, location, background sync, in-app updates (each checks `AppTarget`). See `docs/web-app.md`.
+On the web only Brutal and Lapis are offered (any other stored design shows Brutal), and a few things are off: location reminders, background sync, in-app updates (each checks `AppTarget`). See `docs/web-app.md`.
+
+## Web reminders (push)
+
+How a reminder reaches a browser that is closed:
+
+1. **Plan (app).** `app/lib/notifications/push_plan_uploader.dart` computes a push plan for each web device (next 60 days, at most 500 items, only tasks that notify on that device) from the same reminder schedule in `shared/`, and uploads it when it changes.
+2. **Server tables.** `server/src/push/store.ts` keeps the subscriptions and plan items.
+3. **Queue.** `server/src/push/schedule.ts` queues one Vercel Queues message per item with a delay (`vercel_queue.ts`, topic `taskwise-push`, up to about 7 days ahead; the daily cron queues the rest). On Docker or Node a 30-second timer (`due.ts`) takes its place.
+4. **Delivery.** `server/api/push-delivery.ts` (the queue consumer, `consumer.ts`) calls `deliver.ts`, which re-checks the item (messages can't be cancelled) and sends it with `web_push_sender.ts` (`web-push`, VAPID keys from the environment).
+5. **Notification.** The service worker `app/web/sw.js` shows it; a tap opens the app on that task.
+
+The browser side (permission, subscription, status) is `app/lib/ui/shared/settings/web_notifications_section.dart`.
 
 ## Designs (`app/lib/ui/`)
 

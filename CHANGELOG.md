@@ -6,6 +6,13 @@ When a version is released, its section becomes the text of the draft GitHub rel
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-28
+
+### Added
+
+- **Reminders in the browser.** The web app can now show your reminders as notifications (Web Push), even while it is closed. Turn them on in **Settings → Notifications → Turn on notifications in this browser**. On an iPhone this works in the Home Screen app (iOS 16.4 or newer). Web notifications have no buttons and no snooze, and location reminders still don't fire in the browser. Your phones and computers plan the browser's reminders (the next 60 days, up to 500) and send the plan to your server. See [docs/web-app.md](docs/web-app.md).
+- **Server: web reminders.** The sync server sends the notifications. It needs three new settings (VAPID keys: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`) and a **redeploy**; see [docs/self-hosting.md](docs/self-hosting.md#web-reminders). Without them the server works as before and the web app says reminders aren't set up yet. Other apps need nothing.
+
 ## [1.3.0] - 2026-11-27
 
 ### Added
