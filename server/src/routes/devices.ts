@@ -10,7 +10,12 @@ import {
   type AppDeps,
   type AppEnv,
 } from '../context.js';
-import { DeviceStore, deviceToJson, timeZoneField } from '../devices.js';
+import {
+  allDayMinutesField,
+  DeviceStore,
+  deviceToJson,
+  timeZoneField,
+} from '../devices.js';
 import { ApiError, badRequest } from '../errors.js';
 import { log } from '../log.js';
 
@@ -49,8 +54,16 @@ export function deviceRoutes(deps: AppDeps) {
       }
       const hasName = body?.['name'] !== undefined;
       const timeZone = timeZoneField(body);
-      if (!hasName && makeMain === undefined && timeZone === undefined) {
-        throw badRequest('Send "name", "timeZone" and/or "main": true.');
+      const allDayMinutes = allDayMinutesField(body);
+      if (
+        !hasName &&
+        makeMain === undefined &&
+        timeZone === undefined &&
+        allDayMinutes === undefined
+      ) {
+        throw badRequest(
+          'Send "name", "timeZone", "allDayMinutes" and/or "main": true.',
+        );
       }
       if (hasName && id !== me.id && !me.isMain) {
         throw mainOnly('rename other devices');
@@ -63,12 +76,22 @@ export function deviceRoutes(deps: AppDeps) {
           'A device can only set its own time zone.',
         );
       }
+      if (allDayMinutes !== undefined && id !== me.id) {
+        throw new ApiError(
+          403,
+          'forbidden',
+          'A device can only set its own all-day reminder time.',
+        );
+      }
 
       let device = hasName
         ? await devices.rename(id, stringField(body, 'name', { max: 100 }))
         : await devices.find(id);
       if (timeZone !== undefined) {
         device = await devices.setTimeZone(id, timeZone);
+      }
+      if (allDayMinutes !== undefined) {
+        device = await devices.setAllDayMinutes(id, allDayMinutes);
       }
       if (makeMain) {
         device = await devices.makeMain(id);

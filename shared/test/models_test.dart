@@ -126,11 +126,31 @@ void main() {
           updatedAt: _t0,
           timeZone: 'Asia/Baghdad',
           pushEnabled: true,
+          allDayMinutes: 8 * 60,
         ),
         (v) => v.toJson(),
         Device.fromJson,
       );
-      // Servers before 1.4 send neither field.
+      expect(
+        Device(
+          id: 'w',
+          name: 'Web',
+          type: DeviceType.web,
+          updatedAt: _t0,
+          allDayMinutes: 0,
+        ).toJson()['allDayMinutes'],
+        0,
+      );
+      expect(
+        Device(
+          id: 'd',
+          name: 'x',
+          type: DeviceType.linux,
+          updatedAt: _t0,
+        ).toJson().containsKey('allDayMinutes'),
+        isFalse,
+      );
+      // Servers before 1.4 send none of these fields.
       final old = Device.fromJson({
         'id': 'd',
         'name': 'x',
@@ -139,6 +159,7 @@ void main() {
       });
       expect(old.timeZone, isNull);
       expect(old.pushEnabled, isFalse);
+      expect(old.allDayMinutes, isNull);
       roundTrip(
         TaskTargetDevice(id: 'x', taskId: 't', deviceId: 'd', updatedAt: _t0),
         (v) => v.toJson(),

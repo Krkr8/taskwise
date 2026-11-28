@@ -86,6 +86,9 @@ export const migrations: readonly (readonly string[])[] = [
      )`,
     'CREATE INDEX push_items_due ON push_items (sent_at, fire_at)',
   ],
+  // 4: a web device's all-day reminder time (2026-11-28), so other devices
+  // plan its all-day reminders at the time it shows them.
+  ['ALTER TABLE devices ADD COLUMN all_day_minutes INTEGER'],
 ];
 
 /** Brings the database schema up to date. Safe to run concurrently. */

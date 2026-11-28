@@ -21,6 +21,12 @@ export interface DeviceRow {
   readonly timeZone: string | null;
   /** True when the device has at least one Web Push subscription. */
   readonly pushEnabled: boolean;
+  /**
+   * When the device reminds of all-day tasks, in minutes after midnight
+   * (web devices since 1.4.0 report it, for the apps that plan for them),
+   * or null.
+   */
+  readonly allDayMinutes: number | null;
 }
 
 /** JSON shape of a device; matches `Device.toJson` in shared. */
@@ -37,6 +43,8 @@ export interface DeviceJson {
   timeZone?: string;
   /** Only present when true, like `Device.toJson` in shared. */
   pushEnabled?: true;
+  /** Only present when set, like `Device.toJson` in shared. */
+  allDayMinutes?: number;
 }
 
 /** Longest time zone name accepted (IANA names are far shorter). */
@@ -62,8 +70,29 @@ export function timeZoneField(body: unknown): string | null | undefined {
   return text;
 }
 
+/**
+ * Reads an optional `allDayMinutes` field: undefined when absent, null when
+ * explicitly null (clears it), else an integer from 0 to 1439.
+ */
+export function allDayMinutesField(body: unknown): number | null | undefined {
+  const value =
+    typeof body === 'object' && body !== null
+      ? (body as Record<string, unknown>)['allDayMinutes']
+      : undefined;
+  if (value === undefined || value === null) return value;
+  if (
+    typeof value !== 'number' ||
+    !Number.isInteger(value) ||
+    value < 0 ||
+    value >= 24 * 60
+  ) {
+    throw badRequest('"allDayMinutes" must be null or a whole number from 0 to 1439.');
+  }
+  return value;
+}
+
 const columns = `id, name, type, created_at, updated_at, last_seen_at,
-  revoked_at, is_main, time_zone,
+  revoked_at, is_main, time_zone, all_day_minutes,
   EXISTS (SELECT 1 FROM push_subscriptions s WHERE s.device_id = devices.id)
     AS push_enabled`;
 
@@ -87,6 +116,7 @@ function fromRow(row: Row): DeviceRow {
         ? null
         : String(row['time_zone']),
     pushEnabled: Number(row['push_enabled']) === 1,
+    allDayMinutes: nullable(row['all_day_minutes']),
   };
 }
 
@@ -106,6 +136,7 @@ export function deviceToJson(device: DeviceRow): DeviceJson {
     main: device.isMain,
     ...(device.timeZone === null ? {} : { timeZone: device.timeZone }),
     ...(device.pushEnabled ? { pushEnabled: true as const } : {}),
+    ...(device.allDayMinutes === null ? {} : { allDayMinutes: device.allDayMinutes }),
   };
 }
 
@@ -148,23 +179,32 @@ export class DeviceStore {
   /**
    * Registers a device, or gives an existing device id a new token (which
    * also un-revokes it: the user has just logged in with the password).
-   * Without a [timeZone] (apps before 1.4.0) the stored one is kept.
+   * Without a [timeZone] or [allDayMinutes] (apps before 1.4.0) the stored
+   * one is kept.
    */
   async register(
-    device: { id: string; name: string; type: DeviceType; timeZone?: string },
+    device: {
+      id: string;
+      name: string;
+      type: DeviceType;
+      timeZone?: string;
+      allDayMinutes?: number;
+    },
     tokenHash: string,
   ): Promise<DeviceRow> {
     const now = this.now();
     await this.db.execute({
       sql: `INSERT INTO devices
               (id, name, type, token_hash, created_at, updated_at, last_seen_at,
-               time_zone)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+               time_zone, all_day_minutes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (id) DO UPDATE SET
               name = excluded.name, type = excluded.type,
               token_hash = excluded.token_hash, updated_at = excluded.updated_at,
               last_seen_at = excluded.last_seen_at, revoked_at = NULL,
-              time_zone = COALESCE(excluded.time_zone, devices.time_zone)`,
+              time_zone = COALESCE(excluded.time_zone, devices.time_zone),
+              all_day_minutes =
+                COALESCE(excluded.all_day_minutes, devices.all_day_minutes)`,
       args: [
         device.id,
         device.name,
@@ -174,6 +214,7 @@ export class DeviceStore {
         now,
         now,
         device.timeZone ?? null,
+        device.allDayMinutes ?? null,
       ],
     });
     // The first device (or the first after the main one was removed)
@@ -202,6 +243,18 @@ export class DeviceStore {
     await this.db.execute({
       sql: 'UPDATE devices SET time_zone = ?, updated_at = ? WHERE id = ?',
       args: [timeZone, this.now(), id],
+    });
+    return this.find(id);
+  }
+
+  /** Sets (or with null clears) the device's all-day reminder minutes. */
+  async setAllDayMinutes(
+    id: string,
+    minutes: number | null,
+  ): Promise<DeviceRow | undefined> {
+    await this.db.execute({
+      sql: 'UPDATE devices SET all_day_minutes = ?, updated_at = ? WHERE id = ?',
+      args: [minutes, this.now(), id],
     });
     return this.find(id);
   }

@@ -26,11 +26,14 @@ void main() {
   late DateTime now;
   late TaskRepository tasks;
   late Task task;
+  late DeviceType deviceType;
+  late String? zone;
 
   void addWebDevice(
     String id, {
     bool pushEnabled = true,
     String? timeZone = 'Europe/Berlin',
+    int? allDayMinutes = 9 * 60,
   }) {
     server.devices[id] = {
       'id': id,
@@ -43,6 +46,7 @@ void main() {
       'updatedByDevice': null,
       'timeZone': ?timeZone,
       if (pushEnabled) 'pushEnabled': true,
+      'allDayMinutes': ?allDayMinutes,
     };
   }
 
@@ -53,11 +57,11 @@ void main() {
       overrides: [
         databaseProvider.overrideWithValue(db),
         deviceIdProvider.overrideWithValue(deviceId),
-        deviceTypeProvider.overrideWithValue(DeviceType.linux),
+        deviceTypeProvider.overrideWithValue(deviceType),
         tokenStoreProvider.overrideWithValue(tokens),
         syncHttpClientProvider.overrideWithValue(server.client),
         clockProvider.overrideWithValue(() => now),
-        deviceTimeZoneProvider.overrideWith((ref) async => 'Europe/Berlin'),
+        deviceTimeZoneProvider.overrideWith((ref) async => zone),
         pushPlanDebounceProvider.overrideWithValue(
           const Duration(milliseconds: 20),
         ),
@@ -81,6 +85,8 @@ void main() {
 
   setUp(() async {
     server = FakeSyncServer();
+    deviceType = DeviceType.linux;
+    zone = 'Europe/Berlin';
     db = openTestDatabase();
     deviceId = await ensureThisDevice(
       db,
@@ -253,5 +259,108 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 400));
     expect(server.pushPlanUploads, 2);
     expect(server.pushPlans['web1']!.single['title'], 'Pay rent today');
+  });
+
+  group('all-day reminders', () {
+    late Task allDay;
+
+    setUp(() async {
+      allDay = await tasks.createTask(
+        title: 'Call mum',
+        dueDate: LocalDate.fromDateTime(DateTime(2026, 11, 30)),
+      );
+      await ReminderRepository(
+        db,
+        deviceId: deviceId,
+      ).addRelative(allDay.id, 0);
+    });
+
+    int? allDayFireAt(String webId) =>
+        server.pushPlans[webId]!
+                .where((i) => i['taskId'] == allDay.id)
+                .single['fireAt']
+            as int?;
+
+    test('a web device\'s plan uses the all-day time it reported', () async {
+      addWebDevice('web1', allDayMinutes: 7 * 60);
+      await signInAndStart();
+      await uploader().uploadNow();
+      expect(
+        allDayFireAt('web1'),
+        DateTime(2026, 11, 30, 7).toUtc().millisecondsSinceEpoch,
+      );
+    });
+
+    test('a web device that reported no all-day time is skipped', () async {
+      addWebDevice('web1', allDayMinutes: null);
+      await signInAndStart();
+      await uploader().uploadNow();
+      expect(server.pushPlanUploads, 0);
+    });
+
+    test('a web device reports its all-day time at login and on change, and '
+        'plans for itself with its own setting', () async {
+      container.dispose();
+      deviceType = DeviceType.web;
+      container = await makeContainer();
+      await container
+          .read(syncControllerProvider.notifier)
+          .signIn(
+            serverUrl: 'sync.test',
+            username: server.username,
+            password: server.password,
+            deviceName: 'Browser',
+          );
+      expect(server.devices[deviceId]!['allDayMinutes'], 9 * 60);
+      await container.read(syncControllerProvider.notifier).syncNow();
+
+      await SettingsRepository(
+        db,
+        deviceId: deviceId,
+      ).setAllDayReminderMinutes(8 * 60);
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      expect(server.devices[deviceId]!['allDayMinutes'], 8 * 60);
+      expect(server.requests.where((r) => r == 'PATCH /devices/$deviceId'), [
+        'PATCH /devices/$deviceId',
+      ]);
+
+      // Its own plan: its own setting, whatever the server lists.
+      server.devices[deviceId]!['pushEnabled'] = true;
+      server.devices[deviceId]!['allDayMinutes'] = 6 * 60;
+      await container.read(syncControllerProvider.notifier).syncNow();
+      container.read(pushPlanUploaderProvider);
+      await uploader().uploadNow();
+      expect(
+        allDayFireAt(deviceId),
+        DateTime(2026, 11, 30, 8).toUtc().millisecondsSinceEpoch,
+      );
+    });
+  });
+
+  test('a device signed in before 1.4.0 (no new login) reports its time '
+      'zone on the first device listing, and again after it changes', () async {
+    // Signed in by 1.3.0: the server has no time zone for it.
+    zone = null;
+    container.dispose();
+    container = await makeContainer();
+    await signInAndStart();
+    expect(server.devices[deviceId]!['timeZone'], isNull);
+    container.dispose();
+    server.requests.clear();
+
+    // Updated to 1.4.0: the next start syncs with the saved token.
+    zone = 'Europe/Berlin';
+    container = await makeContainer();
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    await container.read(syncControllerProvider.notifier).syncNow();
+    expect(server.devices[deviceId]!['timeZone'], 'Europe/Berlin');
+    expect(server.requests, isNot(contains('POST /auth/login')));
+    expect(server.requests, contains('PATCH /devices/$deviceId'));
+
+    // Travelled: the zone is read again (on resume) and sent.
+    zone = 'Asia/Baghdad';
+    container.invalidate(deviceTimeZoneProvider);
+    await container.read(syncControllerProvider.notifier).syncNow();
+    expect(server.devices[deviceId]!['timeZone'], 'Asia/Baghdad');
   });
 }

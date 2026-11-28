@@ -14,6 +14,7 @@ final class Device implements SyncRecord {
     this.isMain = false,
     this.timeZone,
     this.pushEnabled = false,
+    this.allDayMinutes,
   });
 
   factory Device.fromJson(Map<String, Object?> json) => Device(
@@ -27,6 +28,7 @@ final class Device implements SyncRecord {
     isMain: json['main'] as bool? ?? false,
     timeZone: json['timeZone'] as String?,
     pushEnabled: json['pushEnabled'] as bool? ?? false,
+    allDayMinutes: (json['allDayMinutes'] as num?)?.toInt(),
   );
 
   @override
@@ -50,6 +52,10 @@ final class Device implements SyncRecord {
   /// Whether the device has Web Push on (set by the server).
   final bool pushEnabled;
 
+  /// When a web device reminds of all-day tasks, in minutes after midnight
+  /// (set by the device; null before 1.4 and on native devices).
+  final int? allDayMinutes;
+
   Map<String, Object?> toJson() => {
     'id': id,
     'name': name,
@@ -61,6 +67,7 @@ final class Device implements SyncRecord {
     'main': isMain,
     if (timeZone != null) 'timeZone': timeZone,
     if (pushEnabled) 'pushEnabled': pushEnabled,
+    'allDayMinutes': ?allDayMinutes,
   };
 
   @override
@@ -75,7 +82,8 @@ final class Device implements SyncRecord {
       other.updatedByDevice == updatedByDevice &&
       other.isMain == isMain &&
       other.timeZone == timeZone &&
-      other.pushEnabled == pushEnabled;
+      other.pushEnabled == pushEnabled &&
+      other.allDayMinutes == allDayMinutes;
 
   @override
   int get hashCode => Object.hash(
@@ -89,6 +97,7 @@ final class Device implements SyncRecord {
     isMain,
     timeZone,
     pushEnabled,
+    allDayMinutes,
   );
 
   @override

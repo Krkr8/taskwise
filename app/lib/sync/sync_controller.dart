@@ -124,6 +124,12 @@ class SyncController extends Notifier<SyncState> {
   bool _again = false;
   bool _disposed = false;
   String? _timeZoneSent;
+  int? _allDaySent;
+  ProviderSubscription<int>? _allDayChanges;
+
+  /// A web device reports its all-day reminder time (other devices plan its
+  /// reminders with it).
+  bool get _reportsAllDay => ref.read(deviceTypeProvider) == DeviceType.web;
 
   @override
   SyncState build() {
@@ -179,6 +185,9 @@ class SyncController extends Notifier<SyncState> {
     }
     final deviceId = ref.read(deviceIdProvider);
     final timeZone = await ref.read(deviceTimeZoneProvider.future);
+    final allDay = _reportsAllDay
+        ? ref.read(appSettingsProvider).allDayReminderMinutes
+        : null;
     final login = await api.login(
       username: username,
       password: password,
@@ -186,9 +195,11 @@ class SyncController extends Notifier<SyncState> {
       deviceName: deviceName,
       deviceType: ref.read(deviceTypeProvider),
       timeZone: timeZone,
+      allDayMinutes: allDay,
     );
     _stop();
     _timeZoneSent = timeZone;
+    _allDaySent = allDay;
     await ref.read(tokenStoreProvider).write(login.token);
     final url = api.baseUri.toString();
     await ref
@@ -320,6 +331,25 @@ class SyncController extends Notifier<SyncState> {
     }
   }
 
+  /// Tells the server this web device's all-day reminder time when it
+  /// differs from what the server has (after each sync, and when the
+  /// setting changes). Tried once per value, like [_syncTimeZone].
+  Future<void> _syncAllDayMinutes(SyncEngine engine) async {
+    if (!_reportsAllDay) return;
+    final minutes = ref.read(appSettingsProvider).allDayReminderMinutes;
+    if (minutes == _allDaySent) return;
+    final own = (engine.serverDevices ?? const <Device>[])
+        .where((d) => d.id == engine.deviceId)
+        .firstOrNull;
+    if (own == null || own.allDayMinutes == minutes) return;
+    _allDaySent = minutes;
+    try {
+      await engine.api.updateDeviceAllDayMinutes(engine.deviceId, minutes);
+    } on SyncApiException catch (e) {
+      appLog.warning('sync', 'Could not send the all-day time: ${e.message}');
+    }
+  }
+
   SyncEngine _requireEngine() =>
       _engine ??
       (throw const SyncHttpException(401, 'unauthorized', 'Not signed in'));
@@ -352,6 +382,7 @@ class SyncController extends Notifier<SyncState> {
       appLog.info('sync', 'Synced: $report');
       if (_disposed || _engine != engine) return;
       await _syncTimeZone(engine);
+      await _syncAllDayMinutes(engine);
       final now = ref.read(clockProvider)().toUtc();
       await ref.read(settingsRepositoryProvider).setLastSyncedAt(now);
       state = state.copyWith(
@@ -403,12 +434,24 @@ class SyncController extends Notifier<SyncState> {
       deviceId: ref.read(deviceIdProvider),
     );
     final engine = _engine!;
+    if (_reportsAllDay) {
+      _allDayChanges = ref.listen(
+        appSettingsProvider.select((s) => s.allDayReminderMinutes),
+        (_, _) => unawaited(_syncAllDayMinutes(engine)),
+      );
+    }
     engine.onDevices = (devices) {
       if (_disposed || _engine != engine) return;
       state = state.copyWith(serverDevices: () => devices);
     };
     _periodic = Timer.periodic(_interval, (_) => unawaited(syncNow()));
-    _lifecycle = AppLifecycleListener(onResume: () => unawaited(syncNow()));
+    _lifecycle = AppLifecycleListener(
+      onResume: () {
+        // The user may have travelled: read the time zone again.
+        ref.invalidate(deviceTimeZoneProvider);
+        unawaited(syncNow());
+      },
+    );
     // A moment after local changes are queued (pulls leave the queue
     // empty, so they don't trigger this).
     final count = db.syncOutbox.recordId.count();
@@ -431,5 +474,7 @@ class SyncController extends Notifier<SyncState> {
     _outbox = null;
     _lifecycle?.dispose();
     _lifecycle = null;
+    _allDayChanges?.close();
+    _allDayChanges = null;
   }
 }

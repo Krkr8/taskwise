@@ -126,6 +126,7 @@ class SyncApi {
     required String deviceName,
     required DeviceType deviceType,
     String? timeZone,
+    int? allDayMinutes,
   }) async {
     final body = await _send(
       'POST',
@@ -138,6 +139,7 @@ class SyncApi {
           'name': deviceName,
           'type': deviceType.name,
           'timeZone': ?timeZone,
+          'allDayMinutes': ?allDayMinutes,
         },
       },
     );
@@ -202,6 +204,14 @@ class SyncApi {
     'PATCH',
     '/devices/${Uri.encodeComponent(id)}',
     body: {'timeZone': timeZone},
+  );
+
+  /// Tells the server when this (web) device reminds of all-day tasks, so
+  /// the devices that plan its reminders use the same time.
+  Future<void> updateDeviceAllDayMinutes(String id, int minutes) => _send(
+    'PATCH',
+    '/devices/${Uri.encodeComponent(id)}',
+    body: {'allDayMinutes': minutes},
   );
 
   // ------------------------------------------------------------- web push

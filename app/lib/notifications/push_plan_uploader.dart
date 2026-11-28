@@ -180,11 +180,17 @@ class PushPlanUploader {
     if (devices == null) return;
     final myId = _ref.read(deviceIdProvider);
     final myZone = await _ref.read(deviceTimeZoneProvider.future);
+    final settings = _ref.read(appSettingsProvider);
+    // A web device plans for itself with its own all-day time; others use
+    // the time it reported, and skip it until it has.
+    int? allDayOf(Device d) =>
+        d.id == myId ? settings.allDayReminderMinutes : d.allDayMinutes;
     final targets = [
       for (final d in devices)
         if (!d.deleted &&
             d.type == DeviceType.web &&
             d.pushEnabled &&
+            allDayOf(d) != null &&
             (d.id == myId || (myZone != null && d.timeZone == myZone)))
           d,
     ];
@@ -196,7 +202,6 @@ class PushPlanUploader {
     hashes.removeWhere((id, _) => !targets.any((d) => d.id == id));
     var changed = hashes.length != before;
 
-    final settings = _ref.read(appSettingsProvider);
     final l10n = lookupAppLocalizations(resolvedLocale(settings));
     final taskTargets = _ref.read(taskTargetsProvider).value ?? const {};
     final now = _ref.read(clockProvider)();
@@ -208,7 +213,7 @@ class PushPlanUploader {
         reminders: reminders,
         notifiesDevice: (t) => notifiesHere(t, taskTargets, device.id),
         now: now,
-        allDayMinutes: settings.allDayReminderMinutes,
+        allDayMinutes: allDayOf(device)!,
         body: (p) => notificationBody(l10n, p, entries, settings.timeFormat),
       );
       final hash = pushPlanHash(items);

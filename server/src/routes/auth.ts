@@ -19,6 +19,7 @@ import {
   DeviceStore,
   deviceToJson,
   deviceTypes,
+  allDayMinutesField,
   timeZoneField,
   type DeviceType,
 } from '../devices.js';
@@ -112,12 +113,16 @@ export function authRoutes(deps: AppDeps) {
     });
 }
 
-/** The login's `device`; `timeZone` is optional (apps since 1.4.0 send it). */
+/**
+ * The login's `device`; `timeZone` and `allDayMinutes` are optional (apps
+ * since 1.4.0 send them).
+ */
 function parseDevice(value: unknown): {
   id: string;
   name: string;
   type: DeviceType;
   timeZone?: string;
+  allDayMinutes?: number;
 } {
   const id = stringField(value, 'id', { max: maxIdLength });
   const name = stringField(value, 'name', { max: 100 });
@@ -126,5 +131,12 @@ function parseDevice(value: unknown): {
     throw badRequest(`"type" must be one of: ${deviceTypes.join(', ')}.`);
   }
   const timeZone = timeZoneField(value);
-  return { id, name, type: type as DeviceType, ...(timeZone ? { timeZone } : {}) };
+  const allDayMinutes = allDayMinutesField(value);
+  return {
+    id,
+    name,
+    type: type as DeviceType,
+    ...(timeZone ? { timeZone } : {}),
+    ...(typeof allDayMinutes === 'number' ? { allDayMinutes } : {}),
+  };
 }

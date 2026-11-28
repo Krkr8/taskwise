@@ -434,6 +434,44 @@ describe('push subscriptions and devices', () => {
     expect((await request('PATCH', '/devices/web', { token: web, body: { timeZone: '' } })).status).toBe(400);
   });
 
+  it('a device reports its all-day reminder minutes at login and with PATCH', async () => {
+    const { request, laptop, login } = await ready();
+    const find = async (id: string) =>
+      (await request('GET', '/devices', { token: laptop })).body.devices.find(
+        (d: { id: string }) => d.id === id,
+      );
+    expect((await find('web')).allDayMinutes).toBeUndefined();
+    await login('web', 'web', { allDayMinutes: 8 * 60 });
+    expect((await find('web')).allDayMinutes).toBe(8 * 60);
+    // Logging in again without it keeps it.
+    const web = await login('web', 'web');
+    expect((await find('web')).allDayMinutes).toBe(8 * 60);
+
+    const own = await request('PATCH', '/devices/web', { token: web, body: { allDayMinutes: 7 * 60 + 30 } });
+    expect(own.status).toBe(200);
+    expect(own.body.allDayMinutes).toBe(7 * 60 + 30);
+    expect((await find('web')).allDayMinutes).toBe(7 * 60 + 30);
+    expect(
+      (await request('PATCH', '/devices/web', { token: laptop, body: { allDayMinutes: 60 } })).status,
+    ).toBe(403);
+    for (const bad of [-1, 24 * 60, 1.5, '540']) {
+      expect(
+        (await request('PATCH', '/devices/web', { token: web, body: { allDayMinutes: bad } })).status,
+      ).toBe(400);
+    }
+    const cleared = await request('PATCH', '/devices/web', { token: web, body: { allDayMinutes: null } });
+    expect(cleared.body.allDayMinutes).toBeUndefined();
+  });
+
+  it('rejects invalid all-day minutes at login', async () => {
+    const t = await testApp();
+    await t.setup();
+    const response = await t.request('POST', '/auth/login', {
+      body: { username: 'owner', password: 'a long password', device: { id: 'x', name: 'X', type: 'web', allDayMinutes: 2000 } },
+    });
+    expect(response.status).toBe(400);
+  });
+
   it('validates subscriptions', async () => {
     const { request, web } = await ready();
     for (const body of [

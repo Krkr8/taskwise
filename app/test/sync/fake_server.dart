@@ -176,6 +176,9 @@ class FakeSyncServer {
       if (request.method == 'PATCH') {
         if (body!['name'] case final String name) device['name'] = name;
         if (body['timeZone'] case final String zone) device['timeZone'] = zone;
+        if (body['allDayMinutes'] case final int minutes) {
+          device['allDayMinutes'] = minutes;
+        }
         if (body['main'] == true) {
           if (!isMain) return _error(403, 'forbidden');
           for (final d in devices.values) {
