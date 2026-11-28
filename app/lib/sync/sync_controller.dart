@@ -202,9 +202,10 @@ class SyncController extends Notifier<SyncState> {
     _allDaySent = allDay;
     await ref.read(tokenStoreProvider).write(login.token);
     final url = api.baseUri.toString();
-    await ref
-        .read(settingsRepositoryProvider)
-        .setSyncAccount(serverUrl: url, username: username);
+    final settings = ref.read(settingsRepositoryProvider);
+    await settings.setSyncAccount(serverUrl: url, username: username);
+    // Plans uploaded to another account or server don't count here.
+    await settings.setPushPlanHashes(const {});
     final db = ref.read(databaseProvider);
     await (db.update(db.devices)..where((d) => d.id.equals(deviceId))).write(
       DevicesCompanion(name: Value(login.device.name)),
@@ -253,6 +254,7 @@ class SyncController extends Notifier<SyncState> {
     }
     await ref.read(tokenStoreProvider).delete();
     await ref.read(settingsRepositoryProvider).setSyncAccount();
+    await ref.read(settingsRepositoryProvider).setPushPlanHashes(const {});
     state = state.copyWith(
       serverUrl: () => null,
       username: () => null,

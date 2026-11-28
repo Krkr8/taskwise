@@ -34,6 +34,13 @@ class FakeSyncServer {
   /// False: the push endpoints answer 404 `push_not_configured`.
   bool pushConfigured = true;
 
+  /// True: a server from before web reminders (404 `not_found` for every
+  /// push endpoint).
+  bool pushMissing = false;
+
+  /// Plan uploads for these device ids answer 404 `not_found`.
+  final pushPlanNotFound = <String>{};
+
   /// Uploaded push plans by web device id, and how many uploads were made.
   final pushPlans = <String, List<Map<String, Object?>>>{};
   int pushPlanUploads = 0;
@@ -130,6 +137,7 @@ class FakeSyncServer {
       });
     }
     if (path.startsWith('/push/')) {
+      if (pushMissing) return _error(404, 'not_found');
       if (!pushConfigured) return _error(404, 'push_not_configured');
       if (path.startsWith('/push/plan/') && request.method == 'PUT') {
         if (pushPlanFailures > 0) {
@@ -138,7 +146,8 @@ class FakeSyncServer {
         }
         final id = Uri.decodeComponent(path.substring('/push/plan/'.length));
         final target = devices[id];
-        if (target == null ||
+        if (pushPlanNotFound.contains(id) ||
+            target == null ||
             target['type'] != 'web' ||
             target['deleted'] == true) {
           return _error(404, 'not_found');

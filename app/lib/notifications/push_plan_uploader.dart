@@ -11,6 +11,7 @@ import '../sync/sync_api.dart';
 import '../sync/sync_controller.dart';
 import 'device_time_zone.dart';
 import 'reminder_scheduler.dart';
+import 'time_zones.dart';
 
 /// How long after the last change the plans are rebuilt.
 final pushPlanDebounceProvider = Provider<Duration>(
@@ -58,6 +59,19 @@ final ownPushPlanEndProvider = Provider<DateTime?>((ref) {
   return end == null || !end.isAfter(now) ? null : end.toLocal();
 });
 
+/// Whether the last plan upload for this (web) device failed; the web
+/// notification settings then say the reminders couldn't be planned.
+final ownPushPlanFailedProvider = NotifierProvider<_Flag, bool>(_Flag.new);
+
+class _Flag extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void set(bool value) {
+    if (state != value) state = value;
+  }
+}
+
 class PushPlanUploader {
   PushPlanUploader(this._ref);
 
@@ -70,13 +84,19 @@ class PushPlanUploader {
   Future<void>? _running;
   bool _again = false;
   bool _freshAgain = false;
+  bool _forceAgain = false;
   bool _disposed = false;
 
-  /// The server has no web push (404 `push_not_configured`): stop until the
-  /// next app start.
+  /// A debounced run came while a sync was running: run when it ends.
+  bool _afterSync = false;
+
+  /// The server has no web push (404 `push_not_configured`, or `not_found`
+  /// from a server before 1.4.0): stop until the next app start or sign-in.
   bool _notConfigured = false;
   DateTime? _retryAfter;
-  Map<String, String>? _hashes;
+
+  /// Web devices already logged as skipped for their time zone.
+  final _zoneSkipped = <String>{};
 
   void start() {
     _ref
@@ -89,7 +109,22 @@ class PushPlanUploader {
       ..listen(
         syncControllerProvider.select((s) => s.lastSyncedAt),
         (_, _) => _schedule(),
-      );
+      )
+      // After a sync that held back a run (also a failed one).
+      ..listen(
+        syncControllerProvider.select((s) => s.phase == SyncPhase.syncing),
+        (_, syncing) {
+          if (syncing || !_afterSync) return;
+          _afterSync = false;
+          _schedule();
+        },
+      )
+      // Another account or server: start over.
+      ..listen(syncControllerProvider.select((s) => s.serverUrl), (_, _) {
+        _notConfigured = false;
+        _zoneSkipped.clear();
+        _ref.read(ownPushPlanFailedProvider.notifier).set(false);
+      });
     _periodic = Timer.periodic(const Duration(hours: 24), (_) => _schedule());
     _schedule();
   }
@@ -103,8 +138,9 @@ class PushPlanUploader {
     );
   }
 
-  /// Rebuilds and uploads now, asking the server for the current device
-  /// list first (a device may just have subscribed). Never throws.
+  /// Rebuilds and uploads every plan now (also unchanged ones), asking the
+  /// server for the current device list first (a device may just have
+  /// subscribed). Never throws.
   Future<void> uploadNow() async {
     _pending?.cancel();
     await _run(fresh: true, force: true);
@@ -117,23 +153,31 @@ class PushPlanUploader {
       if (until != null && _ref.read(clockProvider)().isBefore(until)) {
         return Future.value();
       }
+      // The device list and the tasks are half updated during a sync.
+      if (_ref.read(syncControllerProvider).phase == SyncPhase.syncing) {
+        _afterSync = true;
+        return Future.value();
+      }
     }
     if (_running case final running?) {
       _again = true;
       _freshAgain = _freshAgain || fresh;
+      _forceAgain = _forceAgain || force;
       return running;
     }
-    return _running = _loop(fresh).whenComplete(() => _running = null);
+    return _running = _loop(fresh, force).whenComplete(() => _running = null);
   }
 
-  Future<void> _loop(bool fresh) async {
+  Future<void> _loop(bool fresh, bool force) async {
     var useFresh = fresh;
+    var useForce = force;
     do {
       _again = false;
       _freshAgain = false;
+      _forceAgain = false;
       _failed = false;
       try {
-        await _upload(fresh: useFresh);
+        await _upload(fresh: useFresh, force: useForce);
       } on Object catch (e, stack) {
         // Never a sync error: log (no titles) and wait.
         appLog.error('push', e, stack);
@@ -146,6 +190,7 @@ class PushPlanUploader {
         _retry = null;
       }
       useFresh = _freshAgain;
+      useForce = _forceAgain;
     } while (_again && !_disposed && !_notConfigured);
   }
 
@@ -158,8 +203,14 @@ class PushPlanUploader {
     if (!_disposed) _retry = Timer(backoff, _schedule);
   }
 
-  Future<void> _upload({required bool fresh}) async {
-    final context = _ref.read(syncControllerProvider.notifier).pushContext;
+  void _stop(String why) {
+    _notConfigured = true;
+    appLog.info('push', '$why; uploads stopped');
+  }
+
+  Future<void> _upload({required bool fresh, required bool force}) async {
+    final sync = _ref.read(syncControllerProvider.notifier);
+    final context = sync.pushContext;
     if (context == null) return;
     final entries = _ref.read(taskEntriesProvider).value;
     final reminders = _ref.read(timeRemindersProvider).value;
@@ -181,22 +232,36 @@ class PushPlanUploader {
     final myId = _ref.read(deviceIdProvider);
     final myZone = await _ref.read(deviceTimeZoneProvider.future);
     final settings = _ref.read(appSettingsProvider);
+    final now = _ref.read(clockProvider)();
     // A web device plans for itself with its own all-day time; others use
     // the time it reported, and skip it until it has.
     int? allDayOf(Device d) =>
         d.id == myId ? settings.allDayReminderMinutes : d.allDayMinutes;
+    bool sameZone(Device d) {
+      final zone = d.timeZone;
+      final same =
+          myZone != null &&
+          zone != null &&
+          sameTimeZones(myZone, zone, from: now);
+      if (!same && _zoneSkipped.add(d.id)) {
+        appLog.info('push', 'A web device in another time zone is skipped');
+      }
+      return same;
+    }
+
     final targets = [
       for (final d in devices)
         if (!d.deleted &&
             d.type == DeviceType.web &&
             d.pushEnabled &&
             allDayOf(d) != null &&
-            (d.id == myId || (myZone != null && d.timeZone == myZone)))
+            (d.id == myId || sameZone(d)))
           d,
     ];
+    if (!targets.any((d) => d.id == myId)) _ownFailed(false);
 
     final settingsRepo = _ref.read(settingsRepositoryProvider);
-    final hashes = _hashes ??= await settingsRepo.getPushPlanHashes();
+    final hashes = await settingsRepo.getPushPlanHashes();
     // Forget devices that are gone or no longer notify.
     final before = hashes.length;
     hashes.removeWhere((id, _) => !targets.any((d) => d.id == id));
@@ -204,10 +269,10 @@ class PushPlanUploader {
 
     final l10n = lookupAppLocalizations(resolvedLocale(settings));
     final taskTargets = _ref.read(taskTargetsProvider).value ?? const {};
-    final now = _ref.read(clockProvider)();
     final tasks = [for (final e in entries) e.task];
 
     for (final device in targets) {
+      final own = device.id == myId;
       final items = buildPushPlan(
         tasks: tasks,
         reminders: reminders,
@@ -217,29 +282,53 @@ class PushPlanUploader {
         body: (p) => notificationBody(l10n, p, entries, settings.timeFormat),
       );
       final hash = pushPlanHash(items);
-      if (hashes[device.id] == hash) continue;
+      if (!force && hashes[device.id] == hash) continue;
       try {
         await context.api.putPushPlan(device.id, items);
       } on SyncHttpException catch (e) {
         if (e.status == 404 && e.code == 'push_not_configured') {
-          _notConfigured = true;
-          appLog.info('push', 'The server has no web push; uploads stopped');
+          _stop('The server has no web push');
+          break;
+        }
+        if (e.status == 404 && await _serverLacksPush(context.api)) {
+          _stop('The server is older than web reminders');
           break;
         }
         appLog.warning('push', 'Plan upload refused: ${e.status} ${e.code}');
+        if (own) _ownFailed(true);
         _backOff();
         continue;
       } on SyncNetworkException catch (e) {
         appLog.warning('push', 'Plan upload failed: ${e.message}');
+        if (own) _ownFailed(true);
         _backOff();
         break;
       }
+      if (own) _ownFailed(false);
       hashes[device.id] = hash;
       changed = true;
       appLog.info('push', 'Uploaded a plan of ${items.length} reminders');
     }
+    // Signed out or in again meanwhile: these hashes are for the old one.
+    if (!identical(sync.pushContext?.api, context.api)) return;
     if (changed) await settingsRepo.setPushPlanHashes(hashes);
   }
+
+  /// After a 404 from `/push/plan`: a server from before 1.4.0 answers 404
+  /// (`not_found`) to `/push/key` too.
+  Future<bool> _serverLacksPush(SyncApi api) async {
+    try {
+      await api.pushKey();
+      return false;
+    } on SyncHttpException catch (e) {
+      return e.status == 404;
+    } on SyncNetworkException {
+      return false;
+    }
+  }
+
+  void _ownFailed(bool failed) =>
+      _ref.read(ownPushPlanFailedProvider.notifier).set(failed);
 
   void dispose() {
     _disposed = true;

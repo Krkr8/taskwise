@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:taskwise/data/app_settings.dart';
 import 'package:taskwise/data/db/app_database.dart';
 import 'package:taskwise/data/repositories/reminder_repository.dart';
 import 'package:taskwise/data/repositories/settings_repository.dart';
@@ -148,12 +151,114 @@ void main() {
     expect(server.devices[deviceId]!['timeZone'], 'Europe/Berlin');
   });
 
-  test('unchanged data is not uploaded twice', () async {
+  test('unchanged data is not uploaded twice by the debounced runs, but '
+      'uploadNow always uploads', () async {
     addWebDevice('web1');
     await signInAndStart();
     await uploader().uploadNow();
+    expect(server.pushPlanUploads, 1);
+    // A sync and a settings change both start debounced runs.
+    await container.read(syncControllerProvider.notifier).syncNow();
+    await SettingsRepository(
+      db,
+      deviceId: deviceId,
+    ).setTheme(ThemePreference.dark);
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    expect(server.pushPlanUploads, 1);
+    await uploader().uploadNow();
+    expect(server.pushPlanUploads, 2);
+  });
+
+  test('signing out and in again forgets the uploaded plans', () async {
+    addWebDevice('web1');
+    await signInAndStart();
     await uploader().uploadNow();
     expect(server.pushPlanUploads, 1);
+    final settings = SettingsRepository(db, deviceId: deviceId);
+    expect(await settings.getPushPlanHashes(), isNotEmpty);
+
+    await container.read(syncControllerProvider.notifier).signOut();
+    expect(await settings.getPushPlanHashes(), isEmpty);
+
+    // Hashes from before (e.g. another server's) are dropped at sign-in too.
+    await settings.setPushPlanHashes({'web1': 'stale'});
+    await signInAndStart();
+    expect(await settings.getPushPlanHashes(), isNot({'web1': 'stale'}));
+    // The debounced run uploads the unchanged plan again.
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    expect(server.pushPlanUploads, 2);
+  });
+
+  test('a web device in a zone with the same clock gets its plan', () async {
+    addWebDevice('paris', timeZone: 'Europe/Paris');
+    await signInAndStart();
+    await uploader().uploadNow();
+    expect(server.pushPlans.keys, ['paris']);
+  });
+
+  test(
+    'a server from before web reminders (404 not_found) stops uploads',
+    () async {
+      addWebDevice('web1');
+      server.pushMissing = true;
+      await signInAndStart();
+      await uploader().uploadNow();
+      await uploader().uploadNow();
+      expect(server.pushPlanUploads, 0);
+      expect(
+        server.requests.where((r) => r == 'PUT /push/plan/web1'),
+        hasLength(1),
+      );
+      expect(container.read(syncControllerProvider).message, isNull);
+    },
+  );
+
+  test('a 404 for one device from a server with push only skips it', () async {
+    addWebDevice('gone');
+    addWebDevice('web1');
+    server.pushPlanNotFound.add('gone');
+    await signInAndStart();
+    await uploader().uploadNow();
+    expect(server.pushPlans.keys, ['web1']);
+    server.pushPlanNotFound.clear();
+    await uploader().uploadNow();
+    expect(server.pushPlans.keys, containsAll(['gone', 'web1']));
+  });
+
+  test('no run while a sync is in progress; it runs after the sync', () async {
+    addWebDevice('web1');
+    await signInAndStart();
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    expect(server.pushPlanUploads, 1);
+
+    final release = Completer<void>();
+    server.onPush = () => release.future;
+    await tasks.saveTask(task.copyWith(title: 'Pay rent today'));
+    final sync = container.read(syncControllerProvider.notifier).syncNow();
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    expect(container.read(syncControllerProvider).phase, SyncPhase.syncing);
+    expect(server.pushPlanUploads, 1, reason: 'held back during the sync');
+
+    release.complete();
+    await sync;
+    server.onPush = null;
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    expect(server.pushPlanUploads, 2);
+    expect(server.pushPlans['web1']!.single['title'], 'Pay rent today');
+  });
+
+  test('a failed upload of this web device\'s own plan is reported', () async {
+    container.dispose();
+    deviceType = DeviceType.web;
+    container = await makeContainer();
+    await signInAndStart();
+    server.devices[deviceId]!['pushEnabled'] = true;
+    server.pushPlanFailures = 1;
+    await uploader().uploadNow();
+    expect(container.read(ownPushPlanFailedProvider), isTrue);
+    await uploader().uploadNow();
+    expect(server.pushPlans.keys, [deviceId]);
+    expect(container.read(ownPushPlanFailedProvider), isFalse);
   });
 
   test('a task edit uploads a new plan', () async {
