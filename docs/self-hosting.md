@@ -50,7 +50,7 @@ In short:
 4. Deploy, then set the Vercel function region close to your Turso database.
 5. Check `https://<your-app>.vercel.app/api/v1/health`.
 
-Every click and command is in **[server-setup-vercel.md](server-setup-vercel.md)**. It also explains how to create your account, change secrets later and look at the backups. Vercel runs the daily job for you (`server/vercel.json`).
+Every click and command is in **[server-setup-vercel.md](server-setup-vercel.md)**. It also explains how to create your account, change secrets later and look at the backups. Vercel runs the daily job for you (`server/vercel.json`). The same file rewrites `/api/v1/...` to the server code, because the queue function for web reminders lives in the `api/` folder.
 
 ---
 

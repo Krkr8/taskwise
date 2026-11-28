@@ -19,7 +19,7 @@
   "rewrites": [
     {
       "source": "/api/v1/:path*",
-      "destination": "/:path*"
+      "destination": "/_hono/api/v1/:path*"
     }
   ]
 }
