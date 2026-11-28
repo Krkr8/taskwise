@@ -11,3 +11,5 @@ Stream<void> newVersionReady() => const Stream.empty();
 void reloadToNewVersion() {}
 
 Stream<EdgeInsets> safeAreaInsets() => const Stream.empty();
+
+Stream<String> openTaskRequests() => const Stream.empty();

@@ -1008,7 +1008,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifyAllDevices => 'All devices';
 
   @override
-  String get notifyNoRemindersYet => 'no reminders yet';
+  String get notifyNotificationsOff => 'notifications off';
 
   @override
   String get notifyNoDevice =>
@@ -1021,8 +1021,50 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifTestButton => 'Send a test notification';
 
   @override
-  String get notifWebNote =>
-      'Reminders don\'t ring in the browser yet. Your Taskwise apps on phones and computers remind you.';
+  String get webNotifUnsupported => 'This browser can\'t show notifications.';
+
+  @override
+  String get webNotifNeedsHomeScreen =>
+      'Add Taskwise to your Home Screen first, then turn on notifications there.';
+
+  @override
+  String get webNotifHowToAdd => 'How to add it';
+
+  @override
+  String get webNotifNotConfigured =>
+      'This server isn\'t set up for reminders yet.';
+
+  @override
+  String get webNotifSetupLink => 'How to set it up';
+
+  @override
+  String get webNotifDenied =>
+      'Notifications are blocked for this site. Allow them in the browser\'s settings.';
+
+  @override
+  String get webNotifSignIn =>
+      'Sign in to your server first, then turn on notifications here.';
+
+  @override
+  String get webNotifTurnOn => 'Turn on notifications in this browser';
+
+  @override
+  String get webNotifOn => 'Notifications are on in this browser.';
+
+  @override
+  String webNotifPlannedUntil(String date) {
+    return 'Reminders planned until $date';
+  }
+
+  @override
+  String get webNotifNoUpcoming => 'No upcoming reminders';
+
+  @override
+  String get webNotifTurnOff => 'Turn off';
+
+  @override
+  String get webNotifFailed =>
+      'Couldn\'t turn on notifications. Check your connection and try again.';
 
   @override
   String get notifTestBody => 'Notifications work on this device.';
@@ -1585,7 +1627,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeScreenGuideWhy =>
-      'On iPhone, Taskwise works best from your Home Screen: it opens like an app and keeps your tasks. A Safari tab keeps a separate copy of your tasks, which Safari may clear.';
+      'On iPhone, Taskwise works best from your Home Screen: it opens like an app, keeps your tasks and can remind you. A Safari tab keeps a separate copy of your tasks, which Safari may clear.';
 
   @override
   String get homeScreenGuideStep1 =>

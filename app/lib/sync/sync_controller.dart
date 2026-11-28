@@ -56,6 +56,7 @@ final class SyncState {
     this.lastSyncedAt,
     this.message,
     this.bannerDismissed = false,
+    this.serverDevices,
   });
 
   /// False until the saved account has been read at start-up.
@@ -73,6 +74,11 @@ final class SyncState {
   /// The "connect your devices" banner was dismissed.
   final bool bannerDismissed;
 
+  /// The devices as the server last listed them, with the time zone and the
+  /// web push flag (which the local device table doesn't keep). Null until
+  /// the first listing since the app started, and when not signed in.
+  final List<Device>? serverDevices;
+
   bool get connected => serverUrl != null;
 
   SyncState copyWith({
@@ -83,6 +89,7 @@ final class SyncState {
     DateTime? Function()? lastSyncedAt,
     String? Function()? message,
     bool? bannerDismissed,
+    List<Device>? Function()? serverDevices,
   }) => SyncState(
     loaded: loaded ?? this.loaded,
     serverUrl: serverUrl != null ? serverUrl() : this.serverUrl,
@@ -91,6 +98,7 @@ final class SyncState {
     lastSyncedAt: lastSyncedAt != null ? lastSyncedAt() : this.lastSyncedAt,
     message: message != null ? message() : this.message,
     bannerDismissed: bannerDismissed ?? this.bannerDismissed,
+    serverDevices: serverDevices != null ? serverDevices() : this.serverDevices,
   );
 }
 
@@ -198,6 +206,7 @@ class SyncController extends Notifier<SyncState> {
       phase: SyncPhase.idle,
       message: () => null,
       lastSyncedAt: () => null,
+      serverDevices: () => null,
     );
     _start(url, login.token);
   }
@@ -225,6 +234,7 @@ class SyncController extends Notifier<SyncState> {
       phase: SyncPhase.idle,
       message: () => null,
       lastSyncedAt: () => null,
+      serverDevices: () => null,
     );
     if (removeLocalData && appTarget.isWeb) {
       await ref.read(databaseProvider).deleteAllLocalData();
@@ -378,6 +388,11 @@ class SyncController extends Notifier<SyncState> {
       ),
       deviceId: ref.read(deviceIdProvider),
     );
+    final engine = _engine!;
+    engine.onDevices = (devices) {
+      if (_disposed || _engine != engine) return;
+      state = state.copyWith(serverDevices: () => devices);
+    };
     _periodic = Timer.periodic(_interval, (_) => unawaited(syncNow()));
     _lifecycle = AppLifecycleListener(onResume: () => unawaited(syncNow()));
     // A moment after local changes are queued (pulls leave the queue

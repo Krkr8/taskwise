@@ -37,6 +37,9 @@ class SyncEngine {
   /// first listing (after a restart, or while offline).
   List<Device>? serverDevices;
 
+  /// Called with each new listing (see [serverDevices]).
+  void Function(List<Device> devices)? onDevices;
+
   /// Changes per push request, and per pull page.
   final int pushBatch;
   final int pullLimit;
@@ -181,6 +184,7 @@ class SyncEngine {
   Future<void> refreshDevices() async {
     final devices = await api.devices();
     serverDevices = devices;
+    onDevices?.call(devices);
     await db.transaction(() async {
       for (final d in devices) {
         await db

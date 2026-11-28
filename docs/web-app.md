@@ -25,10 +25,30 @@ Safari throws away a website's stored data after a week without a visit, and a t
 
 In a Safari tab, Taskwise shows these steps first. If the browser keeps nothing at all (a private window, for example), a bar at the top says so.
 
+## Reminders in the browser
+
+The web app can show your reminders as notifications, sent by your sync server at the reminder's time (Web Push), even while the app is closed.
+
+1. Your server must be set up for it: see [Web reminders in the self-hosting guide](self-hosting.md#web-reminders). Until it is, **Settings → Notifications** says "This server isn't set up for reminders yet."
+2. In the web app, open **Settings → Notifications** and tap **Turn on notifications in this browser**. Allow notifications when the browser asks.
+3. It then says "Notifications are on in this browser." and until when reminders are planned (the next 60 days, up to 500 reminders). **Turn off** stops them for this browser.
+
+Tapping a notification opens Taskwise on that task. Reminders reach this browser when the task notifies on it: in a task's **Notify on**, a browser without notifications shows "(notifications off)".
+
+**iPhone and iPad:** notifications only work in the **Home Screen app** (iOS 16.4 or newer), not in a Safari tab. Add Taskwise to the Home Screen first (see above), open it from there and turn notifications on in its Settings. A Safari tab says so and shows the steps.
+
+If the browser says notifications are blocked, allow them for the site in the browser's settings (on an iPhone: **Settings → Notifications → Taskwise**), then open Settings in Taskwise again.
+
+Limits:
+- **No buttons** on the notification (iPhones show none): tap it and tick the task off in the app. There is no snooze from a web notification.
+- **One time zone:** your other devices plan the browser's reminders only when they are in the same time zone as the browser. Otherwise the browser plans its own whenever it is open.
+- **Location reminders** don't fire in the browser.
+- Each browser (and each iPhone Home Screen app) turns notifications on by itself. Clearing the site's data or signing in from scratch may need turning them on again.
+
 ## What is different from the apps
 
 - **Two designs:** Brutal and Lapis, each light, dark or by the system. Classic and Slate & Indigo are in the apps only.
-- **No reminders yet.** Notifications and location reminders don't fire in the browser. Web notifications are planned (milestone M15). Tasks you add in the browser still sync, and your phone reminds you.
+- **Reminders by Web Push only:** time reminders arrive as notifications once you turn them on (see above); location reminders don't fire in the browser.
 - **No background sync.** The web app syncs while it is open (at start, after changes, every minute and when you come back to it), not while the tab is closed.
 - **No Siri or shortcuts, and no in-app updates.** The web app is always the newest version when you reload.
 - **Shared computers:** sign out (Settings → Sync) when you are done, with **Also remove my tasks from this browser** ticked (it is unless you untick it). The browser then forgets your tasks, settings and the app's log, and the page starts again empty. Your tasks stay on your server and your other devices. If you untick it, your tasks stay in that browser until you clear the site's data.

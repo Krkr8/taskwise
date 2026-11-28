@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
 
 import '../../../state/providers.dart';
+import '../../../sync/sync_controller.dart';
 import '../settings/sync_section.dart';
 import '../theme/tokens.dart';
 import 'labels.dart';
@@ -24,6 +25,16 @@ class DeviceTargetsEditor extends ConsumerWidget {
     final chosen = ref.watch(taskTargetsProvider).value?[task.id] ?? const {};
     final repo = ref.read(taskRepositoryProvider);
     final thisId = ref.watch(deviceIdProvider);
+    // Which browsers have notifications on (null until the server listed
+    // the devices).
+    final listed = ref.watch(
+      syncControllerProvider.select((s) => s.serverDevices),
+    );
+    bool notificationsOff(Device device) =>
+        device.type == DeviceType.web &&
+        listed != null &&
+        !(listed.where((d) => d.id == device.id).firstOrNull?.pushEnabled ??
+            false);
 
     void choose(Set<String> ids) =>
         repo.setTaskTargets(task.id, all: false, deviceIds: ids);
@@ -52,9 +63,9 @@ class DeviceTargetsEditor extends ConsumerWidget {
                   [
                     device.name,
                     if (device.id == thisId) '(${l10n.deviceThis})',
-                    // Browsers don't ring reminders yet (M15).
-                    if (device.type == DeviceType.web)
-                      '(${l10n.notifyNoRemindersYet})',
+                    // A browser without Web Push gets no reminders.
+                    if (notificationsOff(device))
+                      '(${l10n.notifyNotificationsOff})',
                   ].join(' '),
                 ),
                 selected: all || chosen.contains(device.id),

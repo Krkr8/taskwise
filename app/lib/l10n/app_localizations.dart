@@ -1628,11 +1628,11 @@ abstract class AppLocalizations {
   /// **'All devices'**
   String get notifyAllDevices;
 
-  /// No description provided for @notifyNoRemindersYet.
+  /// No description provided for @notifyNotificationsOff.
   ///
   /// In en, this message translates to:
-  /// **'no reminders yet'**
-  String get notifyNoRemindersYet;
+  /// **'notifications off'**
+  String get notifyNotificationsOff;
 
   /// No description provided for @notifyNoDevice.
   ///
@@ -1652,11 +1652,83 @@ abstract class AppLocalizations {
   /// **'Send a test notification'**
   String get notifTestButton;
 
-  /// No description provided for @notifWebNote.
+  /// No description provided for @webNotifUnsupported.
   ///
   /// In en, this message translates to:
-  /// **'Reminders don\'t ring in the browser yet. Your Taskwise apps on phones and computers remind you.'**
-  String get notifWebNote;
+  /// **'This browser can\'t show notifications.'**
+  String get webNotifUnsupported;
+
+  /// No description provided for @webNotifNeedsHomeScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Taskwise to your Home Screen first, then turn on notifications there.'**
+  String get webNotifNeedsHomeScreen;
+
+  /// No description provided for @webNotifHowToAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'How to add it'**
+  String get webNotifHowToAdd;
+
+  /// No description provided for @webNotifNotConfigured.
+  ///
+  /// In en, this message translates to:
+  /// **'This server isn\'t set up for reminders yet.'**
+  String get webNotifNotConfigured;
+
+  /// No description provided for @webNotifSetupLink.
+  ///
+  /// In en, this message translates to:
+  /// **'How to set it up'**
+  String get webNotifSetupLink;
+
+  /// No description provided for @webNotifDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are blocked for this site. Allow them in the browser\'s settings.'**
+  String get webNotifDenied;
+
+  /// No description provided for @webNotifSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to your server first, then turn on notifications here.'**
+  String get webNotifSignIn;
+
+  /// No description provided for @webNotifTurnOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on notifications in this browser'**
+  String get webNotifTurnOn;
+
+  /// No description provided for @webNotifOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are on in this browser.'**
+  String get webNotifOn;
+
+  /// No description provided for @webNotifPlannedUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders planned until {date}'**
+  String webNotifPlannedUntil(String date);
+
+  /// No description provided for @webNotifNoUpcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'No upcoming reminders'**
+  String get webNotifNoUpcoming;
+
+  /// No description provided for @webNotifTurnOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off'**
+  String get webNotifTurnOff;
+
+  /// No description provided for @webNotifFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t turn on notifications. Check your connection and try again.'**
+  String get webNotifFailed;
 
   /// No description provided for @notifTestBody.
   ///
@@ -2591,7 +2663,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeScreenGuideWhy.
   ///
   /// In en, this message translates to:
-  /// **'On iPhone, Taskwise works best from your Home Screen: it opens like an app and keeps your tasks. A Safari tab keeps a separate copy of your tasks, which Safari may clear.'**
+  /// **'On iPhone, Taskwise works best from your Home Screen: it opens like an app, keeps your tasks and can remind you. A Safari tab keeps a separate copy of your tasks, which Safari may clear.'**
   String get homeScreenGuideWhy;
 
   /// No description provided for @homeScreenGuideStep1.

@@ -18,6 +18,7 @@ import 'ui/shared/update/update_listener.dart';
 import 'ui/shared/web/add_to_home_screen_page.dart';
 import 'ui/shared/web/browser_safe_area.dart';
 import 'ui/shared/web/new_version_bar.dart';
+import 'ui/shared/web/open_task_listener.dart';
 import 'update/update_controller.dart';
 import 'notifications/push_plan_uploader.dart';
 
@@ -97,7 +98,9 @@ class TaskwiseApp extends ConsumerWidget {
         child: NewVersionBar(
           child: AssistantActionListener(
             child: StorageWarningBar(
-              child: AddToHomeScreenGate(child: spec.shell()),
+              child: AddToHomeScreenGate(
+                child: WebOpenTaskListener(child: spec.shell()),
+              ),
             ),
           ),
         ),

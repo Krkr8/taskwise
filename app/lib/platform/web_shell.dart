@@ -8,7 +8,8 @@ import 'web_shell_stub.dart'
 
 /// The browser around the web app: the iPhone Safari tab check (see
 /// `AddToHomeScreenGate`), the service worker's new versions (see
-/// `NewVersionBar`) and the iPhone's safe areas (see `BrowserSafeArea`).
+/// `NewVersionBar`), the iPhone's safe areas (see `BrowserSafeArea`) and
+/// the tasks tapped notifications ask for (see `WebOpenTaskListener`).
 /// [NoWebShell] outside the browser.
 abstract class WebShell {
   /// An iPhone or iPad Safari tab, not the Home Screen app. The two keep
@@ -33,6 +34,11 @@ abstract class WebShell {
   /// The page covers the whole screen (`viewport-fit=cover`), and Flutter
   /// doesn't read these itself.
   Stream<EdgeInsets> get safeAreaInsets;
+
+  /// Task ids from tapped notifications: the `#task=<id>` the page was
+  /// opened with (the first listener gets it), then each `open-task`
+  /// message from the service worker (app/web/sw.js).
+  Stream<String> get openTaskRequests;
 }
 
 /// Outside the browser: nothing to do.
@@ -56,6 +62,9 @@ class NoWebShell implements WebShell {
 
   @override
   Stream<EdgeInsets> get safeAreaInsets => const Stream.empty();
+
+  @override
+  Stream<String> get openTaskRequests => const Stream.empty();
 }
 
 class BrowserWebShell implements WebShell {
@@ -78,6 +87,9 @@ class BrowserWebShell implements WebShell {
 
   @override
   Stream<EdgeInsets> get safeAreaInsets => impl.safeAreaInsets();
+
+  @override
+  Stream<String> get openTaskRequests => impl.openTaskRequests();
 }
 
 final webShellProvider = Provider<WebShell>(

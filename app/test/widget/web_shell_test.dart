@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:taskwise/data/app_settings.dart';
 import 'package:taskwise/platform/web_shell.dart';
+import 'package:taskwise/ui/designs/classic/tasks/task_detail.dart';
 
 import 'app_test.dart' show appTest;
 
@@ -19,6 +20,10 @@ class FakeWebShell implements WebShell {
   bool guideDismissed;
 
   final newVersion$ = StreamController<void>.broadcast();
+  final openTask$ = StreamController<String>.broadcast();
+
+  /// Handed to the first listener, like a `#task=` the page was opened with.
+  String? pendingTask;
   final safeArea$ = StreamController<EdgeInsets>.broadcast();
   int reloads = 0;
 
@@ -30,6 +35,16 @@ class FakeWebShell implements WebShell {
 
   @override
   void dismissGuide() => guideDismissed = true;
+
+  @override
+  Stream<String> get openTaskRequests => Stream<String>.multi((controller) {
+    if (pendingTask case final id?) {
+      pendingTask = null;
+      controller.add(id);
+    }
+    final sub = openTask$.stream.listen(controller.add);
+    controller.onCancel = sub.cancel;
+  });
 
   @override
   void reload() => reloads++;
@@ -105,6 +120,39 @@ void main() {
       expect(shell.reloads, 1);
       expect(find.text(_newVersion), findsNothing);
     }, overrides: [webShellProvider.overrideWithValue(shell)]);
+  });
+
+  group('a notification opens its task', () {
+    final shell = FakeWebShell();
+
+    appTest('a notification tapped while the app is open', (
+      tester,
+      repo,
+    ) async {
+      final task = await repo.createTask(title: 'Pay rent');
+      await tester.pumpAndSettle();
+      expect(find.byType(TaskDetailView), findsNothing);
+      shell.openTask$.add(task.id);
+      await tester.pumpAndSettle();
+      expect(find.byType(TaskDetailView), findsOneWidget);
+      expect(
+        tester.widget<TaskDetailView>(find.byType(TaskDetailView)).taskId,
+        task.id,
+      );
+    }, overrides: [webShellProvider.overrideWithValue(shell)]);
+
+    final opened = FakeWebShell()..pendingTask = 'from-the-address';
+    appTest(
+      'the app opened by a notification (#task=…) shows the task once started',
+      (tester, repo) async {
+        expect(find.byType(TaskDetailView), findsOneWidget);
+        expect(
+          tester.widget<TaskDetailView>(find.byType(TaskDetailView)).taskId,
+          'from-the-address',
+        );
+      },
+      overrides: [webShellProvider.overrideWithValue(opened)],
+    );
   });
 
   group('iPhone safe areas', () {

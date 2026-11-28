@@ -138,9 +138,9 @@ void main() {
     await close();
   });
 
-  const webNote =
-      "Reminders don't ring in the browser yet. Your Taskwise apps on phones "
-      'and computers remind you.';
+  // The web notifications section (web_notifications_section_test.dart):
+  // flutter_test has no browser push, so it says so.
+  const webNote = "This browser can't show notifications.";
   const testButton = 'Send a test notification';
 
   // Scrolls Settings to [text], in the notifications section.
@@ -156,8 +156,8 @@ void main() {
   }
 
   for (final design in [AppDesign.brutal, AppDesign.lapis]) {
-    testWidgets('${design.name} on the web says reminders don\'t ring in the '
-        'browser instead of a test notification', (tester) async {
+    testWidgets('${design.name} on the web has the browser notifications '
+        'section instead of a test notification', (tester) async {
       final close = await pumpWeb(tester, design);
       await openNotifications(tester, webNote);
       expect(find.text(webNote), findsOneWidget);

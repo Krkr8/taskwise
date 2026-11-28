@@ -10,8 +10,12 @@ import 'web_shell.dart' show isIosBrowserTabFor;
 
 // The page side of the service worker lives in web/index.html: it sets
 // `taskwiseNewVersionReady`, fires `taskwise-new-version` and defines
-// `taskwiseReloadToNewVersion()`.
+// `taskwiseReloadToNewVersion()`. For a tapped notification it sets
+// `taskwisePendingTask` (from `#task=<id>` or the worker's `open-task`
+// message) and fires `taskwise-open-task`.
 const _newVersionEvent = 'taskwise-new-version';
+const _openTaskEvent = 'taskwise-open-task';
+const _pendingTask = 'taskwisePendingTask';
 const _guideKey = 'taskwise.homeScreenGuideDismissed';
 
 bool isIosBrowserTab() {
@@ -99,6 +103,20 @@ Stream<EdgeInsets> safeAreaInsets() => Stream<EdgeInsets>.multi((controller) {
     sub.cancel();
     probe.remove();
   };
+});
+
+Stream<String> openTaskRequests() => Stream<String>.multi((controller) {
+  void take() {
+    final id = globalContext.getProperty<JSAny?>(_pendingTask.toJS).dartify();
+    globalContext.setProperty(_pendingTask.toJS, null);
+    if (id is String && id.isNotEmpty) controller.add(id);
+  }
+
+  take();
+  final sub = web.EventStreamProvider<web.Event>(_openTaskEvent)
+      .forTarget(web.window)
+      .listen((_) => take());
+  controller.onCancel = sub.cancel;
 });
 
 bool _isTrue(JSAny? value) => value.dartify() == true;

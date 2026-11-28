@@ -2,6 +2,9 @@
 // `--pwa-strategy=none`). It keeps the app's own files for an offline start
 // and tells the page when a new version is waiting. See app/web_README.md.
 //
+// It also shows the reminders the sync server sends as Web Push, in dev
+// builds too, and opens the task when one is tapped.
+//
 // The site build replaces the placeholder below with the version, so every
 // release has a new cache (and a changed sw.js, which makes browsers install
 // it). An unreplaced dev build caches nothing.
@@ -211,4 +214,68 @@ self.addEventListener('fetch', (event) => {
   } else {
     event.respondWith(cacheFirst(event));
   }
+});
+
+// ------------------------------------------------------------- reminders
+
+// The server's push payload (docs/sync-api.md):
+// {"title": "Pay rent", "body": "Today at 09:00", "taskId": "…", "key": "…"}.
+// Every push shows a notification (iOS stops sending to a site that shows
+// none), so anything unreadable still shows a plain one. No buttons: iOS
+// shows none, and tapping opens the task.
+function reminderFrom(data) {
+  let payload = null;
+  try {
+    payload = data ? data.json() : null;
+  } catch (_) {
+    payload = null;
+  }
+  const text = (value) => (typeof value === 'string' ? value : '');
+  const title = payload && text(payload.title).trim();
+  const arabic = (self.navigator.language || '').startsWith('ar');
+  const options = {
+    body: payload ? text(payload.body) : '',
+    icon: 'icons/Icon-192.png',
+    data: { taskId: payload && text(payload.taskId) ? payload.taskId : null },
+  };
+  if (payload && text(payload.key)) options.tag = payload.key;
+  return {
+    title: title || (arabic ? 'تذكير من Taskwise' : 'Taskwise reminder'),
+    options,
+  };
+}
+
+self.addEventListener('push', (event) => {
+  const { title, options } = reminderFrom(event.data);
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// The app's address for a task (index.html reads `#task=`).
+function taskUrl(taskId) {
+  return taskId ? `${scope}#task=${encodeURIComponent(taskId)}` : scope;
+}
+
+// Focuses an open window of the app and tells it the task, or opens one.
+async function openTask(taskId) {
+  const windows = await self.clients.matchAll({
+    type: 'window',
+    includeUncontrolled: true,
+  });
+  const open = windows.find((client) => client.url.startsWith(scope));
+  if (open) {
+    try {
+      await open.focus();
+    } catch (_) {
+      // Not allowed here (outside a click): the message still opens it.
+    }
+    if (taskId) open.postMessage({ type: 'open-task', taskId });
+    return;
+  }
+  await self.clients.openWindow(taskUrl(taskId));
+}
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const data = event.notification.data || {};
+  event.waitUntil(openTask(typeof data.taskId === 'string' ? data.taskId : null));
 });

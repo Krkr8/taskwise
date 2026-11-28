@@ -24,13 +24,35 @@ final pushPlanBackoffProvider = Provider<Duration>(
 
 /// Uploads each web device's push plan (the reminders the server sends as
 /// Web Push) from every device that shares its time zone. Read it once (the
-/// app root does) to start it. Task 5 calls [PushPlanUploader.uploadNow]
-/// after the web app subscribes or unsubscribes.
+/// app root does) to start it. The web notification settings call
+/// [PushPlanUploader.uploadNow] after subscribing or unsubscribing.
 final pushPlanUploaderProvider = Provider<PushPlanUploader>((ref) {
   final uploader = PushPlanUploader(ref);
   ref.onDispose(uploader.dispose);
   uploader.start();
   return uploader;
+});
+
+/// When the last reminder of this device's push plan fires (the web app's
+/// notification settings show it), from the same rules as the uploads.
+/// Null: no reminders planned, or the tasks aren't loaded yet.
+final ownPushPlanEndProvider = Provider<DateTime?>((ref) {
+  final entries = ref.watch(taskEntriesProvider).value;
+  final reminders = ref.watch(timeRemindersProvider).value;
+  if (entries == null || reminders == null) return null;
+  final taskTargets = ref.watch(taskTargetsProvider).value ?? const {};
+  final settings = ref.watch(appSettingsProvider);
+  final deviceId = ref.watch(deviceIdProvider);
+  final items = buildPushPlan(
+    tasks: [for (final e in entries) e.task],
+    reminders: reminders,
+    notifiesDevice: (t) => notifiesHere(t, taskTargets, deviceId),
+    now: ref.read(clockProvider)(),
+    allDayMinutes: settings.allDayReminderMinutes,
+    // Only the times matter here.
+    body: (_) => '',
+  );
+  return items.isEmpty ? null : items.last.fireAt.toLocal();
 });
 
 class PushPlanUploader {

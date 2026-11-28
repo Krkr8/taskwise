@@ -21,6 +21,7 @@ import '../../../shared/settings/categories_page.dart';
 import '../../../shared/settings/location_debug_page.dart';
 import 'places_page.dart';
 import '../../../shared/settings/sync_section.dart';
+import '../../../shared/settings/web_notifications_section.dart';
 import '../../../../platform/app_target.dart';
 
 /// Settings destination: appearance, date & time, notifications,
@@ -263,15 +264,9 @@ class SettingsPage extends ConsumerWidget {
                     }
                   },
                 ),
-                // The browser can't ring reminders yet (M15): say so instead.
+                // The browser: Web Push instead of a test notification.
                 if (appTarget.isWeb)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: Spacing.sm),
-                    child: Text(
-                      l10n.notifWebNote,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  )
+                  const WebNotificationsSection()
                 else
                   Align(
                     alignment: AlignmentDirectional.centerStart,

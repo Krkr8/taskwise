@@ -14,6 +14,13 @@
 // 3. Hosts: the first visit in English, and one in Arabic (a fresh
 //    profile), must fetch only from the site itself (no Google fonts, no
 //    CDN); every request of the pages and their workers is listed.
+// 4. Reminders (a fresh profile, notifications allowed): a Web Push
+//    delivered to the service worker (CDP ServiceWorker.deliverPushMessage)
+//    shows its notification (registration.getNotifications()), a payload
+//    that isn't JSON a plain "Taskwise reminder"; the worker's click logic
+//    (openTask, run inside the worker: CDP can't click a notification)
+//    sends the open app to the task; and a page opened at #task=<id> (where
+//    a click opens a closed app) opens it too, with the address cleaned.
 //
 // "The app started" means the app wrote its start line ("started on web")
 // to its log in localStorage, so main() ran with CanvasKit and the database.
@@ -136,6 +143,8 @@ async function launchChrome() {
     requests: [], // { url, target }
     errors: [],
     pageSessions: new Map(), // targetId -> sessionId
+    workerSessions: [], // service worker sessions
+    listeners,
     language: 'en',
     async close() {
       try { await send('Browser.close'); } catch (_) { /* gone */ }
@@ -150,6 +159,7 @@ async function launchChrome() {
       const s = params.sessionId;
       const type = params.targetInfo.type;
       if (type === 'page') chrome.pageSessions.set(params.targetInfo.targetId, s);
+      if (type === 'service_worker') chrome.workerSessions.push(s);
       // All at once, as the target waits for runIfWaitingForDebugger (some
       // commands wait for it to run).
       const commands = [send('Network.enable', {}, s), send('Runtime.enable', {}, s)];
@@ -184,6 +194,7 @@ async function openTab(chrome, url) {
   }
   const sessionId = chrome.pageSessions.get(targetId);
   return {
+    sessionId,
     async eval(expression) {
       const { result, exceptionDetails } = await chrome.send(
         'Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, sessionId);
@@ -358,6 +369,90 @@ try {
   bad(error.stack ?? String(error));
 } finally {
   await arabic.close();
+}
+
+// 6. Reminders, in a fresh profile with notifications allowed.
+const push = await launchChrome();
+try {
+  await push.send('Browser.grantPermissions', { origin, permissions: ['notifications'] });
+  const registrations = new Map(); // scope -> registration id
+  push.listeners.push(({ method, params }) => {
+    if (method !== 'ServiceWorker.workerRegistrationUpdated') return;
+    for (const r of params.registrations) {
+      if (r.isDeleted) registrations.delete(r.scopeURL);
+      else registrations.set(r.scopeURL, r.registrationId);
+    }
+  });
+  const tab = await openTab(push, appUrl);
+  await waitStarted(tab, 1);
+  await waitFor('the worker to control the page', () => tab.eval('!!navigator.serviceWorker.controller'), 30000);
+  await push.send('ServiceWorker.enable', {}, tab.sessionId);
+  const registrationId = await waitFor('the worker registration', () => registrations.get(appUrl), 10000);
+  const deliver = (data) => push.send(
+    'ServiceWorker.deliverPushMessage', { origin, registrationId, data }, tab.sessionId);
+  const notificationsJs = `navigator.serviceWorker.ready.then((r) => r.getNotifications()).then((list) =>
+    list.map((n) => ({ title: n.title, body: n.body, tag: n.tag, icon: n.icon, data: n.data, actions: n.actions.length })))`;
+
+  await deliver(JSON.stringify({ title: 'Pay rent', body: 'Today at 09:00', taskId: 'task-123', key: 'k1' }));
+  const shown = await waitFor('the notification', async () =>
+    (await tab.eval(notificationsJs)).find((n) => n.tag === 'k1'), 10000);
+  console.log(`push notification: ${JSON.stringify(shown)}`);
+  if (shown.title === 'Pay rent' && shown.body === 'Today at 09:00' && shown.data?.taskId === 'task-123' &&
+      shown.actions === 0 && shown.icon.endsWith('/app/icons/Icon-192.png')) {
+    ok('a push shows its notification (title, body, tag, task id, icon, no buttons)');
+  } else {
+    bad(`unexpected notification ${JSON.stringify(shown)}`);
+  }
+
+  await deliver('not json');
+  const plain = await waitFor('the plain notification', async () =>
+    (await tab.eval(notificationsJs)).find((n) => n.title === 'Taskwise reminder'), 10000);
+  ok(`a payload that isn't JSON still shows "${plain.title}"`);
+
+  // The click: the worker's own openTask() with the notification's task id.
+  const opensJs = (id) => `(localStorage.getItem('taskwise.log') || '').includes('Opening task ${id} from a notification')`;
+  const worker = await waitFor('the worker session', async () => {
+    for (const s of push.workerSessions) {
+      try {
+        const { result } = await push.send('Runtime.evaluate', {
+          expression: 'typeof openTask === "function" && self.registration.scope', returnByValue: true }, s);
+        if (result.value === appUrl) return s;
+      } catch (_) { /* a stopped worker */ }
+    }
+    return null;
+  }, 10000);
+  const { result: clicked, exceptionDetails } = await push.send('Runtime.evaluate', {
+    expression: `self.registration.getNotifications({ tag: 'k1' })
+      .then((list) => openTask(list[0].data.taskId)).then(() => taskUrl('task-456'))`,
+    awaitPromise: true, returnByValue: true }, worker);
+  if (exceptionDetails) throw new Error(`openTask: ${exceptionDetails.exception?.description ?? exceptionDetails.text}`);
+  try {
+    await waitFor('the open app to open the task', () => tab.eval(opensJs('task-123')), 10000);
+    ok('a tapped notification sends the open app to its task (open-task message)');
+  } catch (error) {
+    bad(`tapping with the app open: ${error.message}`);
+  }
+  await sleep(1000);
+  await tab.shot('4-opened-from-notification');
+  await tab.close();
+
+  // The app was closed: the click opens the address taskUrl() gives.
+  if (clicked.value !== `${appUrl}#task=task-456`) bad(`taskUrl gave ${clicked.value}`);
+  const cold = await openTab(push, clicked.value);
+  await waitStarted(cold, 2);
+  try {
+    await waitFor('the started app to open the task', () => cold.eval(opensJs('task-456')), 15000);
+    const hash = await cold.eval('location.hash');
+    if (hash) bad(`#task= was left in the address: ${hash}`);
+    else ok('an app opened at #task=<id> opens that task, and the address is cleaned');
+  } catch (error) {
+    bad(`opening at #task=: ${error.message}`);
+  }
+  await cold.close();
+} catch (error) {
+  bad(error.stack ?? String(error));
+} finally {
+  await push.close();
   server.close();
 }
 

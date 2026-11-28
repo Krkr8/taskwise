@@ -299,6 +299,8 @@ class SyncApi {
     }
     if (response.statusCode >= 200 && response.statusCode < 300) {
       if (json is Map<String, Object?>) return json;
+      // The push endpoints answer without a body.
+      if (response.statusCode == 204) return const {};
       throw SyncHttpException(
         response.statusCode,
         'bad_response',

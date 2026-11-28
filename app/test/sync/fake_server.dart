@@ -38,6 +38,9 @@ class FakeSyncServer {
   final pushPlans = <String, List<Map<String, Object?>>>{};
   int pushPlanUploads = 0;
 
+  /// Push subscription endpoints by device id.
+  final subscriptions = <String, Set<String>>{};
+
   /// The next this many plan uploads answer 500.
   int pushPlanFailures = 0;
 
@@ -142,9 +145,16 @@ class FakeSyncServer {
         }
         pushPlans[id] = (body!['items']! as List).cast<Map<String, Object?>>();
         pushPlanUploads++;
-        return _json({'ok': true});
+        return http.Response('', 204);
       }
       if (path == '/push/key') return _json({'publicKey': 'test-key'});
+      if (path == '/push/subscription') {
+        final endpoint = body!['endpoint']! as String;
+        final mine = subscriptions.putIfAbsent(deviceId, () => {});
+        request.method == 'PUT' ? mine.add(endpoint) : mine.remove(endpoint);
+        devices[deviceId]!['pushEnabled'] = mine.isNotEmpty;
+        return http.Response('', 204);
+      }
       return _error(404, 'not_found');
     }
     if (path == '/devices') return _json({'devices': devices.values.toList()});

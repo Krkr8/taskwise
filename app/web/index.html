@@ -46,6 +46,21 @@
   </script>
 
   <script>
+    // `#task=<id>`: the service worker opened the app for a tapped
+    // notification (sw.js). The app reads `taskwisePendingTask` and listens
+    // for `taskwise-open-task` (lib/platform/web_shell_web.dart). Taken out
+    // of the address before Flutter starts, like `#server=`.
+    (function () {
+      var match = /^#task=([^&]+)$/.exec(location.hash);
+      if (!match) return;
+      try {
+        window.taskwisePendingTask = decodeURIComponent(match[1]);
+      } catch (_) {}
+      history.replaceState(history.state, '', location.pathname + location.search);
+    })();
+  </script>
+
+  <script>
     // The page side of sw.js (see app/web_README.md). The app reads
     // `taskwiseNewVersionReady`, listens for `taskwise-new-version` and calls
     // `taskwiseReloadToNewVersion()` (lib/platform/web_shell_web.dart).
@@ -118,6 +133,12 @@
       navigator.serviceWorker.addEventListener('message', function (event) {
         if (event.data && event.data.type === 'new-version' && event.source) {
           newVersion(event.source);
+        }
+        // A tapped notification, with the app already open (sw.js).
+        if (event.data && event.data.type === 'open-task' &&
+            typeof event.data.taskId === 'string') {
+          window.taskwisePendingTask = event.data.taskId;
+          window.dispatchEvent(new Event('taskwise-open-task'));
         }
       });
 

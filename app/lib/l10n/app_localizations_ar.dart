@@ -1041,7 +1041,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notifyAllDevices => 'كل الأجهزة';
 
   @override
-  String get notifyNoRemindersYet => 'لا تذكيرات بعد';
+  String get notifyNotificationsOff => 'الإشعارات متوقفة';
 
   @override
   String get notifyNoDevice =>
@@ -1054,8 +1054,49 @@ class AppLocalizationsAr extends AppLocalizations {
   String get notifTestButton => 'إرسال إشعار تجريبي';
 
   @override
-  String get notifWebNote =>
-      'التذكيرات لا ترنّ في المتصفح بعد. تطبيقات Taskwise على هواتفك وحواسيبك هي التي تذكّرك.';
+  String get webNotifUnsupported => 'هذا المتصفح لا يستطيع عرض الإشعارات.';
+
+  @override
+  String get webNotifNeedsHomeScreen =>
+      'أضف Taskwise إلى الشاشة الرئيسية أولًا، ثم فعّل الإشعارات من هناك.';
+
+  @override
+  String get webNotifHowToAdd => 'طريقة الإضافة';
+
+  @override
+  String get webNotifNotConfigured => 'هذا الخادم غير مُعدّ للتذكيرات بعد.';
+
+  @override
+  String get webNotifSetupLink => 'طريقة الإعداد';
+
+  @override
+  String get webNotifDenied =>
+      'الإشعارات محظورة لهذا الموقع. اسمح بها من إعدادات المتصفح.';
+
+  @override
+  String get webNotifSignIn =>
+      'سجّل الدخول إلى خادمك أولًا، ثم فعّل الإشعارات هنا.';
+
+  @override
+  String get webNotifTurnOn => 'تفعيل الإشعارات في هذا المتصفح';
+
+  @override
+  String get webNotifOn => 'الإشعارات مفعّلة في هذا المتصفح.';
+
+  @override
+  String webNotifPlannedUntil(String date) {
+    return 'التذكيرات مخطّطة حتى $date';
+  }
+
+  @override
+  String get webNotifNoUpcoming => 'لا تذكيرات قادمة';
+
+  @override
+  String get webNotifTurnOff => 'إيقاف';
+
+  @override
+  String get webNotifFailed =>
+      'تعذّر تفعيل الإشعارات. تحقّق من الاتصال وحاول مجددًا.';
 
   @override
   String get notifTestBody => 'الإشعارات تعمل على هذا الجهاز.';
@@ -1622,7 +1663,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get homeScreenGuideWhy =>
-      'على iPhone يعمل Taskwise أفضل من الشاشة الرئيسية: يُفتح كتطبيق ويحتفظ بمهامك. أما علامة تبويب Safari فتحتفظ بنسخة منفصلة من مهامك قد يمسحها Safari.';
+      'على iPhone يعمل Taskwise أفضل من الشاشة الرئيسية: يُفتح كتطبيق ويحتفظ بمهامك ويستطيع تذكيرك. أما علامة تبويب Safari فتحتفظ بنسخة منفصلة من مهامك قد يمسحها Safari.';
 
   @override
   String get homeScreenGuideStep1 =>

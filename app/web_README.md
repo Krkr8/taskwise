@@ -11,7 +11,7 @@ flutter build web --pwa-strategy=none
 
 | File | What it is |
 | --- | --- |
-| `index.html` | Title, theme colours (Brutal light/dark), iPhone Home Screen tags, registers `sw.js`, then loads `flutter_bootstrap.js` |
+| `index.html` | Title, theme colours (Brutal light/dark), iPhone Home Screen tags, takes `#server=` and `#task=` out of the address, registers `sw.js`, then loads `flutter_bootstrap.js` |
 | `manifest.json` | Name, icons, `display: standalone`, Brutal colours |
 | `sw.js` | Our service worker (below) |
 | `icons/` | Generated from the iOS app icon (below) |
@@ -63,11 +63,27 @@ flutter build web --pwa-strategy=none
   Reload) would take over at the next start, delete the older cache, and
   start offline without CanvasKit: a blank page.
 
+It also shows the reminders the sync server sends as Web Push (in dev builds
+too; the web app subscribes in Settings → Notifications,
+`lib/ui/shared/settings/web_notifications_section.dart`):
+
+- `push`: always shows a notification (iOS stops pushing to a site that
+  shows none), with the payload's title and body, `tag` = its key and
+  `data.taskId`. An unreadable payload shows a plain "Taskwise reminder". No
+  action buttons (iOS shows none).
+- `notificationclick`: focuses an open window of the app and posts
+  `{type: 'open-task', taskId}`, or opens `./#task=<id>`. `index.html` takes
+  `#task=` out of the address before Flutter starts and, like the message,
+  sets `window.taskwisePendingTask` and fires `taskwise-open-task`; the app
+  opens the task (`WebShell.openTaskRequests`,
+  `lib/ui/shared/web/open_task_listener.dart`).
+
 `web/test_site_browser.mjs` checks this in Chrome on a built site (CI's `web`
 job runs it): version 1 is visited, version 2 installs and waits, the tab
 closes, the server goes away, and a new tab must start the app; then a
-server that never answers; and that a first visit, in English and in
-Arabic, fetches only from the site itself.
+server that never answers; that a first visit, in English and in Arabic,
+fetches only from the site itself; and that a push shows its notification
+and opens the task.
 
 Check the syntax after a change: `node --check web/sw.js`.
 
