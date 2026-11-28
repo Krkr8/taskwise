@@ -20,11 +20,16 @@ final class WebPushSubscription {
     required this.endpoint,
     required this.p256dh,
     required this.auth,
+    this.applicationServerKey,
   });
 
   final String endpoint;
   final String p256dh;
   final String auth;
+
+  /// The VAPID public key (base64url, no padding) the subscription was made
+  /// with; null if the browser doesn't say.
+  final String? applicationServerKey;
 }
 
 /// The browser's notifications and Web Push (the service worker shows the
@@ -44,7 +49,8 @@ abstract class WebPushClient {
   Future<WebPushSubscription?> current();
 
   /// Subscribes the service worker with the server's VAPID public key
-  /// (base64url, from `GET /push/key`). Null if the browser refused.
+  /// (base64url, from `GET /push/key`). An existing subscription made with
+  /// another key is dropped first. Null if the browser refused.
   Future<WebPushSubscription?> subscribe(String vapidPublicKey);
 
   /// Drops the browser's subscription (no more pushes reach this browser).

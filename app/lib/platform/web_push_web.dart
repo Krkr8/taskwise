@@ -51,7 +51,15 @@ class _BrowserWebPushClient implements WebPushClient {
 
   @override
   Future<WebPushSubscription?> subscribe(String vapidPublicKey) async {
-    final subscription = await (await _pushManager())
+    final manager = await _pushManager();
+    final existing = await manager.getSubscription().toDart;
+    if (existing != null) {
+      final old = _toDart(existing)?.applicationServerKey;
+      if (old != null && old != _normalizeKey(vapidPublicKey)) {
+        await existing.unsubscribe().toDart;
+      }
+    }
+    final subscription = await manager
         .subscribe(
           web.PushSubscriptionOptionsInit(
             userVisibleOnly: true,
@@ -81,8 +89,17 @@ WebPushSubscription? _toDart(web.PushSubscription subscription) {
     endpoint: subscription.endpoint,
     p256dh: p256dh,
     auth: auth,
+    applicationServerKey: _serverKey(subscription),
   );
 }
+
+String? _serverKey(web.PushSubscription subscription) {
+  final buffer = subscription.options.applicationServerKey;
+  if (buffer == null) return null;
+  return base64Url.encode(buffer.toDart.asUint8List()).replaceAll('=', '');
+}
+
+String _normalizeKey(String key) => key.replaceAll('=', '');
 
 /// The VAPID key is base64url without padding.
 Uint8List _base64UrlBytes(String text) =>

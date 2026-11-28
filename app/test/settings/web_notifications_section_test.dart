@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:taskwise/l10n/app_localizations.dart';
+import 'package:taskwise/l10n/app_localizations_en.dart';
 import 'package:taskwise/notifications/push_plan_uploader.dart';
 import 'package:taskwise/platform/web_push.dart';
 import 'package:taskwise/state/providers.dart';
@@ -49,9 +50,13 @@ class _FakeClient implements WebPushClient {
     );
   }
 
+  /// Makes unsubscribe throw after dropping the subscription.
+  bool unsubscribeThrows = false;
+
   @override
   Future<void> unsubscribe() async {
     _calls.add('unsubscribe');
+    if (unsubscribeThrows) throw StateError('unsubscribe failed');
     subscription = null;
   }
 }
@@ -462,5 +467,59 @@ void main() {
       );
     await pump(tester, serverDevices: [_device('me', pushEnabled: true)]);
     expect(_calls, ['pushKey']);
+  });
+
+  testWidgets('a subscription for another server is dropped, not sent', (
+    tester,
+  ) async {
+    client
+      ..currentPermission = 'granted'
+      ..subscription = const WebPushSubscription(
+        endpoint: 'https://push.test/abc',
+        p256dh: 'p',
+        auth: 'a',
+        applicationServerKey: 'other-key',
+      );
+    await pump(tester, serverDevices: [_device('me')]);
+    expect(_calls, ['pushKey', 'unsubscribe']);
+    expect(find.text('Turn on notifications in this browser'), findsOneWidget);
+  });
+
+  testWidgets('a subscription with the server key and lost on the server '
+      'is sent again', (tester) async {
+    client
+      ..currentPermission = 'granted'
+      ..subscription = const WebPushSubscription(
+        endpoint: 'https://push.test/abc',
+        p256dh: 'p',
+        auth: 'a',
+        applicationServerKey: 'test-key',
+      );
+    await pump(tester, serverDevices: [_device('me')]);
+    expect(_calls, [
+      'pushKey',
+      'putSubscription https://push.test/abc p a',
+      'uploadNow',
+      'syncNow',
+    ]);
+  });
+
+  testWidgets('turning off when the browser fails afterwards shows the '
+      'truth and the failure', (tester) async {
+    client
+      ..currentPermission = 'granted'
+      ..subscription = const WebPushSubscription(
+        endpoint: 'https://push.test/abc',
+        p256dh: 'p',
+        auth: 'a',
+      );
+    await pump(tester);
+    client.unsubscribeThrows = true;
+    _calls.clear();
+    await tester.tap(find.text('Turn off'));
+    await tester.pumpAndSettle();
+    expect(_calls.first, 'deleteSubscription https://push.test/abc');
+    expect(_calls, contains('pushKey'));
+    expect(find.text(AppLocalizationsEn().webNotifFailed), findsOneWidget);
   });
 }

@@ -108,8 +108,21 @@ class _WebNotificationsSectionState
       if (subscription == null || permission != 'granted') {
         return _set(_Phase.off);
       }
+      // Made with another server's key: it can never get pushes from this
+      // one, and must not be handed to this account.
+      final made = subscription.applicationServerKey;
+      final server = _key;
+      if (made != null &&
+          server != null &&
+          made.replaceAll('=', '') != server.replaceAll('=', '')) {
+        appLog.info('push', 'The browser subscription is for another server');
+        await _client.unsubscribe();
+        if (!stale()) _set(_Phase.off);
+        return;
+      }
       _set(_Phase.on);
-      await _resendIfServerLost(api, subscription);
+      // Offline (no key): can't tell whose it is, so don't send it.
+      if (server != null) await _resendIfServerLost(api, subscription);
     } on Object catch (e, stack) {
       appLog.error('push', e, stack);
       if (!stale()) _set(_Phase.off);
@@ -230,6 +243,9 @@ class _WebNotificationsSectionState
       await _afterChange();
     } on Object catch (e, stack) {
       appLog.error('push', e, stack);
+      // Part of it may have happened: show what is true now.
+      await _load();
+      if (mounted) setState(() => _failed = true);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -327,6 +343,12 @@ class _WebNotificationsSectionState
         ),
       ],
       _Phase.on => [
+        if (_failed)
+          row(
+            Icons.error_outline,
+            l10n.webNotifFailed,
+            color: theme.colorScheme.error,
+          ),
         row(
           Icons.notifications_active_outlined,
           l10n.webNotifOn,

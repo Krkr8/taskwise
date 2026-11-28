@@ -15,6 +15,7 @@ import '../logging/app_log.dart';
 import '../notifications/device_time_zone.dart';
 import '../platform/app_target.dart';
 import '../platform/page_reload.dart';
+import '../platform/web_push.dart';
 
 /// Where the device token is kept. Tests override it with a
 /// [MemoryTokenStore].
@@ -219,6 +220,19 @@ class SyncController extends Notifier<SyncState> {
   Future<void> signOut({bool removeLocalData = false}) async {
     final engine = _engine;
     _stop();
+    if (appTarget.isWeb) {
+      // The server may not be reachable to revoke this device, and it would
+      // keep the subscription: drop it in the browser, so no old-account
+      // reminders arrive here. Best effort, never blocks signing out.
+      try {
+        await ref
+            .read(webPushClientProvider)
+            .unsubscribe()
+            .timeout(const Duration(seconds: 3));
+      } on Object catch (e) {
+        appLog.warning('push', 'Could not drop the subscription: $e');
+      }
+    }
     if (engine != null) {
       try {
         await engine.api.revokeDevice(ref.read(deviceIdProvider));

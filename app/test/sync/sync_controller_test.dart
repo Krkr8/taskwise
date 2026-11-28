@@ -11,6 +11,7 @@ import 'package:taskwise/data/repositories/task_repository.dart';
 import 'package:taskwise/logging/app_log.dart';
 import 'package:taskwise/platform/app_target.dart';
 import 'package:taskwise/platform/page_reload.dart';
+import 'package:taskwise/platform/web_push.dart';
 import 'package:taskwise/state/providers.dart';
 import 'package:taskwise/sync/sync_api.dart';
 import 'package:taskwise/sync/sync_controller.dart';
@@ -19,6 +20,14 @@ import 'package:taskwise_shared/taskwise_shared.dart';
 
 import '../data/test_db.dart';
 import 'fake_server.dart';
+
+class _CountingPush extends NoWebPushClient {
+  _CountingPush();
+  int unsubscribes = 0;
+
+  @override
+  Future<void> unsubscribe() async => unsubscribes++;
+}
 
 void main() {
   // The controller listens to app lifecycle events.
@@ -29,10 +38,13 @@ void main() {
   late MemoryTokenStore tokens;
   late ProviderContainer container;
   late String deviceId;
+  late _CountingPush push;
 
   Future<ProviderContainer> start() async {
+    push = _CountingPush();
     final c = ProviderContainer(
       overrides: [
+        webPushClientProvider.overrideWithValue(push),
         databaseProvider.overrideWithValue(db),
         deviceIdProvider.overrideWithValue(deviceId),
         deviceTypeProvider.overrideWithValue(DeviceType.linux),
@@ -252,6 +264,24 @@ void main() {
       expect(after['tasks'], greaterThan(0));
       expect(after['places'], greaterThan(0));
       expect(reloads, 0);
+    });
+
+    test('web sign-out drops the push subscription, even offline', () async {
+      debugAppTargetOverride = AppTarget.web;
+      await signIn();
+      await _settle(container);
+      server.offline = true;
+      await controller().signOut();
+      expect(push.unsubscribes, 1);
+      expect(state().connected, isFalse);
+    });
+
+    test('native sign-out leaves the push client alone', () async {
+      debugAppTargetOverride = AppTarget.linux;
+      await signIn();
+      await _settle(container);
+      await controller().signOut();
+      expect(push.unsubscribes, 0);
     });
 
     test('native apps never remove data on sign-out', () async {
