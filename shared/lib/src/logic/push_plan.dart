@@ -55,9 +55,14 @@ final class PushPlanItem {
       Object.hash(key, fireAt.millisecondsSinceEpoch, taskId, title, body);
 }
 
-/// Items for one web device: its targeted tasks' reminders in the next
-/// [horizon], sorted by fireAt, at most [limit]. Uses [planNotifications] for
-/// the rules.
+/// How long a due item stays in a plan: the server's stale limit (it still
+/// sends an item this late), so an upload just after a reminder's time
+/// doesn't delete it before it's sent.
+const pushPlanKeepDue = Duration(minutes: 60);
+
+/// Items for one web device: its targeted tasks' reminders from
+/// [pushPlanKeepDue] ago to [horizon] ahead, sorted by fireAt, at most
+/// [limit], one per key. Uses [planNotifications] for the rules.
 List<PushPlanItem> buildPushPlan({
   required Iterable<Task> tasks,
   required Iterable<Reminder> reminders,
@@ -73,11 +78,12 @@ List<PushPlanItem> buildPushPlan({
     tasks: targeted,
     reminders: reminders,
     now: now,
+    after: now.subtract(pushPlanKeepDue),
     horizon: horizon,
     allDayMinutes: allDayMinutes,
     limit: limit,
   );
-  return [
+  return uniquePushPlanKeys([
     for (final p in plan)
       PushPlanItem(
         key: '${p.id}',
@@ -86,10 +92,21 @@ List<PushPlanItem> buildPushPlan({
         title: p.title,
         body: body(p),
       ),
+  ]);
+}
+
+/// [items] with one item per key, the first of each (the earliest, for a
+/// plan sorted by fireAt): two ids can collide, and the server refuses a
+/// plan with a duplicate key.
+List<PushPlanItem> uniquePushPlanKeys(List<PushPlanItem> items) {
+  final seen = <String>{};
+  return [
+    for (final i in items)
+      if (seen.add(i.key)) i,
   ];
 }
 
-/// A stable hash of a plan (FNV-1a, 31 bits, as hex) that doesn't depend on
+/// A stable hash of a plan (FNV-1a, 32 bits, as hex) that doesn't depend on
 /// the order of [items]; it tells whether a plan changed since the last upload.
 String pushPlanHash(List<PushPlanItem> items) {
   final sorted = [...items]

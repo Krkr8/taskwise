@@ -1,5 +1,6 @@
 import type { Client } from '@libsql/client';
 
+import { staleAfterMs } from './deliver.js';
 import type { PushItemRef } from './store.js';
 
 /** A queued delivery of one item at one fire time. */
@@ -28,8 +29,10 @@ const enqueueBatch = 25;
 
 /**
  * Queues every unsent, not yet queued item with a fire time in
- * (now, now + queueHorizonMs] (7 days minus an hour), of [deviceId] or of all devices, and returns how many
- * were queued. Items are marked queued first, in one statement, so two calls
+ * (now - staleAfterMs, now + queueHorizonMs] (from an hour ago to 7 days
+ * minus an hour ahead), of [deviceId] or of all devices, and returns how
+ * many were queued. A recently due item (apps keep the last hour in their
+ * plans) is queued with no delay. Items are marked queued first, in one statement, so two calls
  * at once queue each item only once. Items whose enqueue fails are unmarked
  * (the next upload or the daily cron tries again) and the call throws.
  */
@@ -47,7 +50,7 @@ export async function queueDueItems(
           RETURNING device_id, key, fire_at`,
     args: [
       now,
-      now,
+      now - staleAfterMs,
       now + queueHorizonMs,
       ...(deviceId === undefined ? [] : [deviceId]),
     ],
@@ -65,7 +68,7 @@ export async function queueDueItems(
     const batch = claimed.slice(i, i + enqueueBatch);
     const results = await Promise.allSettled(
       batch.map((msg) =>
-        scheduler.enqueue(msg, Math.ceil((msg.fireAt - now) / 1000)),
+        scheduler.enqueue(msg, Math.max(0, Math.ceil((msg.fireAt - now) / 1000))),
       ),
     );
     results.forEach((r, j) => {

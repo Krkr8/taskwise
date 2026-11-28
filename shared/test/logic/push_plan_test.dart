@@ -136,4 +136,49 @@ void main() {
     expect(pushPlanHash(a), pushPlanHash([a[1], a[0]]));
     expect(pushPlanHash(a), isNot(pushPlanHash([item('1', 0), item('2', 31)])));
   });
+
+  test('an item 5 minutes past stays in the plan, one 61 minutes past not', () {
+    final items = _build(
+      [
+        _task('a', due: LocalDate(2026, 10, 20), time: 7 * 60 + 55),
+        _task('b', due: LocalDate(2026, 10, 20), time: 6 * 60 + 59),
+      ],
+      [_before('r', 'a', 0), _before('s', 'b', 0)],
+    );
+    expect(items.map((i) => i.taskId), ['a']);
+    expect(items.single.fireAt, DateTime(2026, 10, 20, 7, 55).toUtc());
+  });
+
+  test('a done task due 5 minutes ago drops out', () {
+    expect(
+      _build(
+        [
+          _task(
+            'a',
+            due: LocalDate(2026, 10, 20),
+            time: 7 * 60 + 55,
+            done: true,
+          ),
+        ],
+        [_before('r', 'a', 0)],
+      ),
+      isEmpty,
+    );
+  });
+
+  test('uniquePushPlanKeys keeps the earliest item of each key', () {
+    PushPlanItem item(String key, int minute) => PushPlanItem(
+      key: key,
+      fireAt: DateTime.utc(2026, 10, 21, 5, minute),
+      taskId: 'task$minute',
+      title: 'T',
+      body: 'B',
+    );
+    final items = uniquePushPlanKeys([
+      item('1', 0),
+      item('2', 10),
+      item('1', 20),
+    ]);
+    expect(items.map((i) => (i.key, i.fireAt.minute)), [('1', 0), ('2', 10)]);
+  });
 }

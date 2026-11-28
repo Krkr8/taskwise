@@ -43,16 +43,19 @@ final ownPushPlanEndProvider = Provider<DateTime?>((ref) {
   final taskTargets = ref.watch(taskTargetsProvider).value ?? const {};
   final settings = ref.watch(appSettingsProvider);
   final deviceId = ref.watch(deviceIdProvider);
+  final now = ref.read(clockProvider)();
   final items = buildPushPlan(
     tasks: [for (final e in entries) e.task],
     reminders: reminders,
     notifiesDevice: (t) => notifiesHere(t, taskTargets, deviceId),
-    now: ref.read(clockProvider)(),
+    now: now,
     allDayMinutes: settings.allDayReminderMinutes,
     // Only the times matter here.
     body: (_) => '',
   );
-  return items.isEmpty ? null : items.last.fireAt.toLocal();
+  // A plan keeps the last hour's items; only one still ahead counts.
+  final end = items.isEmpty ? null : items.last.fireAt;
+  return end == null || !end.isAfter(now) ? null : end.toLocal();
 });
 
 class PushPlanUploader {

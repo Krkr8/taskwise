@@ -227,6 +227,40 @@ describe('push plans', () => {
     expect((await upload(max)).status).toBe(204);
   });
 
+  it('an upload just after the time without the item (older apps) still deletes it', async () => {
+    const { upload, item, clock, scheduler, deliver, sender, web, request } = await ready();
+    await request('PUT', '/push/subscription', { token: web, body: subscription() });
+    const at = clock.now + hour;
+    await upload([item('a', at), item('b', at + hour)]);
+    clock.now = at + 1000;
+    await upload([item('b', at + hour)]);
+    expect(await deliver(scheduler.queued[0]!.msg)).toBe('skipped');
+    expect(sender.sent).toHaveLength(0);
+  });
+
+  it('an upload just after the time with the item (1.4.0) keeps it, and it is sent', async () => {
+    const { upload, item, clock, scheduler, deliver, sender, web, request } = await ready();
+    await request('PUT', '/push/subscription', { token: web, body: subscription() });
+    const at = clock.now + hour;
+    await upload([item('a', at), item('b', at + hour)]);
+    clock.now = at + 1000;
+    await upload([item('a', at), item('b', at + hour)]);
+    expect(scheduler.queued).toHaveLength(2);
+    expect(await deliver(scheduler.queued[0]!.msg)).toBe('sent');
+    expect(sender.sent).toHaveLength(1);
+  });
+
+  it('an item a few minutes past at upload is queued at once and sent', async () => {
+    const { upload, item, clock, scheduler, deliver, sender, web, request } = await ready();
+    await request('PUT', '/push/subscription', { token: web, body: subscription() });
+    await upload([item('a', clock.now - 2 * 60 * 1000)]);
+    expect(scheduler.queued).toEqual([
+      { msg: { deviceId: 'web', key: 'a', fireAt: clock.now - 2 * 60 * 1000 }, delaySeconds: 0 },
+    ]);
+    expect(await deliver(scheduler.queued[0]!.msg)).toBe('sent');
+    expect(sender.sent).toHaveLength(1);
+  });
+
   it('a web device can upload its own plan', async () => {
     const { upload, item, clock, web, scheduler } = await ready();
     expect((await upload([item('a', clock.now + hour)], 'web', web)).status).toBe(204);
@@ -494,19 +528,26 @@ describe('queueing', () => {
     expect((await rows()).map((r) => r.key)).toEqual(['b']);
   });
 
-  it('queueDueItems skips past items and those of other devices when asked', async () => {
+  it('queueDueItems skips items over an hour past and those of other devices when asked', async () => {
     const { upload, item, clock, db, login } = await ready();
     await login('web-2', 'web');
-    await upload([item('past', clock.now - 1000), item('soon', clock.now + hour)]);
+    await upload([
+      item('old', clock.now - hour - 1000),
+      item('recent', clock.now - 1000),
+      item('soon', clock.now + hour),
+    ]);
     const scheduler = fakeScheduler();
-    // Both already queued by the upload; reset to check the selection.
+    // Already queued by the upload; reset to check the selection.
     await db.execute('UPDATE push_items SET queued_at = NULL');
     await upload([item('other', clock.now + hour)], 'web-2');
     await db.execute('UPDATE push_items SET queued_at = NULL');
-    expect(await queueDueItems(db, scheduler, clock.now, 'web')).toBe(1);
-    expect(scheduler.queued.map((q) => q.msg.key)).toEqual(['soon']);
+    expect(await queueDueItems(db, scheduler, clock.now, 'web')).toBe(2);
+    expect(scheduler.queued.map((q) => [q.msg.key, q.delaySeconds])).toEqual([
+      ['recent', 0],
+      ['soon', 3600],
+    ]);
     expect(await queueDueItems(db, scheduler, clock.now)).toBe(1);
-    expect(scheduler.queued.map((q) => q.msg.key)).toEqual(['soon', 'other']);
+    expect(scheduler.queued.map((q) => q.msg.key)).toEqual(['recent', 'soon', 'other']);
   });
 
   it('a failed enqueue leaves the item for the next try', async () => {
