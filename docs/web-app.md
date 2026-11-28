@@ -31,7 +31,7 @@ The web app can show your reminders as notifications, sent by your sync server a
 
 1. Your server must be set up for it: see [Web reminders in the self-hosting guide](self-hosting.md#web-reminders). Until it is, **Settings → Notifications** says "This server isn't set up for reminders yet."
 2. In the web app, open **Settings → Notifications** and tap **Turn on notifications in this browser**. Allow notifications when the browser asks.
-3. It then says "Notifications are on in this browser." and until when reminders are planned (the next 60 days, up to 500 reminders). **Turn off** stops them for this browser.
+3. It then says "Notifications are on in this browser." and until when reminders are planned (the next 60 days, up to 500 reminders). **Turn off** stops them for this browser. If the server can't plan them (for example, a Vercel server without Queues), it says "Reminders couldn't be planned on the server. They'll be retried." instead.
 
 Tapping a notification opens Taskwise on that task. Reminders reach this browser when the task notifies on it: in a task's **Notify on**, a browser without notifications shows "(notifications off)".
 
@@ -41,9 +41,11 @@ If the browser says notifications are blocked, allow them for the site in the br
 
 Limits:
 - **No buttons** on the notification (iPhones show none): tap it and tick the task off in the app. There is no snooze from a web notification.
-- **One time zone:** your other devices plan the browser's reminders only when they are in the same time zone as the browser. Otherwise the browser plans its own whenever it is open.
+- **Taskwise 1.4.0 on your other devices:** they plan the browser's reminders, so they need 1.4.0 or newer. Older ones sync as before but plan nothing for the browser.
+- **One time zone:** your other devices plan the browser's reminders only when their time zone shows the same clock as the browser's (for example Riyadh and Baghdad) over the next 60 days. Otherwise the browser plans its own whenever it is open. All-day tasks remind at the browser's own **all-day reminder time**.
 - **Location reminders** don't fire in the browser.
-- Each browser (and each iPhone Home Screen app) turns notifications on by itself. Clearing the site's data or signing in from scratch may need turning them on again.
+- Each browser (and each iPhone Home Screen app) turns notifications on by itself. If the push service drops a browser's subscription, the browser subscribes again by itself the next time Taskwise opens there. Signing out, or clearing the site's data, turns them off: turn them on again after signing in.
+- **Not built (yet):** a warning when the browser's planned reminders run out within 7 days (when no other device has planned them for a while), and a fallback when the server's queue isn't available.
 
 ## What is different from the apps
 

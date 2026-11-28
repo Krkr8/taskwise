@@ -33,6 +33,10 @@ function shorten(text: string, max: number): string {
  * sent item sends nothing (`'skipped'`), and a message delivered twice sends
  * once. If every subscription fails, the claim is undone and this throws, so
  * the queue tries again.
+ *
+ * Claim before send, on purpose: if the function dies between the claim and
+ * the push (a crash or a timeout), that reminder is lost, never sent twice.
+ * The queue's retry finds it claimed and skips it.
  */
 export async function deliverPushItem(
   db: Client,

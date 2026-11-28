@@ -71,12 +71,14 @@ Each app install is a **device**. Logging in registers the device and returns it
 {
   "username": "owner",
   "password": "…",
-  "device": { "id": "0199a3c0-…", "name": "Fedora Laptop", "type": "linux" }
+  "device": { "id": "0199a3c0-…", "name": "Fedora Laptop", "type": "web",
+              "timeZone": "Asia/Baghdad", "allDayMinutes": 540 }
 }
 ```
 - `device.id` is a UUID that the app makes once and keeps.
 - `type` is one of `windows`, `linux`, `ios`, `android`, `other`, `web` (`android` since v0.7.0, `web` since v1.3.0; apps map a type they don't know to `other`).
 - `timeZone` (optional, since v1.4.0) is the device's IANA time zone, e.g. `"Asia/Baghdad"`. Without it (older apps) the stored one is kept.
+- `allDayMinutes` (optional, since v1.4.0; web devices send it) is when the device reminds of all-day tasks, in minutes after midnight (0–1439; `540` is 09:00). The apps that plan the device's reminders use it. Without it the stored one is kept.
 
 The reply:
 ```json
@@ -90,7 +92,8 @@ The reply:
 
 The `device` objects match the shared `Device` model. Two fields appear only when set, like `Device.toJson` (since v1.4.0):
 - `"timeZone": "Asia/Baghdad"` once the device has reported its time zone;
-- `"pushEnabled": true` while the device has at least one Web Push subscription.
+- `"pushEnabled": true` while the device has at least one Web Push subscription;
+- `"allDayMinutes": 540` once a web device has reported its all-day reminder time.
 
 **The main device** (`"main": true`) manages the account's devices:
 - The first device to sign in becomes the main device. If there is no active main device, the next one to sign in becomes it.
@@ -101,7 +104,7 @@ The `device` objects match the shared `Device` model. Two fields appear only whe
 
 The endpoints:
 - `GET /devices` returns `{"devices": [...]}` with all devices, oldest first. Revoked devices are listed as `"deleted": true`.
-- `PATCH /devices/{id}` with `{"name": "Work PC"}` renames a device. With `{"main": true}` it makes that device the main one. With `{"timeZone": "Europe/London"}` (or `null` to clear it) a device sets its own time zone; for another device that's `403`. They can be combined. It returns the device.
+- `PATCH /devices/{id}` with `{"name": "Work PC"}` renames a device. With `{"main": true}` it makes that device the main one. With `{"timeZone": "Europe/London"}` (or `null` to clear it) a device sets its own time zone, and with `{"allDayMinutes": 480}` (or `null`) its own all-day reminder time; for another device either is `403`. They can be combined. It returns the device.
 - `DELETE /devices/{id}` revokes the device's token, deletes its push subscriptions and unsent push items, and returns the device with `"deleted": true`. From then on that device gets `401` everywhere, until it logs in again (it doesn't get the main role back). A device may always revoke itself (sign out).
 - `POST /devices/claim-main` with `{"password": "…"}` makes the calling device the main one. A wrong password gets `403 wrong_password`. Failures count towards the same rate limit as logins.
 
@@ -187,7 +190,7 @@ A device whose `since` is older than the purged tombstones would never learn abo
 
 Since v1.4.0 the server sends time reminders to web devices as Web Push. The apps plan them (the server doesn't read records): every app uploads a **push plan** for each web device, and the server sends each item at its time. Push data lives in its own tables (`push_subscriptions`, `push_items`), not in the synced records, so devices on 1.2.x/1.3.0 sync unchanged.
 
-All these endpoints need a device token. When the server has no VAPID keys (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`), each one answers `404 push_not_configured`. A server older than v1.4.0 answers `404 not_found`. Apps treat both as "this server can't send reminders" and stop uploading.
+All these endpoints need a device token. When the server has no VAPID keys (`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`), each one answers `404 push_not_configured`. A server older than v1.4.0 answers `404 not_found`. Apps treat both as "this server can't send reminders" and stop uploading until the next start or sign-in: on `404 push_not_configured` from any of them, and on a `404` with another code from `PUT /push/plan` when `GET /push/key` answers `404` too (a 1.4.0 server also answers `404 not_found` for a plan of a device that isn't an active web device).
 
 - `GET /push/key` returns `{"publicKey": "B…"}`, the VAPID public key a browser subscribes with.
 - `PUT /push/subscription` with the browser's subscription saves it for the calling device and answers `204`. The same endpoint again replaces it.
@@ -200,10 +203,11 @@ All these endpoints need a device token. When the server has no VAPID keys (`VAP
   { "items": [ { "key": "1234", "fireAt": 1793448000000, "taskId": "0199…", "title": "Pay rent", "body": "Today at 09:00" } ] }
   ```
   - `fireAt` is the time in UTC milliseconds (an integer). `key` is the planner's id for that reminder occurrence, unique within the list.
+  - Apps since v1.4.0 keep the items of the last 60 minutes in the list, so an upload just after a reminder's time doesn't delete it before it's sent. Each app plans a web device whose time zone shows the same clock as its own over the next 60 days, with the all-day time that device reported (and skips it until it has).
   - At most 500 items. `title` and `body` are at most 1000 characters (the push shortens them).
   - Unsent items that aren't in the new list are deleted and won't be sent. An item whose `fireAt` changed is sent at the new time. A changed `title` or `body` is used when the item is sent. Items already sent are not sent again.
 
-The server queues one message per item due within 7 days minus an hour (on Vercel with Vercel Queues; on Node an in-process timer). The daily job queues the items that have come within that window since. When a message arrives, the server checks that the item is still unsent with the same `fireAt`, marks it sent and pushes it to every subscription of the device. A message that arrives more than 60 minutes late sends nothing. Subscriptions the push service reports gone (404/410) are deleted.
+The server queues one message per item due within 7 days minus an hour (on Vercel with Vercel Queues; on Node an in-process timer); an item due up to 60 minutes ago is queued to arrive at once. The daily job queues the items that have come within that window since. When a message arrives, the server checks that the item is still unsent with the same `fireAt`, marks it sent and pushes it to every subscription of the device. It marks the item sent before pushing it, so a crash between the two loses that one reminder but never sends it twice (a failed push un-marks it for a retry). A message that arrives more than 60 minutes late sends nothing. Subscriptions the push service reports gone (404/410) are deleted.
 
 The push's JSON payload, which the web app's service worker shows:
 ```json

@@ -47,7 +47,7 @@ How a reminder reaches a browser that is closed:
 4. **Delivery.** `server/api/push-delivery.ts` (the queue consumer, `consumer.ts`) calls `deliver.ts`, which re-checks the item (messages can't be cancelled) and sends it with `web_push_sender.ts` (`web-push`, VAPID keys from the environment).
 5. **Notification.** The service worker `app/web/sw.js` shows it; a tap opens the app on that task.
 
-The browser side (permission, subscription, status) is `app/lib/ui/shared/settings/web_notifications_section.dart`.
+The browser side (permission, subscription, status) is `app/lib/ui/shared/settings/web_notifications_section.dart`; `app/lib/notifications/web_push_renewer.dart` checks the subscription at start and when that section opens, and subscribes again when the server lost it. Time zones are matched by `app/lib/notifications/time_zones.dart` (the same clock over the plan's 60 days), and each web device's all-day reminder time comes from the device list (`allDayMinutes`).
 
 ## Designs (`app/lib/ui/`)
 

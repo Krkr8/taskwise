@@ -211,7 +211,14 @@ The Taskwise web app talks to your server from the browser. Nothing to set up: t
 
 ## Web reminders
 
-The web app can show reminders as notifications (Web Push). This needs three more settings, called VAPID keys. Without them the server works as before and the web app says it isn't set up for reminders yet.
+The web app can show reminders as notifications (Web Push). This needs a server from 1.4.0 on and three more settings, called VAPID keys. Without them the server works as before and the web app says it isn't set up for reminders yet.
+
+**Update the server first:**
+
+- **On Vercel (A):** open your fork on GitHub and click **Sync fork → Update branch**. Vercel redeploys the server by itself.
+- **With Docker or Node (B):** get the new code and rebuild the image (or the Node build), as in [Update the server](#update-the-server). The server adds its new tables by itself.
+
+The phones and computers that plan the browser's reminders need Taskwise 1.4.0 or newer too.
 
 1. Make the keys (once, on any computer with Node.js):
 
@@ -230,7 +237,7 @@ The web app can show reminders as notifications (Web Push). This needs three mor
 3. **On Vercel (A):** put them in the server project under **Settings → Environment Variables**, then redeploy. Reminders are queued with Vercel Queues (the `taskwise-push` topic), which needs no further setup.
    **With Docker or Node (B):** pass the same three variables (`--env-file` or `-e`). The server checks for due reminders every 30 seconds by itself; there is nothing else to run.
 
-Keep the keys: if you change them, browsers have to subscribe again.
+Keep the keys: if you change them, every browser's subscription stops working. A browser that had notifications on subscribes again with the new key by itself the next time the web app opens.
 
 ## If something goes wrong
 
