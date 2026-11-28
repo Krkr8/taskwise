@@ -21,6 +21,7 @@ import 'ui/shared/web/new_version_bar.dart';
 import 'ui/shared/web/open_task_listener.dart';
 import 'update/update_controller.dart';
 import 'notifications/push_plan_uploader.dart';
+import 'notifications/web_push_renewer.dart';
 
 /// Root widget: theme, language/RTL and time format come from settings.
 class TaskwiseApp extends ConsumerWidget {
@@ -32,10 +33,12 @@ class TaskwiseApp extends ConsumerWidget {
     final design = ref.watch(appDesignProvider);
     final spec = designSpec(design);
     // Starts the reminder scheduler, missed repeats, location reminders,
-    // Siri's inbox, the update checks and sync (kept alive by these watches).
+    // Siri's inbox, the update checks, sync and the web push renewal (kept
+    // alive by these watches).
     ref
       ..watch(reminderSchedulerProvider)
       ..watch(pushPlanUploaderProvider)
+      ..watch(webPushRenewerProvider)
       ..watch(missedRepeatsProvider)
       ..watch(assistantSyncProvider)
       ..watch(updateControllerProvider)

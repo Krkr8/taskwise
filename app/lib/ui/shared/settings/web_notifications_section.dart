@@ -7,7 +7,9 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../logging/app_log.dart';
+import '../../../data/repositories/settings_repository.dart';
 import '../../../notifications/push_plan_uploader.dart';
+import '../../../notifications/web_push_renewer.dart';
 import '../../../platform/web_push.dart';
 import '../../../state/providers.dart';
 import '../../../sync/sync_api.dart';
@@ -50,8 +52,8 @@ class _WebNotificationsSectionState
   bool _busy = false;
   bool _failed = false;
 
-  /// The server's VAPID public key, once fetched.
-  String? _key;
+  /// The failure was turning off (else turning on).
+  bool _failedTurnOff = false;
 
   /// Bumped by each load, so an older one that finishes late is ignored.
   int _generation = 0;
@@ -64,6 +66,8 @@ class _WebNotificationsSectionState
 
   WebPushClient get _client => ref.read(webPushClientProvider);
 
+  SettingsRepository get _settings => ref.read(settingsRepositoryProvider);
+
   SyncApi? get _api =>
       ref.read(syncControllerProvider.notifier).pushContext?.api;
 
@@ -73,88 +77,21 @@ class _WebNotificationsSectionState
 
   Future<void> _load() async {
     final generation = ++_generation;
-    bool stale() => !mounted || generation != _generation;
-    try {
-      final support = await _client.support();
-      if (stale()) return;
-      if (support != WebPushSupport.supported) {
-        return _set(
-          support == WebPushSupport.needsHomeScreen
-              ? _Phase.needsHomeScreen
-              : _Phase.unsupported,
-        );
-      }
-      final api = _api;
-      if (api == null) return _set(_Phase.signedOut);
-      try {
-        _key = await api.pushKey();
-      } on SyncHttpException catch (e) {
-        // 404: no VAPID keys, or a server from before web reminders.
-        if (e.status == 404) {
-          if (!stale()) _set(_Phase.notConfigured);
-          return;
-        }
-        appLog.warning('push', 'No push key: ${e.status} ${e.code}');
-      } on SyncNetworkException catch (e) {
-        // Offline: asked again when turning on.
-        appLog.warning('push', 'No push key: ${e.message}');
-      }
-      if (stale()) return;
-      final permission = await _client.permission();
-      if (stale()) return;
-      if (permission == 'denied') return _set(_Phase.denied);
-      final subscription = await _client.current();
-      if (stale()) return;
-      if (subscription == null || permission != 'granted') {
-        return _set(_Phase.off);
-      }
-      // Made with another server's key: it can never get pushes from this
-      // one, and must not be handed to this account.
-      final made = subscription.applicationServerKey;
-      final server = _key;
-      if (made != null &&
-          server != null &&
-          made.replaceAll('=', '') != server.replaceAll('=', '')) {
-        appLog.info('push', 'The browser subscription is for another server');
-        await _client.unsubscribe();
-        if (!stale()) _set(_Phase.off);
-        return;
-      }
-      _set(_Phase.on);
-      // Offline (no key): can't tell whose it is, so don't send it.
-      if (server != null) await _resendIfServerLost(api, subscription);
-    } on Object catch (e, stack) {
-      appLog.error('push', e, stack);
-      if (!stale()) _set(_Phase.off);
-    }
-  }
-
-  /// Subscribed here, but the server lists this device without a
-  /// subscription (it signed in again, or the push service once said it was
-  /// gone): send it again.
-  Future<void> _resendIfServerLost(
-    SyncApi api,
-    WebPushSubscription subscription,
-  ) async {
-    final devices = ref.read(syncControllerProvider).serverDevices;
-    final me = ref.read(deviceIdProvider);
-    final own = devices?.where((d) => d.id == me).firstOrNull;
-    if (own == null || own.pushEnabled) return;
-    try {
-      await _save(api, subscription);
-    } on SyncApiException catch (e) {
-      appLog.warning('push', 'Could not send the subscription again: $e');
-    }
-  }
-
-  Future<void> _save(SyncApi api, WebPushSubscription subscription) async {
-    await api.putPushSubscription(
-      endpoint: subscription.endpoint,
-      p256dh: subscription.p256dh,
-      auth: subscription.auth,
-    );
-    appLog.info('push', 'This browser gets reminders now');
-    await _afterChange();
+    final status = await ref.read(webPushRenewerProvider).check();
+    if (!mounted || generation != _generation) return;
+    setState(() {
+      _failed = status == WebPushStatus.failed;
+      _failedTurnOff = false;
+      _phase = switch (status) {
+        WebPushStatus.unsupported => _Phase.unsupported,
+        WebPushStatus.needsHomeScreen => _Phase.needsHomeScreen,
+        WebPushStatus.signedOut => _Phase.signedOut,
+        WebPushStatus.notConfigured => _Phase.notConfigured,
+        WebPushStatus.denied => _Phase.denied,
+        WebPushStatus.off || WebPushStatus.failed => _Phase.off,
+        WebPushStatus.on => _Phase.on,
+      };
+    });
   }
 
   /// The plan follows the subscription, and the device list shows it.
@@ -169,6 +106,7 @@ class _WebNotificationsSectionState
     setState(() {
       _busy = true;
       _failed = false;
+      _failedTurnOff = false;
     });
     var subscribed = false;
     try {
@@ -178,7 +116,7 @@ class _WebNotificationsSectionState
       if (permission != 'granted') return;
       String key;
       try {
-        key = _key ??= await api.pushKey();
+        key = await api.pushKey();
       } on SyncHttpException catch (e) {
         if (e.status != 404) rethrow;
         return _set(_Phase.notConfigured);
@@ -191,6 +129,7 @@ class _WebNotificationsSectionState
         p256dh: subscription.p256dh,
         auth: subscription.auth,
       );
+      await _settings.setWebPushWanted(true);
       appLog.info('push', 'Notifications turned on in this browser');
       _set(_Phase.on);
       await _afterChange();
@@ -224,8 +163,11 @@ class _WebNotificationsSectionState
     setState(() {
       _busy = true;
       _failed = false;
+      _failedTurnOff = false;
     });
     try {
+      // Not renewed by itself again, whatever happens below.
+      await _settings.setWebPushWanted(false);
       final subscription = await _client.current();
       final api = _api;
       if (subscription != null && api != null) {
@@ -245,7 +187,12 @@ class _WebNotificationsSectionState
       appLog.error('push', e, stack);
       // Part of it may have happened: show what is true now.
       await _load();
-      if (mounted) setState(() => _failed = true);
+      if (mounted) {
+        setState(() {
+          _failed = true;
+          _failedTurnOff = true;
+        });
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -278,6 +225,12 @@ class _WebNotificationsSectionState
     Widget button(Widget child) => Padding(
       padding: const EdgeInsets.only(bottom: Spacing.sm),
       child: Align(alignment: AlignmentDirectional.centerStart, child: child),
+    );
+
+    final failure = row(
+      Icons.error_outline,
+      _failedTurnOff ? l10n.webNotifTurnOffFailed : l10n.webNotifFailed,
+      color: theme.colorScheme.error,
     );
 
     final children = switch (_phase) {
@@ -328,12 +281,7 @@ class _WebNotificationsSectionState
         row(Icons.block, l10n.webNotifDenied, color: theme.colorScheme.error),
       ],
       _Phase.off => [
-        if (_failed)
-          row(
-            Icons.error_outline,
-            l10n.webNotifFailed,
-            color: theme.colorScheme.error,
-          ),
+        if (_failed) failure,
         button(
           FilledButton.icon(
             icon: const Icon(Icons.notifications_active_outlined),
@@ -343,18 +291,20 @@ class _WebNotificationsSectionState
         ),
       ],
       _Phase.on => [
-        if (_failed)
+        if (_failed) failure,
+        if (ref.watch(ownPushPlanFailedProvider))
           row(
             Icons.error_outline,
-            l10n.webNotifFailed,
+            l10n.webNotifPlanFailed,
             color: theme.colorScheme.error,
+          )
+        else
+          row(
+            Icons.notifications_active_outlined,
+            l10n.webNotifOn,
+            subtitle: _plannedText(l10n),
+            color: theme.colorScheme.primary,
           ),
-        row(
-          Icons.notifications_active_outlined,
-          l10n.webNotifOn,
-          subtitle: _plannedText(l10n),
-          color: theme.colorScheme.primary,
-        ),
         button(
           OutlinedButton(
             onPressed: _busy ? null : _turnOff,

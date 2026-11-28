@@ -1099,6 +1099,13 @@ class AppLocalizationsAr extends AppLocalizations {
       'تعذّر تفعيل الإشعارات. تحقّق من الاتصال وحاول مجددًا.';
 
   @override
+  String get webNotifTurnOffFailed => 'تعذّر إيقاف الإشعارات. حاول مجددًا.';
+
+  @override
+  String get webNotifPlanFailed =>
+      'تعذّرت جدولة التذكيرات على الخادم. ستُعاد المحاولة.';
+
+  @override
   String get notifTestBody => 'الإشعارات تعمل على هذا الجهاز.';
 
   @override

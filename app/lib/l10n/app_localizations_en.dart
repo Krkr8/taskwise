@@ -1067,6 +1067,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'Couldn\'t turn on notifications. Check your connection and try again.';
 
   @override
+  String get webNotifTurnOffFailed =>
+      'Couldn\'t turn off notifications. Try again.';
+
+  @override
+  String get webNotifPlanFailed =>
+      'Reminders couldn\'t be planned on the server. They\'ll be retried.';
+
+  @override
   String get notifTestBody => 'Notifications work on this device.';
 
   @override

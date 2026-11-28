@@ -236,6 +236,8 @@ class SyncController extends Notifier<SyncState> {
       // The server may not be reachable to revoke this device, and it would
       // keep the subscription: drop it in the browser, so no old-account
       // reminders arrive here. Best effort, never blocks signing out.
+      // Signing in again doesn't turn them back on by itself.
+      await ref.read(settingsRepositoryProvider).setWebPushWanted(false);
       try {
         await ref
             .read(webPushClientProvider)

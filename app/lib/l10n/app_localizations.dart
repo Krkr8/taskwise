@@ -1730,6 +1730,18 @@ abstract class AppLocalizations {
   /// **'Couldn\'t turn on notifications. Check your connection and try again.'**
   String get webNotifFailed;
 
+  /// No description provided for @webNotifTurnOffFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t turn off notifications. Try again.'**
+  String get webNotifTurnOffFailed;
+
+  /// No description provided for @webNotifPlanFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders couldn\'t be planned on the server. They\'ll be retried.'**
+  String get webNotifPlanFailed;
+
   /// No description provided for @notifTestBody.
   ///
   /// In en, this message translates to:

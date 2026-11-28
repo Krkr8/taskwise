@@ -342,6 +342,8 @@
   "webNotifNoUpcoming": "No upcoming reminders",
   "webNotifTurnOff": "Turn off",
   "webNotifFailed": "Couldn't turn on notifications. Check your connection and try again.",
+  "webNotifTurnOffFailed": "Couldn't turn off notifications. Try again.",
+  "webNotifPlanFailed": "Reminders couldn't be planned on the server. They'll be retried.",
   "notifTestBody": "Notifications work on this device.",
   "notifTestDenied": "Notifications are turned off for Taskwise. Turn them on in the system settings.",
   "notifTestSent": "Sent. If nothing appeared, check the system's notification settings (and Focus / Do Not Disturb).",

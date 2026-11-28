@@ -33,6 +33,10 @@ abstract final class SettingKeys {
   /// Hash of the last push plan uploaded per web device (JSON map);
   /// device-only.
   static const pushPlanHashes = 'push_plan_hashes';
+
+  /// Whether notifications were turned on in this browser (`true`/`false`;
+  /// absent before 1.4.0's renewal); device-only.
+  static const webPushWanted = 'web_push_wanted';
   static const thisDeviceId = 'this_device_id';
 
   // Sync (all device-only).
@@ -167,6 +171,22 @@ class SettingsRepository extends RepositoryBase {
 
   Future<void> setPushPlanHashes(Map<String, String> hashes) =>
       _put(SettingKeys.pushPlanHashes, jsonEncode(hashes), synced: false);
+
+  /// Whether the user turned notifications on in this browser (and not off
+  /// since); null when never set.
+  Future<bool?> getWebPushWanted() async {
+    final row = await (db.select(
+      db.settings,
+    )..where((s) => s.id.equals(SettingKeys.webPushWanted))).getSingleOrNull();
+    return switch (row?.value) {
+      'true' => true,
+      'false' => false,
+      _ => null,
+    };
+  }
+
+  Future<void> setWebPushWanted(bool wanted) =>
+      _put(SettingKeys.webPushWanted, '$wanted', synced: false);
 
   // --------------------------------------------------------------- updates
 

@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:taskwise/l10n/app_localizations.dart';
+import 'package:taskwise/data/db/app_database.dart';
+import 'package:taskwise/data/repositories/settings_repository.dart';
 import 'package:taskwise/l10n/app_localizations_en.dart';
 import 'package:taskwise/notifications/push_plan_uploader.dart';
 import 'package:taskwise/platform/web_push.dart';
@@ -13,6 +15,8 @@ import 'package:taskwise/sync/sync_controller.dart';
 import 'package:taskwise/ui/shared/settings/web_notifications_section.dart';
 import 'package:taskwise/ui/shared/web/add_to_home_screen_page.dart';
 import 'package:taskwise_shared/taskwise_shared.dart';
+
+import '../data/test_db.dart';
 
 /// Every call the section makes, in order, from the browser and the server.
 final _calls = <String>[];
@@ -69,6 +73,15 @@ class _FakeApi extends SyncApi {
 
   /// What saving the subscription throws, if anything.
   SyncApiException? putError;
+
+  /// What `GET /devices` answers (when the sync state has no list).
+  List<Device> listed = [];
+
+  @override
+  Future<List<Device>> devices() async {
+    _calls.add('devices');
+    return listed;
+  }
 
   @override
   Future<String> pushKey() async {
@@ -133,12 +146,28 @@ void main() {
 
   late _FakeClient client;
   late _FakeApi api;
+  late AppDatabase db;
 
   setUp(() {
     _calls.clear();
     client = _FakeClient();
     api = _FakeApi();
+    db = openTestDatabase();
   });
+
+  tearDown(() => db.close());
+
+  SettingsRepository settings() => SettingsRepository(db, deviceId: 'me');
+
+  /// This browser as the server lists it.
+  final listedOn = [_device('me', pushEnabled: true)];
+  final listedOff = [_device('me')];
+
+  const subscribed = WebPushSubscription(
+    endpoint: 'https://push.test/abc',
+    p256dh: 'p',
+    auth: 'a',
+  );
 
   Future<void> pump(
     WidgetTester tester, {
@@ -150,6 +179,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          databaseProvider.overrideWithValue(db),
           webPushClientProvider.overrideWithValue(client),
           deviceIdProvider.overrideWithValue('me'),
           clockProvider.overrideWithValue(() => DateTime(2026, 11, 28, 10)),
@@ -282,7 +312,12 @@ void main() {
             auth: 'a',
           );
         final end = DateTime(2026, 12, 20, 9);
-        await pump(tester, locale: locale, planEnd: end);
+        await pump(
+          tester,
+          locale: locale,
+          planEnd: end,
+          serverDevices: listedOn,
+        );
         expect(find.text(t.on), findsOneWidget);
         final date = DateFormat.MMMEd(locale).format(end);
         expect(find.textContaining(date), findsOneWidget);
@@ -298,7 +333,7 @@ void main() {
             p256dh: 'p',
             auth: 'a',
           );
-        await pump(tester, locale: locale);
+        await pump(tester, locale: locale, serverDevices: listedOn);
         expect(find.text(t.on), findsOneWidget);
         expect(find.text(t.noUpcoming), findsOneWidget);
       });
@@ -314,7 +349,7 @@ void main() {
         auth: 'a',
       );
     final end = DateTime(2027, 1, 12, 9);
-    await pump(tester, planEnd: end);
+    await pump(tester, planEnd: end, serverDevices: listedOn);
     expect(
       find.text(
         'Reminders planned until ${DateFormat.yMMMEd('en').format(end)}',
@@ -332,12 +367,14 @@ void main() {
 
     expect(_calls, [
       'requestPermission',
+      'pushKey',
       'subscribe test-key',
       'putSubscription https://push.test/abc p-key a-key',
       'uploadNow',
       'syncNow',
     ]);
     expect(find.text('Notifications are on in this browser.'), findsOneWidget);
+    expect(await settings().getWebPushWanted(), isTrue);
   });
 
   testWidgets('turning on while the key could not be fetched asks again', (
@@ -403,6 +440,7 @@ void main() {
     // The browser's subscription is dropped again: the server doesn't know it.
     expect(_calls, [
       'requestPermission',
+      'pushKey',
       'subscribe test-key',
       'putSubscription https://push.test/abc p-key a-key',
       'unsubscribe',
@@ -418,7 +456,7 @@ void main() {
         p256dh: 'p',
         auth: 'a',
       );
-    await pump(tester);
+    await pump(tester, serverDevices: listedOn);
     _calls.clear();
     await tester.tap(find.text('Turn off'));
     await tester.pumpAndSettle();
@@ -429,6 +467,7 @@ void main() {
       'syncNow',
     ]);
     expect(find.text('Turn on notifications in this browser'), findsOneWidget);
+    expect(await settings().getWebPushWanted(), isFalse);
   });
 
   testWidgets(
@@ -441,10 +480,12 @@ void main() {
           p256dh: 'p',
           auth: 'a',
         );
-      await pump(tester, serverDevices: [_device('me')]);
+      await pump(tester, serverDevices: listedOff);
       expect(_calls, [
         'pushKey',
-        'putSubscription https://push.test/abc p a',
+        'unsubscribe',
+        'subscribe test-key',
+        'putSubscription https://push.test/abc p-key a-key',
         'uploadNow',
         'syncNow',
       ]);
@@ -465,13 +506,13 @@ void main() {
         p256dh: 'p',
         auth: 'a',
       );
-    await pump(tester, serverDevices: [_device('me', pushEnabled: true)]);
+    await pump(tester, serverDevices: listedOn);
     expect(_calls, ['pushKey']);
+    expect(find.text('Notifications are on in this browser.'), findsOneWidget);
   });
 
-  testWidgets('a subscription for another server is dropped, not sent', (
-    tester,
-  ) async {
+  testWidgets('a subscription made with another key is renewed with the '
+      "server's key", (tester) async {
     client
       ..currentPermission = 'granted'
       ..subscription = const WebPushSubscription(
@@ -480,9 +521,17 @@ void main() {
         auth: 'a',
         applicationServerKey: 'other-key',
       );
-    await pump(tester, serverDevices: [_device('me')]);
-    expect(_calls, ['pushKey', 'unsubscribe']);
-    expect(find.text('Turn on notifications in this browser'), findsOneWidget);
+    // Even when the server lists a subscription (the old one).
+    await pump(tester, serverDevices: listedOn);
+    expect(_calls, [
+      'pushKey',
+      'unsubscribe',
+      'subscribe test-key',
+      'putSubscription https://push.test/abc p-key a-key',
+      'uploadNow',
+      'syncNow',
+    ]);
+    expect(find.text('Notifications are on in this browser.'), findsOneWidget);
   });
 
   testWidgets('a subscription with the server key and lost on the server '
@@ -495,10 +544,12 @@ void main() {
         auth: 'a',
         applicationServerKey: 'test-key',
       );
-    await pump(tester, serverDevices: [_device('me')]);
+    await pump(tester, serverDevices: listedOff);
     expect(_calls, [
       'pushKey',
-      'putSubscription https://push.test/abc p a',
+      'unsubscribe',
+      'subscribe test-key',
+      'putSubscription https://push.test/abc p-key a-key',
       'uploadNow',
       'syncNow',
     ]);
@@ -513,13 +564,93 @@ void main() {
         p256dh: 'p',
         auth: 'a',
       );
-    await pump(tester);
+    await pump(tester, serverDevices: listedOn);
     client.unsubscribeThrows = true;
     _calls.clear();
     await tester.tap(find.text('Turn off'));
     await tester.pumpAndSettle();
     expect(_calls.first, 'deleteSubscription https://push.test/abc');
     expect(_calls, contains('pushKey'));
+    expect(
+      find.text("Couldn't turn off notifications. Try again."),
+      findsOneWidget,
+    );
+    expect(find.text(AppLocalizationsEn().webNotifFailed), findsNothing);
+    // Still subscribed (the fake server still lists it): on, not renewed.
+    expect(find.text('Turn off'), findsOneWidget);
+    expect(_calls, isNot(contains('subscribe test-key')));
+  });
+
+  testWidgets('allowed and turned on before, but the server and the browser '
+      'lost the subscription: renewed without a tap', (tester) async {
+    client.currentPermission = 'granted';
+    await settings().setWebPushWanted(true);
+    await pump(tester, serverDevices: listedOff);
+    expect(_calls, [
+      'pushKey',
+      'subscribe test-key',
+      'putSubscription https://push.test/abc p-key a-key',
+      'uploadNow',
+      'syncNow',
+    ]);
+    expect(find.text('Notifications are on in this browser.'), findsOneWidget);
+  });
+
+  testWidgets('allowed but turned off here: stays off', (tester) async {
+    client.currentPermission = 'granted';
+    await settings().setWebPushWanted(false);
+    await pump(tester, serverDevices: listedOff);
+    expect(_calls, ['pushKey']);
+    expect(find.text('Turn on notifications in this browser'), findsOneWidget);
+  });
+
+  testWidgets('not allowed yet: nothing is renewed', (tester) async {
+    client.subscription = subscribed;
+    await settings().setWebPushWanted(true);
+    await pump(tester, serverDevices: listedOff);
+    expect(_calls, ['pushKey']);
+    expect(find.text('Turn on notifications in this browser'), findsOneWidget);
+  });
+
+  testWidgets('a failed renewal shows off and the failure', (tester) async {
+    client
+      ..currentPermission = 'granted'
+      ..subscription = subscribed;
+    api.putError = const SyncNetworkException('offline');
+    await pump(tester, serverDevices: listedOff);
+    expect(find.text('Turn on notifications in this browser'), findsOneWidget);
     expect(find.text(AppLocalizationsEn().webNotifFailed), findsOneWidget);
+    expect(_calls, isNot(contains('uploadNow')));
+  });
+
+  testWidgets('without a device list it asks the server', (tester) async {
+    client
+      ..currentPermission = 'granted'
+      ..subscription = subscribed;
+    api.listed = listedOn;
+    await pump(tester);
+    expect(_calls, ['pushKey', 'devices']);
+    expect(find.text('Notifications are on in this browser.'), findsOneWidget);
+  });
+
+  testWidgets('plan uploads that fail say so instead of a plain on', (
+    tester,
+  ) async {
+    client
+      ..currentPermission = 'granted'
+      ..subscription = subscribed;
+    await pump(tester, serverDevices: listedOn);
+    ProviderScope.containerOf(
+      tester.element(find.byType(WebNotificationsSection)),
+    ).read(ownPushPlanFailedProvider.notifier).set(true);
+    await tester.pumpAndSettle();
+    expect(
+      find.text(
+        "Reminders couldn't be planned on the server. They'll be retried.",
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('Notifications are on in this browser.'), findsNothing);
+    expect(find.text('Turn off'), findsOneWidget);
   });
 }
